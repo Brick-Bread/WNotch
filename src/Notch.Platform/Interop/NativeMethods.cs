@@ -61,6 +61,10 @@ internal static unsafe partial class NativeMethods
     internal static partial bool GetWindowRect(nint hwnd, out RECT rect);
 
     [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool GetCursorPos(out POINT point);
+
+    [LibraryImport("user32.dll")]
     internal static partial nint GetForegroundWindow();
 
     [LibraryImport("user32.dll")]

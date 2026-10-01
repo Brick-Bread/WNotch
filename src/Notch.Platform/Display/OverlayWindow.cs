@@ -34,6 +34,10 @@ public static class OverlayWindow
             bounds.Height,
             NativeMethods.SWP_NOACTIVATE);
 
+    /// <summary>The pointer's position in physical screen pixels, or null when Windows will not say (e.g. on the lock screen).</summary>
+    public static (int X, int Y)? GetCursorPosition() =>
+        NativeMethods.GetCursorPos(out POINT point) ? (point.X, point.Y) : null;
+
     /// <summary>Other topmost windows can end up above the notch; this puts it back on top.</summary>
     public static void BringToTop(nint hwnd) =>
         NativeMethods.SetWindowPos(

@@ -24,9 +24,14 @@ public partial class NotchWindow : Window
     private static readonly TimeSpan CloseDelay = TimeSpan.FromMilliseconds(350);
     private static readonly Duration FadeDuration = TimeSpan.FromMilliseconds(160);
 
+    // How far outside the island, in DIPs, the pointer still counts as on it.
+    private const double HoverMargin = 2;
+
     // In DIPs. Large fits the biggest expanded tab; small fits the pill plus room for its glow.
+    // Both are the same width: a resize that moved the left edge would show the previous frame
+    // in the wrong place until the next one is drawn, leaving nothing under the pointer.
     private static readonly Size LargeWindowSize = new(980, 600);
-    private static readonly Size SmallWindowSize = new(450, 96);
+    private static readonly Size SmallWindowSize = new(980, 96);
 
     private readonly ActivityManager _activities;
     private readonly IMediaService _media;
@@ -38,6 +43,7 @@ public partial class NotchWindow : Window
     private readonly GlowController _glow;
     private readonly RectangleGeometry _islandClip = new();
     private readonly DispatcherTimer _hoverTimer = new();
+    private readonly DispatcherTimer _pointerWatch = new() { Interval = TimeSpan.FromMilliseconds(100) };
     private readonly DispatcherTimer _housekeepingTimer = new() { Interval = TimeSpan.FromSeconds(1) };
 
     private nint _hwnd;
@@ -76,32 +82,44 @@ public partial class NotchWindow : Window
         Shape idle = ShapeFor(NotchMode.Idle);
         _animator = new NotchAnimator(idle.Width, idle.Height, idle.Radius);
         _animator.Frame += ApplyShape;
-        _animator.Settled += () =>
-        {
-            if (!_expanded)
-            {
-                SetLargeWindow(false);
-            }
-        };
+        _animator.Settled += ShrinkWindowWhenClear;
         Island.Clip = _islandClip;
         ApplyShape();
 
         Island.MouseEnter += (_, _) =>
         {
+            HoverTrace.Write("enter");
+
             // Entering also cancels a pending close, which matters even when hover-to-open is off.
             if (_settings.ExpandOnHover || _expanded)
             {
                 ScheduleExpanded(true, OpenDelay);
             }
         };
-        Island.MouseLeave += (_, _) => ScheduleExpanded(false, CloseDelay);
+        Island.MouseLeave += (_, _) =>
+        {
+            // WPF also reports a leave when the window is resized under a pointer that has not
+            // moved, so the pointer's real position decides.
+            bool over = PointerOverIsland();
+            HoverTrace.Write($"leave over={over}");
+            if (!over)
+            {
+                ScheduleExpanded(false, CloseDelay);
+            }
+        };
         Island.MouseLeftButtonDown += OnIslandClicked;
 
         _hoverTimer.Tick += (_, _) =>
         {
             _hoverTimer.Stop();
+            if (!_hoverWantsExpanded && _expanded && PointerOverIsland())
+            {
+                return;
+            }
+
             SetExpanded(_hoverWantsExpanded);
         };
+        _pointerWatch.Tick += (_, _) => WatchPointer();
         _housekeepingTimer.Tick += (_, _) => Housekeeping();
 
         Refresh();
@@ -143,6 +161,7 @@ public partial class NotchWindow : Window
         _mediaTimer.Stop();
         _glow.Dispose();
         _hoverTimer.Stop();
+        _pointerWatch.Stop();
         _housekeepingTimer.Stop();
         base.OnClosed(e);
     }
@@ -184,6 +203,7 @@ public partial class NotchWindow : Window
         if (_largeWindow != large)
         {
             _largeWindow = large;
+            HoverTrace.Write($"window large={large}");
             if (_hwnd != 0)
             {
                 Reposition();
@@ -225,6 +245,67 @@ public partial class NotchWindow : Window
         if (!fullscreen)
         {
             OverlayWindow.BringToTop(_hwnd);
+        }
+
+        // Catches a shrink that was put off because the pointer was resting on the pill.
+        if (!_animator.IsRunning)
+        {
+            ShrinkWindowWhenClear();
+        }
+    }
+
+    /// <summary>Returns the window to its small size once the notch is closed and the pointer is off it.</summary>
+    private void ShrinkWindowWhenClear()
+    {
+        if (!_expanded && _largeWindow && !PointerOverIsland())
+        {
+            SetLargeWindow(false);
+        }
+    }
+
+    /// <summary>
+    /// Whether the pointer is on the island, judged by where both are on screen. Mouse events
+    /// alone are not reliable here: resizing the window, or the terminal's own child window,
+    /// makes WPF report a leave while the pointer is still on the notch.
+    /// </summary>
+    private bool PointerOverIsland()
+    {
+        if (_display is not { } display || OverlayWindow.GetCursorPosition() is not { } cursor)
+        {
+            return Island.IsMouseOver;
+        }
+
+        return IslandHitTest.Contains(
+            display.Bounds.Left,
+            display.Bounds.Top,
+            display.Bounds.Width,
+            display.Scale,
+            _animator.Width,
+            _animator.Height,
+            cursor.X,
+            cursor.Y,
+            HoverMargin);
+    }
+
+    /// <summary>
+    /// Runs while the notch is open. Closes it once the pointer has really left, including when
+    /// WPF never reported that, and calls off a close when the pointer is back.
+    /// </summary>
+    private void WatchPointer()
+    {
+        bool closePending = _hoverTimer.IsEnabled && !_hoverWantsExpanded;
+        if (PointerOverIsland())
+        {
+            if (closePending)
+            {
+                HoverTrace.Write("watch: close cancelled");
+                _hoverTimer.Stop();
+            }
+        }
+        else if (!closePending && !_pinnedOpen)
+        {
+            HoverTrace.Write("watch: pointer left");
+            ScheduleExpanded(false, CloseDelay);
         }
     }
 
@@ -277,9 +358,15 @@ public partial class NotchWindow : Window
         if (_expanded != expanded)
         {
             _expanded = expanded;
+            HoverTrace.Write($"expanded={expanded}");
             if (expanded)
             {
                 UpdateCalendar();
+                _pointerWatch.Start();
+            }
+            else
+            {
+                _pointerWatch.Stop();
             }
 
             Refresh();

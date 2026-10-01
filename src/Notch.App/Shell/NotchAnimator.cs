@@ -23,6 +23,9 @@ internal sealed class NotchAnimator(double width, double height, double radius)
 
     public double Radius => _radius.Value;
 
+    /// <summary>True while the shape is still moving towards its target.</summary>
+    public bool IsRunning => _running;
+
     public void AnimateTo(double width, double height, double radius)
     {
         _width.Target = width;

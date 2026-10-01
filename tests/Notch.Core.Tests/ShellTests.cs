@@ -23,6 +23,25 @@ public class ShellTests
     public void Expanded_wins_over_activities() =>
         Assert.Equal(NotchMode.Expanded, NotchModeResolver.Resolve(expanded: true, [Make(ActivityTier.Transient)]));
 
+    // A 2560-wide display at 150%, to the right of another one; the idle pill is 180 x 32 DIPs.
+    [Theory]
+    [InlineData(3200, 0, true)]
+    [InlineData(3066, 47, true)]
+    [InlineData(3334, 47, true)]
+    [InlineData(3064, 10, false)]
+    [InlineData(3335, 10, false)]
+    [InlineData(3200, 48, false)]
+    [InlineData(3200, -1, false)]
+    public void Island_hit_test_follows_the_display(int x, int y, bool expected) =>
+        Assert.Equal(expected, IslandHitTest.Contains(1920, 0, 2560, 1.5, 180, 32, x, y));
+
+    [Fact]
+    public void Island_hit_test_margin_reaches_past_the_edge()
+    {
+        Assert.False(IslandHitTest.Contains(0, 0, 1920, 1, 180, 32, 871, 33));
+        Assert.True(IslandHitTest.Contains(0, 0, 1920, 1, 180, 32, 869, 33, margin: 2));
+    }
+
     [Fact]
     public void Spring_settles_on_its_target()
     {

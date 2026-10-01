@@ -63,6 +63,8 @@ Development flags for `Notch.exe`:
 | `--settings` | Open the settings window at launch |
 | `--display=<n>` | Use display *n* (as numbered in settings) for this run, e.g. to keep a debug build off the screen an installed copy is on |
 | `--plugin=<folder>` | Load a plugin from its build output and run it whether or not it is enabled; can be repeated |
+| `--trace-hover` | Log pointer enter/leave, opening, closing and window resizes to `%LocalAppData%\Notch\hover.log`, to diagnose hover problems |
+| `--software-render` | Draw without the GPU, which makes rendering-timing problems easier to reproduce |
 
 Settings live in `%AppData%\Notch\settings.json`; unexpected errors are logged to `%LocalAppData%\Notch\errors.log`, and plugin starts, stops and failures to `%LocalAppData%\Notch\plugins.log`.
 

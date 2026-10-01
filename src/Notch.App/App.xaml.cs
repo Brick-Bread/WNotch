@@ -1,6 +1,8 @@
 using System.IO;
 using System.Net.Http;
 using System.Windows;
+using System.Windows.Interop;
+using System.Windows.Media;
 using H.NotifyIcon;
 using Notch.App.Settings;
 using Notch.App.Shell;
@@ -58,6 +60,17 @@ public partial class App : Application
         }
 
         bool demo = HasFlag(e, "--demo");
+        if (HasFlag(e, "--trace-hover"))
+        {
+            HoverTrace.Enable();
+        }
+
+        // --software-render draws without the GPU, which makes timing problems easier to reproduce.
+        if (HasFlag(e, "--software-render"))
+        {
+            RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;
+        }
+
 
         var settingsStore = new SettingsStore(Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Notch", "settings.json"));
