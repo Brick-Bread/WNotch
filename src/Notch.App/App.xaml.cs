@@ -3,6 +3,7 @@ using H.NotifyIcon;
 using Notch.App.Shell;
 using Notch.Core.Activities;
 using Notch.Core.Media;
+using Notch.Platform.Hud;
 using Notch.Platform.Media;
 
 namespace Notch.App;
@@ -13,6 +14,7 @@ public partial class App : Application
     private ActivityManager? _activities;
     private GsmtcMediaService? _media;
     private MediaActivityPublisher? _mediaPublisher;
+    private volatile SystemHudSources? _huds;
     private TaskbarIcon? _tray;
     private DemoDriver? _demo;
 
@@ -52,6 +54,9 @@ public partial class App : Application
 
         _tray = TrayIcon.Create(Shutdown);
 
+        ActivityManager activities = _activities;
+        Task.Run(() => _huds = SystemHudSources.Start(activities));
+
         if (demo)
         {
             _demo = new DemoDriver(_activities);
@@ -61,6 +66,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _demo?.Dispose();
+        _huds?.Dispose();
         _tray?.Dispose();
         _mediaPublisher?.Dispose();
         _media?.Dispose();

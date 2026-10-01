@@ -1,0 +1,84 @@
+using Notch.Core.Activities;
+
+namespace Notch.Core.Hud;
+
+/// <summary>Builds the transient activities shown for system events.</summary>
+public static class HudActivities
+{
+    public const string VolumeId = "hud.volume";
+    public const string BrightnessId = "hud.brightness";
+    public const string PowerId = "hud.power";
+    public const string BluetoothId = "hud.bluetooth";
+    public const string AudioOutputId = "hud.audio-output";
+
+    private static readonly TimeSpan NoticeLifetime = TimeSpan.FromSeconds(3.5);
+
+    public static Activity Volume(double level, bool muted)
+    {
+        level = Math.Clamp(level, 0, 1);
+        bool silent = muted || level <= 0;
+
+        return new Activity
+        {
+            Id = VolumeId,
+            Tier = ActivityTier.Transient,
+            Title = muted ? "Muted" : "Volume",
+            Progress = silent ? 0 : level,
+            Glyph = silent ? "" : level switch
+            {
+                < 0.34 => "",
+                < 0.67 => "",
+                _ => "",
+            },
+        };
+    }
+
+    public static Activity Brightness(double level) => new()
+    {
+        Id = BrightnessId,
+        Tier = ActivityTier.Transient,
+        Title = "Brightness",
+        Progress = Math.Clamp(level, 0, 1),
+        Glyph = "",
+    };
+
+    public static Activity Power(bool pluggedIn, int percent) => new()
+    {
+        Id = PowerId,
+        Tier = ActivityTier.Transient,
+        Title = pluggedIn ? "Charging" : "On battery",
+        Detail = $"{percent}%",
+        Glyph = pluggedIn ? "" : "",
+        Lifetime = NoticeLifetime,
+    };
+
+    public static Activity LowBattery(int percent) => new()
+    {
+        Id = PowerId,
+        Tier = ActivityTier.Transient,
+        Title = "Low battery",
+        Detail = $"{percent}%",
+        Glyph = "",
+        Lifetime = TimeSpan.FromSeconds(6),
+    };
+
+    public static Activity Bluetooth(string deviceName, bool connected) => new()
+    {
+        Id = BluetoothId,
+        Tier = ActivityTier.Transient,
+        Title = deviceName,
+        Detail = connected ? "Connected" : "Disconnected",
+        Glyph = "",
+        Lifetime = NoticeLifetime,
+    };
+
+    public static Activity AudioOutput(string deviceName) => new()
+    {
+        Id = AudioOutputId,
+        Tier = ActivityTier.Transient,
+        Title = deviceName,
+        Detail = "Output",
+        Glyph = "",
+        Lifetime = NoticeLifetime,
+    };
+}

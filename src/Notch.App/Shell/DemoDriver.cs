@@ -1,5 +1,6 @@
 using System.Windows.Threading;
 using Notch.Core.Activities;
+using Notch.Core.Hud;
 
 namespace Notch.App.Shell;
 
@@ -16,10 +17,12 @@ internal sealed class DemoDriver : IDisposable
         _activities = activities;
         _script =
         [
-            () => _activities.Publish(new Activity { Id = "hud.volume", Tier = ActivityTier.Transient, Glyph = "", Title = "Volume", Progress = 0.6 }),
+            () => _activities.Publish(HudActivities.Volume(0.6, muted: false)),
             () => _activities.Publish(new Activity { Id = "agent", Tier = ActivityTier.Ongoing, Glyph = "", Title = "Claude", Detail = "Working" }),
             () => _activities.Publish(new Activity { Id = "agent", Tier = ActivityTier.Attention, Glyph = "", Title = "Claude", Detail = "Needs input" }),
-            () => _activities.Publish(new Activity { Id = "hud.power", Tier = ActivityTier.Transient, Glyph = "", Title = "Charging", Detail = "82%" }),
+            () => _activities.Publish(HudActivities.Power(pluggedIn: true, percent: 82)),
+            () => _activities.Publish(HudActivities.Bluetooth("Headphones", connected: true)),
+            () => _activities.Publish(HudActivities.Brightness(0.4)),
             () => _activities.Remove("agent"),
         ];
 
