@@ -8,15 +8,20 @@ using Notch.Platform.Media;
 namespace Notch.App.Shell;
 
 /// <summary>
-/// Animates the light around the notch. Two layers sit exactly behind the island, so only
-/// their blurred shadows show: a wide soft halo and a tight bright core. Runs per frame
-/// only while lit.
+/// Animates the light around the notch. Two layers sit behind the island, reaching just past
+/// its edge (<see cref="Spread"/>), so a thin lit rim and their blurred shadows show: a wide
+/// soft halo and a tight bright core. Runs per frame only while lit.
 /// </summary>
 internal sealed class GlowController : IDisposable
 {
     private const double HaloBlur = 18;
     private const double HaloExtraBlur = 14;
-    private const double CoreBlur = 7;
+    private const double CoreBlur = 9;
+
+    // How far the lit layers reach past the island at standard brightness. The shadow of a
+    // layer hidden exactly behind the island is already half faded where it comes into view;
+    // letting it peek out puts a rim of full-strength light around the pill.
+    private const double BaseSpread = 2.5;
 
     // A soft glow looks the same at 24 fps, and every frame redraws the whole transparent window.
     private static readonly TimeSpan MinFrameInterval = TimeSpan.FromMilliseconds(40);
@@ -36,6 +41,12 @@ internal sealed class GlowController : IDisposable
     private double _intensity;
     private double _audioLevel;
     private bool _running;
+
+    /// <summary>The user's brightness setting as a multiplier; see <see cref="GlowOutput.Gain"/>.</summary>
+    public double Gain { get; set; } = 1;
+
+    /// <summary>How far, in DIPs, the glow layers must extend past the island's sides and bottom.</summary>
+    public double Spread => BaseSpread * Gain;
 
     public GlowController(Border halo, Border core)
     {
@@ -63,7 +74,7 @@ internal sealed class GlowController : IDisposable
         }
 
         // A new pattern starts from its beginning; the colour blends over from the old one.
-        bool wasDark = _glow is null && _intensity < 0.01;
+        bool wasDark = _glow is null && _intensity < 0.001;
         _glow = glow;
         _startedAt = CurrentTime();
         if (glow is not null)
@@ -159,15 +170,21 @@ internal sealed class GlowController : IDisposable
         _intensity += (target - _intensity) * Math.Min(1, dt * 14);
         _color = _color.Lerp(_targetColor, Math.Min(1, dt * 6));
 
+        // Opacity tops out at 1, so brightness beyond that is spent on a wider halo.
+        double level = GlowOutput.Level(_intensity, Gain);
+        double opacity = Math.Min(1, level);
+        double reach = Math.Sqrt(Gain);
+
         var color = Color.FromRgb(_color.R, _color.G, _color.B);
         _haloShadow.Color = color;
-        _haloShadow.Opacity = _intensity;
-        _haloShadow.BlurRadius = HaloBlur + (HaloExtraBlur * _intensity);
+        _haloShadow.Opacity = opacity;
+        _haloShadow.BlurRadius = (HaloBlur + (HaloExtraBlur * opacity)) * reach;
         _coreShadow.Color = color;
-        _coreShadow.Opacity = Math.Min(1, _intensity * 1.1);
-        _rim.Color = Color.FromArgb((byte)(255 * _intensity), color.R, color.G, color.B);
+        _coreShadow.Opacity = Math.Min(1, level * 1.1);
+        _coreShadow.BlurRadius = CoreBlur * reach;
+        _rim.Color = Color.FromArgb((byte)(255 * opacity), color.R, color.G, color.B);
 
-        if (_glow is null && _intensity < 0.01)
+        if (_glow is null && _intensity < 0.001)
         {
             _intensity = 0;
             Stop();

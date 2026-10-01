@@ -30,7 +30,7 @@
     <!-- The window is as large as the notch ever gets. Everything outside the island is
          transparent, and transparent pixels of a layered window pass clicks through. -->
     <Grid x:Name="Root">
-        <!-- Exactly behind the island: only its glow shows. Sized and shaped in code. -->
+        <!-- Behind the island and slightly larger: a lit rim and its glow show. Sized and shaped in code. -->
         <Border x:Name="GlowLayer" Width="180" Height="32" HorizontalAlignment="Center" VerticalAlignment="Top"
                 IsHitTestVisible="False" />
         <Border x:Name="GlowCore" Width="180" Height="32" HorizontalAlignment="Center" VerticalAlignment="Top"
@@ -70,6 +70,9 @@
                     <RadioButton x:Name="TabHome" Style="{StaticResource TabButton}" Content="Home" IsChecked="True" />
                     <RadioButton x:Name="TabTerminal" Style="{StaticResource TabButton}" Content="Terminal" />
                     <RadioButton x:Name="TabStats" Style="{StaticResource TabButton}" Content="Stats" />
+                    <!-- Only shown while a plugin has a card to put on it. -->
+                    <RadioButton x:Name="TabPlugins" Style="{StaticResource TabButton}" Content="Plugins"
+                                 Visibility="Collapsed" />
                 </StackPanel>
 
                 <!-- Home: media, timer, calendar -->
@@ -278,6 +281,37 @@
                         </StackPanel>
                     </Border>
                 </UniformGrid>
+
+                <!-- Plugins: one card per PluginCard, three to a row. Scrolls (wheel only) past three rows. -->
+                <ScrollViewer x:Name="PluginsPanel" Grid.Row="1" Margin="-6,10,-6,0" Visibility="Collapsed"
+                              VerticalScrollBarVisibility="Hidden" Focusable="False">
+                    <ItemsControl x:Name="PluginCards">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="3" VerticalAlignment="Top" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource Card}" Margin="6" Height="95" Tag="{Binding}"
+                                        Cursor="{Binding Cursor}" MouseLeftButtonUp="OnPluginCardClicked">
+                                    <DockPanel>
+                                        <TextBlock DockPanel.Dock="Top" Text="{Binding Label}"
+                                                   Style="{StaticResource CardLabel}" TextTrimming="CharacterEllipsis" />
+                                        <ProgressBar DockPanel.Dock="Bottom" Height="4" Maximum="1" BorderThickness="0"
+                                                     Foreground="White" Background="#40FFFFFF"
+                                                     Value="{Binding Progress, Mode=OneTime}"
+                                                     Visibility="{Binding ProgressVisibility}" />
+                                        <TextBlock DockPanel.Dock="Top" Text="{Binding Value}"
+                                                   Style="{StaticResource CardValue}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding Detail}" FontSize="11" Opacity="0.55"
+                                                   TextWrapping="Wrap" TextTrimming="CharacterEllipsis" />
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
             </Grid>
         </Grid>
     </Grid>

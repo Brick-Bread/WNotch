@@ -7,6 +7,7 @@ using System.Windows.Threading;
 using Notch.Core.Activities;
 using Notch.App.Terminal;
 using Notch.Core.Media;
+using Notch.Core.Plugins;
 using Notch.Core.Settings;
 using Notch.Core.Shell;
 using Notch.Core.Widgets;
@@ -30,6 +31,7 @@ public partial class NotchWindow : Window
     private readonly ActivityManager _activities;
     private readonly IMediaService _media;
     private readonly TerminalController _terminal;
+    private readonly PluginCardBoard _pluginCards;
     private readonly SettingsStore _settingsStore;
     private readonly AppSettings _settings;
     private readonly NotchAnimator _animator;
@@ -43,6 +45,7 @@ public partial class NotchWindow : Window
     private bool _expanded;
     private bool _hoverWantsExpanded;
     private bool _pinnedOpen;
+    private int? _displayOverride;
     private byte[]? _compactArtBytes;
     private GlowColor? _artAccent;
     private bool _largeWindow;
@@ -51,6 +54,7 @@ public partial class NotchWindow : Window
         ActivityManager activities,
         IMediaService media,
         TerminalController terminal,
+        PluginCardBoard pluginCards,
         SettingsStore settingsStore,
         AppSettings settings)
     {
@@ -60,12 +64,14 @@ public partial class NotchWindow : Window
         _activities.Changed += OnActivitiesChanged;
         _media = media;
         _terminal = terminal;
+        _pluginCards = pluginCards;
         _settingsStore = settingsStore;
         _settings = settings;
-        _glow = new GlowController(GlowLayer, GlowCore);
+        _glow = new GlowController(GlowLayer, GlowCore) { Gain = GlowOutput.Gain(settings.GlowIntensity) };
         InitializeMedia();
         InitializeTerminal();
         InitializeWidgets();
+        InitializePlugins();
 
         Shape idle = ShapeFor(NotchMode.Idle);
         _animator = new NotchAnimator(idle.Width, idle.Height, idle.Radius);
@@ -110,6 +116,7 @@ public partial class NotchWindow : Window
         NotchMode.Peek => new Shape(360, 44, 22),
         NotchMode.Expanded when _tab == NotchTab.Terminal => new Shape(920, 540, 30),
         NotchMode.Expanded when _tab == NotchTab.Stats => new Shape(640, 290, 30),
+        NotchMode.Expanded when _tab == NotchTab.Plugins => new Shape(640, PluginsTabHeight, 30),
 
         // Home is taller while the media card is showing.
         NotchMode.Expanded => new Shape(640, _media.Current is null ? 236 : 364, 30),
@@ -132,6 +139,7 @@ public partial class NotchWindow : Window
     {
         _activities.Changed -= OnActivitiesChanged;
         _media.Changed -= OnMediaChanged;
+        _pluginCards.Changed -= OnPluginCardsChanged;
         _mediaTimer.Stop();
         _glow.Dispose();
         _hoverTimer.Stop();
@@ -162,6 +170,8 @@ public partial class NotchWindow : Window
         Reposition();
         Housekeeping();
         RefreshCalendar();
+        _glow.Gain = GlowOutput.Gain(_settings.GlowIntensity);
+        ApplyShape();
         Refresh();
     }
 
@@ -186,7 +196,7 @@ public partial class NotchWindow : Window
     {
         // The saved display may have been unplugged since; fall back to the primary one.
         IReadOnlyList<DisplayInfo> displays = Displays.GetAll();
-        DisplayInfo display = _settings.DisplayIndex is { } index && index >= 0 && index < displays.Count
+        DisplayInfo display = (_displayOverride ?? _settings.DisplayIndex) is { } index && index >= 0 && index < displays.Count
             ? displays[index]
             : Displays.GetPrimary();
         _display = display;
@@ -238,6 +248,20 @@ public partial class NotchWindow : Window
         _hoverTimer.Stop();
         _hoverTimer.Interval = delay;
         _hoverTimer.Start();
+    }
+
+    /// <summary>
+    /// Puts the notch on a display of this run's choosing without changing the saved setting
+    /// (<c>--display=</c>, for development: keeps a debug build off an installed copy's screen).
+    /// </summary>
+    /// <param name="index">An index into the system's display list, like <see cref="AppSettings.DisplayIndex"/>.</param>
+    public void UseDisplay(int index)
+    {
+        _displayOverride = index;
+        if (_hwnd != 0)
+        {
+            Reposition();
+        }
     }
 
     /// <summary>Keeps the notch expanded regardless of the pointer (<c>--pin-open</c>, for development).</summary>
@@ -330,10 +354,12 @@ public partial class NotchWindow : Window
 
         Island.Width = width;
         Island.Height = height;
-        var corners = new CornerRadius(0, 0, radius, radius);
-        GlowLayer.Width = GlowCore.Width = width;
-        GlowLayer.Height = GlowCore.Height = height;
-        GlowLayer.CornerRadius = GlowCore.CornerRadius = corners;
+
+        // The glow layers follow the island's outline, a little outside it.
+        double spread = _glow.Spread;
+        GlowLayer.Width = GlowCore.Width = width + (2 * spread);
+        GlowLayer.Height = GlowCore.Height = height + spread;
+        GlowLayer.CornerRadius = GlowCore.CornerRadius = new CornerRadius(0, 0, radius + spread, radius + spread);
 
         // The rounded rectangle starts one radius above the island, so only the bottom corners
         // are rounded and the top edge sits flush against the screen edge.

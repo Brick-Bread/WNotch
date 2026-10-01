@@ -76,6 +76,28 @@ public sealed record Glow(GlowColor Color, GlowPattern Pattern, double Strength 
     }
 }
 
+/// <summary>How a glow's intensity is put on screen, including the user's brightness setting.</summary>
+public static class GlowOutput
+{
+    public const int MinPercent = 25;
+    public const int MaxPercent = 200;
+    public const int DefaultPercent = 100;
+
+    // Below 1 this lifts dim glows much more than bright ones, so a subtle glow is still
+    // clearly visible while the difference between subtle and strong remains.
+    private const double Lift = 0.6;
+
+    /// <summary>The user's setting as a multiplier, with anything out of range pulled back in.</summary>
+    public static double Gain(int percent) => Math.Clamp(percent, MinPercent, MaxPercent) / 100.0;
+
+    /// <summary>
+    /// How strongly to draw a glow of <paramref name="intensity"/> (0..1). 1 is full opacity;
+    /// above that, which takes a <paramref name="gain"/> over 1, there is only size left to add.
+    /// </summary>
+    public static double Level(double intensity, double gain) =>
+        Math.Pow(Math.Clamp(intensity, 0, 1), Lift) * Math.Max(0, gain);
+}
+
 /// <summary>Picks a glow colour that represents an image, such as album art.</summary>
 public static class AccentColor
 {

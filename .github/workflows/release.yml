@@ -50,6 +50,14 @@ jobs:
           makensis /V2 /DVERSION=${{ steps.version.outputs.version }} /DFILE_VERSION=${{ steps.version.outputs.file_version }} installer\Notch.nsi
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      # The one .zip on the release: what "Brick-Bread/WNotch" installs from the app's plugin settings.
+      - name: Package the sample plugin
+        shell: pwsh
+        run: |
+          dotnet publish samples/BreakReminder -c Release -o artifacts/break-reminder
+          Remove-Item artifacts/break-reminder/*.pdb -ErrorAction SilentlyContinue
+          Compress-Archive -Path artifacts/break-reminder/* -DestinationPath artifacts/BreakReminder-plugin.zip
+
       - uses: actions/upload-artifact@v4
         with:
           name: Notch-Setup-${{ steps.version.outputs.version }}
@@ -63,4 +71,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $installer = Get-Item artifacts/Notch-Setup-*.exe
-          gh release create $env:GITHUB_REF_NAME $installer.FullName --title "Notch ${{ steps.version.outputs.version }}" --generate-notes
+          gh release create $env:GITHUB_REF_NAME $installer.FullName artifacts/BreakReminder-plugin.zip --title "Notch ${{ steps.version.outputs.version }}" --generate-notes

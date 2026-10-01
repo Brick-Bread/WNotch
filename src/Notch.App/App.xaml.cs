@@ -1,4 +1,5 @@
 using System.IO;
+using System.Net.Http;
 using System.Windows;
 using H.NotifyIcon;
 using Notch.App.Settings;
@@ -7,6 +8,7 @@ using Notch.App.Terminal;
 using Notch.App.Updates;
 using Notch.Core.Activities;
 using Notch.Core.Media;
+using Notch.Core.Plugins;
 using Notch.Core.Settings;
 using Notch.Core.Terminal;
 using Notch.Platform.Hud;
@@ -16,12 +18,16 @@ namespace Notch.App;
 
 public partial class App : Application
 {
+    private static readonly HttpClient PluginHttp = new() { Timeout = TimeSpan.FromMinutes(2) };
+
     private Mutex? _singleInstance;
     private ActivityManager? _activities;
     private GsmtcMediaService? _media;
     private MediaActivityPublisher? _mediaPublisher;
     private TerminalController? _terminal;
     private volatile SystemHudSources? _huds;
+    private PluginManager? _plugins;
+    private PluginInstaller? _pluginInstaller;
     private TaskbarIcon? _tray;
     private SettingsWindow? _settingsWindow;
     private UpdateService? _updates;
@@ -72,7 +78,32 @@ public partial class App : Application
         _mediaPublisher = new MediaActivityPublisher(media, _activities);
         _terminal = new TerminalController(_activities, Dispatcher);
 
-        var window = new NotchWindow(_activities, media, _terminal, settingsStore, settings);
+        var pluginCards = new PluginCardBoard();
+        string appData = Path.GetDirectoryName(settingsStore.FilePath)!;
+        _plugins = new PluginManager(
+            Path.Combine(appData, "plugins"),
+            Path.Combine(appData, "plugin-data"),
+            _activities,
+            pluginCards,
+            new PluginLog(Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Notch", "plugins.log")));
+
+        // Before anything is loaded, so plugin updates downloaded during the last run can replace their files.
+        PluginInstaller.ApplyPendingUpdates(_plugins.PluginsDirectory);
+        _pluginInstaller = new PluginInstaller(PluginHttp, _plugins.PluginsDirectory, _plugins.IsLoaded);
+
+        // Only reads manifests, so it is cheap enough to do before the window shows.
+        // --plugin=<folder> runs a plugin straight from its build output, enabled or not.
+        _plugins.Discover(Options(e, "--plugin="));
+
+        var window = new NotchWindow(_activities, media, _terminal, pluginCards, settingsStore, settings);
+
+        // --display=2 uses the display the settings window lists as "Display 2", for this run only.
+        if (int.TryParse(Option(e, "--display="), out int display))
+        {
+            window.UseDisplay(display - 1);
+        }
+
         window.Show();
         if (HasFlag(e, "--pin-open"))
         {
@@ -102,6 +133,11 @@ public partial class App : Application
         ActivityManager activities = _activities;
         Task.Run(() => _huds = SystemHudSources.Start(activities));
 
+        // Off the UI thread: loading assemblies and starting plugins must not delay the notch.
+        PluginManager plugins = _plugins;
+        string[] enabledPlugins = [.. settings.EnabledPlugins];
+        Task.Run(() => plugins.SetEnabled(enabledPlugins));
+
         _updates = new UpdateService(settings, settingsStore, _activities, () => window.IsBusy, Shutdown);
         _updates.CleanUpDownloads();
         if (HasFlag(e, UpdateService.UpdatedFlag))
@@ -118,6 +154,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _demo?.Dispose();
+        _plugins?.Dispose();
         _updates?.Dispose();
         _terminal?.Dispose();
         _huds?.Dispose();
@@ -137,12 +174,15 @@ public partial class App : Application
             return;
         }
 
-        _settingsWindow = new SettingsWindow(settings, store);
+        _settingsWindow = new SettingsWindow(settings, store, _plugins!, _pluginInstaller!);
         _settingsWindow.Saved += (_, _) =>
         {
             _activities?.SetSuppressed(settings.SuppressedActivityIds());
             notch.ApplySettings();
             _updates?.CheckSoon();
+
+            string[] enabledPlugins = [.. settings.EnabledPlugins];
+            Task.Run(() => _plugins?.SetEnabled(enabledPlugins));
         };
         _settingsWindow.Closed += (_, _) => _settingsWindow = null;
         _settingsWindow.Show();
@@ -167,8 +207,11 @@ public partial class App : Application
         e.Args.Contains(flag, StringComparer.OrdinalIgnoreCase);
 
     /// <summary>The value of a <c>--name=value</c> argument, or null when it was not given.</summary>
-    private static string? Option(StartupEventArgs e, string prefix) =>
-        e.Args.FirstOrDefault(a => a.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))?[prefix.Length..];
+    private static string? Option(StartupEventArgs e, string prefix) => Options(e, prefix).FirstOrDefault();
+
+    /// <summary>The values of every <c>--name=value</c> argument with this name.</summary>
+    private static IEnumerable<string> Options(StartupEventArgs e, string prefix) =>
+        e.Args.Where(a => a.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).Select(a => a[prefix.Length..]);
 
     private static async Task StartMediaAsync(GsmtcMediaService media)
     {

@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/BreakReminder/BreakReminder.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/Notch.App/Notch.App.csproj" />
     <Project Path="src/Notch.Core/Notch.Core.csproj" />

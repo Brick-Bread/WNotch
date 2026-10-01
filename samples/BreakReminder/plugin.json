@@ -1,0 +1,9 @@
+{
+  "id": "notch.break-reminder",
+  "name": "Break reminder",
+  "version": "1.0.0",
+  "author": "Notch contributors",
+  "description": "Counts how long you have been at the screen and nudges you to take a break.",
+  "assembly": "BreakReminder.dll",
+  "apiVersion": 1
+}

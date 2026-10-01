@@ -5,6 +5,8 @@
         Width="460" SizeToContent="Height" ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
         ThemeMode="System">
+    <!-- Scrolls on screens too short for the whole window; see the MaxHeight set in code. -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
     <StackPanel Margin="24,20,24,20">
         <StackPanel.Resources>
             <Style x:Key="Heading" TargetType="TextBlock">
@@ -27,6 +29,13 @@
 
         <TextBlock Text="Show in the pill" Style="{StaticResource Heading}" Margin="0,22,0,8" />
         <CheckBox x:Name="GlowEffects" Content="Glow effects (colour and rhythm follow what is happening)" />
+        <DockPanel Margin="28,0,0,6" IsEnabled="{Binding IsChecked, ElementName=GlowEffects}">
+            <TextBlock Text="Brightness" VerticalAlignment="Center" Margin="0,0,12,0" />
+            <TextBlock x:Name="GlowIntensityText" DockPanel.Dock="Right" Width="48" TextAlignment="Right"
+                       VerticalAlignment="Center" />
+            <Slider x:Name="GlowIntensity" TickFrequency="5" IsSnapToTickEnabled="True"
+                    SmallChange="5" LargeChange="25" VerticalAlignment="Center" />
+        </DockPanel>
         <CheckBox x:Name="ShowMedia" Content="Media that is playing" />
         <CheckBox x:Name="ShowVolume" Content="Volume and audio output changes" />
         <CheckBox x:Name="ShowBrightness" Content="Brightness changes" />
@@ -49,6 +58,26 @@
         <TextBox x:Name="CalendarFeeds" AcceptsReturn="True" Height="76" TextWrapping="NoWrap"
                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" />
 
+        <DockPanel Margin="0,22,0,4">
+            <Button x:Name="OpenPluginsFolder" DockPanel.Dock="Right" Content="Open folder"
+                    ToolTip="Each plugin is a folder in here. Reopen settings after adding one." />
+            <TextBlock Text="Plugins" Style="{StaticResource Heading}" Margin="0" VerticalAlignment="Center" />
+        </DockPanel>
+        <TextBlock TextWrapping="Wrap" Opacity="0.7" Margin="0,0,0,8"
+                   Text="Plugins can do anything Notch itself can do on this PC. Only switch on plugins you trust." />
+        <ScrollViewer MaxHeight="132" VerticalScrollBarVisibility="Auto">
+            <!-- One check box per installed plugin, added in code. -->
+            <StackPanel x:Name="PluginList" />
+        </ScrollViewer>
+        <TextBlock Text="Install from GitHub: a repository as owner/name, or its link" Opacity="0.7"
+                   Margin="0,12,0,6" />
+        <DockPanel>
+            <Button x:Name="InstallPlugin" DockPanel.Dock="Right" Content="Install" MinWidth="88" Margin="8,0,0,0"
+                    ToolTip="Downloads the plugin attached to the repository's latest release." />
+            <TextBox x:Name="PluginSource" />
+        </DockPanel>
+        <TextBlock x:Name="InstallStatus" TextWrapping="Wrap" Margin="0,6,0,0" Visibility="Collapsed" />
+
         <DockPanel Margin="0,24,0,0">
             <TextBlock x:Name="VersionText" VerticalAlignment="Center" Opacity="0.6" />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -58,4 +87,5 @@
             </StackPanel>
         </DockPanel>
     </StackPanel>
+    </ScrollViewer>
 </Window>

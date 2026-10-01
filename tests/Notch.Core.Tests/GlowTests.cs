@@ -46,6 +46,24 @@ public class GlowTests
         Assert.Equal(0.4, new Glow(GlowColor.White, GlowPattern.Steady, 0.5).IntensityAt(0), precision: 6);
 
     [Fact]
+    public void Output_lifts_dim_glows_but_keeps_their_order()
+    {
+        Assert.Equal(0, GlowOutput.Level(0, 1), precision: 6);
+        Assert.Equal(1, GlowOutput.Level(1, 1), precision: 6);
+        Assert.True(GlowOutput.Level(0.25, 1) > 0.4);
+        Assert.True(GlowOutput.Level(0.25, 1) < GlowOutput.Level(0.5, 1));
+    }
+
+    [Fact]
+    public void Output_scales_with_the_brightness_setting()
+    {
+        Assert.Equal(2 * GlowOutput.Level(0.5, 1), GlowOutput.Level(0.5, GlowOutput.Gain(200)), precision: 6);
+        Assert.Equal(1, GlowOutput.Gain(GlowOutput.DefaultPercent));
+        Assert.Equal(0.25, GlowOutput.Gain(-5));
+        Assert.Equal(2, GlowOutput.Gain(1000));
+    }
+
+    [Fact]
     public void Colours_blend() =>
         Assert.Equal(new GlowColor(100, 64, 0), new GlowColor(0, 0, 0).Lerp(new GlowColor(200, 128, 0), 0.5));
 

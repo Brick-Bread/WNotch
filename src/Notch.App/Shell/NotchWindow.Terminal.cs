@@ -20,12 +20,13 @@ public partial class NotchWindow
         Home,
         Terminal,
         Stats,
+        Plugins,
     }
 
     /// <summary>The terminal takes keyboard input, so the notch must not close under the user while it has focus.</summary>
     private bool TerminalHasFocus => _expanded && _tab == NotchTab.Terminal && IsActive;
 
-    /// <summary>Selects a tab by name ("home", "terminal", "stats"); unknown names are ignored.</summary>
+    /// <summary>Selects a tab by name ("home", "terminal", "stats", "plugins"); unknown names are ignored.</summary>
     public void ShowTab(string name)
     {
         if (Enum.TryParse(name, ignoreCase: true, out NotchTab tab))
@@ -34,6 +35,7 @@ public partial class NotchWindow
             {
                 NotchTab.Terminal => TabTerminal,
                 NotchTab.Stats => TabStats,
+                NotchTab.Plugins => TabPlugins,
                 _ => TabHome,
             }).IsChecked = true;
         }
@@ -55,6 +57,7 @@ public partial class NotchWindow
         TabHome.Checked += (_, _) => SelectTab(NotchTab.Home);
         TabTerminal.Checked += (_, _) => SelectTab(NotchTab.Terminal);
         TabStats.Checked += (_, _) => SelectTab(NotchTab.Stats);
+        TabPlugins.Checked += (_, _) => SelectTab(NotchTab.Plugins);
 
         NewClaude.Click += (_, _) => OpenSession(TerminalProfile.Claude);
         NewCodex.Click += (_, _) => OpenSession(TerminalProfile.Codex);
@@ -81,6 +84,7 @@ public partial class NotchWindow
         HomePanel.Visibility = tab == NotchTab.Home ? Visibility.Visible : Visibility.Collapsed;
         TerminalPanel.Visibility = tab == NotchTab.Terminal ? Visibility.Visible : Visibility.Collapsed;
         StatsPanel.Visibility = tab == NotchTab.Stats ? Visibility.Visible : Visibility.Collapsed;
+        PluginsPanel.Visibility = tab == NotchTab.Plugins ? Visibility.Visible : Visibility.Collapsed;
 
         Refresh();
         UpdateTerminalInteraction();

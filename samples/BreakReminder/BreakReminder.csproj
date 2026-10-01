@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- Builds a self-describing plugin folder: a .deps.json, and any NuGet dependencies copied next to the dll. -->
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Notch supplies Notch.Core at run time, so neither it nor its dependencies are copied to the output.
+         Outside this repository, reference the Notch.Core.dll of an installed Notch instead; see docs/plugins.md. -->
+    <ProjectReference Include="..\..\src\Notch.Core\Notch.Core.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="plugin.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

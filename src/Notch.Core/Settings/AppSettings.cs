@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Notch.Core.Activities;
 using Notch.Core.Hud;
 using Notch.Core.Media;
 
@@ -18,6 +19,9 @@ public sealed class AppSettings
 
     /// <summary>Light up the pill in a colour and rhythm that matches what is happening.</summary>
     public bool GlowEffects { get; set; } = true;
+
+    /// <summary>Glow brightness in percent of the standard, <see cref="GlowOutput.MinPercent"/> to <see cref="GlowOutput.MaxPercent"/>.</summary>
+    public int GlowIntensity { get; set; } = GlowOutput.DefaultPercent;
 
     /// <summary>Download and install new releases without asking.</summary>
     public bool AutoUpdate { get; set; } = true;
@@ -58,6 +62,9 @@ public sealed class AppSettings
 
     /// <summary>iCalendar (.ics) links shown on the Home tab's calendar card.</summary>
     public List<string> CalendarFeeds { get; set; } = [];
+
+    /// <summary>Ids of the plugins the user has switched on. Installed plugins do not run until listed here.</summary>
+    public List<string> EnabledPlugins { get; set; } = [];
 
     /// <summary>Folders terminal sessions were started in, most recent first.</summary>
     public List<string> RecentFolders { get; set; } = [];
