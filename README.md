@@ -71,6 +71,10 @@ Pushing a tag such as `v0.2.0` runs `.github/workflows/release.yml`, which tests
 | `src/Notch.Hook` | Small helper the Claude and Codex CLIs run to report agent status to the app |
 | `tests/Notch.Core.Tests` | xUnit tests for `Notch.Core` |
 
+
+
 ## License
 
 MIT. The terminal bundles [xterm.js](https://xtermjs.org) (MIT).
+
+- made by Brick_Bread
