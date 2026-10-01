@@ -304,6 +304,42 @@ A card is plain data: the plugin describes it and Notch draws it in its own styl
 
 There is currently no way to learn whether the tab is on screen, so update cards on a modest schedule: once a second at most, and less often for anything that costs something to compute or fetch.
 
+## Pages: tabs with a console
+
+A page is a tab of its own in the expanded notch: up to eight figures in a row on top and a console below. It suits a plugin that watches one thing closely, such as a game server. Needs API version 3.
+
+```csharp
+host.Pages.Set(new PluginPage
+{
+    Id = "server",
+    Title = "Survival",
+    InputHint = "Send a command",
+    Stats =
+    [
+        new PluginStat { Label = "State", Value = "Running", Color = GlowColor.Green },
+        new PluginStat { Label = "Memory", Value = "2.1 GB", Detail = "of 4 GB", Progress = 0.52 },
+    ],
+    Input = line => SendToServer(line),
+});
+
+host.Pages.Append("server", "[12:00:00 INFO]: Done!");
+host.Pages.Open("server");
+```
+
+| `PluginPage` property | Meaning |
+|---|---|
+| `Id` | Required. Identifies the page within your plugin. `Set` with the same id replaces the page and keeps its console. |
+| `Title` | Required. The tab's name; keep it short. |
+| `Stats` | Up to eight `PluginStat`s (`Label`, `Value`, `Detail`, `Progress`, `Color`, like a card). |
+| `Input` | Shows an input line under the console and is called with each line the user submits (Enter or the Send button; Up and Down recall earlier lines). Null makes the console read-only. Runs on a background thread. |
+| `InputHint` | Greyed text in the empty input line. |
+
+- `Append(pageId, line)` adds a console line; the newest 500 are kept. The console follows new lines unless the user has scrolled up. `ClearConsole(pageId)` empties it.
+- `Open(pageId)` expands the notch on the page. Use it for something the user asked for (a click), not to interrupt them.
+- Updating a page with `Set` is cheap; do it as often as the figures change, but not faster than once a second.
+- The input line takes keyboard focus while the page is showing, like the Terminal tab. Notch does not echo what the user types: append it yourself if you want it in the console.
+- `Remove(id)` and `Clear()` take pages away; the tab disappears with them.
+
 ## Settings and files
 
 `host.Settings` stores small values as JSON in `settings.json` inside the plugin's data folder:
