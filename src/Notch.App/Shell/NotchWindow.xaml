@@ -1,0 +1,75 @@
+<Window x:Class="Notch.App.Shell.NotchWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Notch"
+        Width="720" Height="440"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False" Topmost="True"
+        Focusable="False" Foreground="White"
+        FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="13">
+
+    <!-- The window is as large as the notch ever gets. Everything outside the island is
+         transparent, and transparent pixels of a layered window pass clicks through. -->
+    <Grid x:Name="Root">
+        <Grid x:Name="Island" Width="180" Height="32"
+              HorizontalAlignment="Center" VerticalAlignment="Top" Background="Black">
+
+            <Grid x:Name="CompactLayer" Margin="16,0" Opacity="0" IsHitTestVisible="False">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="CompactGlyph" FontFamily="{StaticResource IconFont}" FontSize="15"
+                           VerticalAlignment="Center" />
+                <TextBlock x:Name="CompactTitle" Grid.Column="1" Margin="10,0" VerticalAlignment="Center"
+                           FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                <TextBlock x:Name="CompactDetail" Grid.Column="2" VerticalAlignment="Center" Opacity="0.65" />
+                <ProgressBar x:Name="CompactProgress" Grid.Column="2" Width="110" Height="4" Maximum="1"
+                             VerticalAlignment="Center" BorderThickness="0"
+                             Foreground="White" Background="#40FFFFFF" />
+            </Grid>
+
+            <!-- Fixed size so the content is revealed by the growing island instead of reflowing. -->
+            <Grid x:Name="ExpandedLayer" Width="600" Height="324" Margin="0,16,0,0"
+                  HorizontalAlignment="Center" VerticalAlignment="Top" Opacity="0" IsHitTestVisible="False">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Home" FontWeight="SemiBold" />
+                    <TextBlock Text="Terminal" Margin="20,0,0,0" Opacity="0.45" />
+                    <TextBlock Text="Stats" Margin="20,0,0,0" Opacity="0.45" />
+                </StackPanel>
+
+                <ItemsControl x:Name="ActivityList" Grid.Row="1" Margin="0,18,0,0">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="#1AFFFFFF" CornerRadius="12" Padding="14,10" Margin="0,0,0,8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Glyph}" FontFamily="{StaticResource IconFont}"
+                                               FontSize="18" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Title}" Margin="12,0"
+                                               FontWeight="SemiBold" VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Detail}" Opacity="0.65"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock x:Name="EmptyText" Grid.Row="1" Text="Nothing happening right now"
+                           Opacity="0.45" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>
