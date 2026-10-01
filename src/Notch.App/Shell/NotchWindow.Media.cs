@@ -31,8 +31,14 @@ public partial class NotchWindow
     private void UpdateMediaCard()
     {
         MediaSnapshot? media = _media.Current;
-        MediaCard.Visibility = media is null ? Visibility.Collapsed : Visibility.Visible;
-        UpdateEmptyText();
+        Visibility visibility = media is null ? Visibility.Collapsed : Visibility.Visible;
+        if (MediaCard.Visibility != visibility)
+        {
+            // The Home tab is taller with the card than without it.
+            MediaCard.Visibility = visibility;
+            Refresh();
+        }
+
         UpdateMediaTimer();
 
         if (media is null)

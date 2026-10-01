@@ -9,6 +9,9 @@ public sealed class AppSettings
     /// <summary>Folders terminal sessions were started in, most recent first.</summary>
     public List<string> RecentFolders { get; set; } = [];
 
+    /// <summary>iCalendar (.ics) links shown on the Home tab's calendar card.</summary>
+    public List<string> CalendarFeeds { get; set; } = [];
+
     public void RememberFolder(string folder)
     {
         RecentFolders.RemoveAll(f => string.Equals(f, folder, StringComparison.OrdinalIgnoreCase));

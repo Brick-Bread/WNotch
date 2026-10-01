@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="NAudio.Wasapi" Version="3.1.0" />
+    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="10.0.12" />
     <PackageReference Include="System.Management" Version="10.0.12" />
   </ItemGroup>
 

@@ -19,10 +19,25 @@ public partial class NotchWindow
     {
         Home,
         Terminal,
+        Stats,
     }
 
     /// <summary>The terminal takes keyboard input, so the notch must not close under the user while it has focus.</summary>
     private bool TerminalHasFocus => _expanded && _tab == NotchTab.Terminal && IsActive;
+
+    /// <summary>Selects a tab by name ("home", "terminal", "stats"); unknown names are ignored.</summary>
+    public void ShowTab(string name)
+    {
+        if (Enum.TryParse(name, ignoreCase: true, out NotchTab tab))
+        {
+            (tab switch
+            {
+                NotchTab.Terminal => TabTerminal,
+                NotchTab.Stats => TabStats,
+                _ => TabHome,
+            }).IsChecked = true;
+        }
+    }
 
     /// <summary>Switches to the Terminal tab and starts a session there.</summary>
     public void OpenTerminal(TerminalProfile profile)
@@ -39,6 +54,7 @@ public partial class NotchWindow
 
         TabHome.Checked += (_, _) => SelectTab(NotchTab.Home);
         TabTerminal.Checked += (_, _) => SelectTab(NotchTab.Terminal);
+        TabStats.Checked += (_, _) => SelectTab(NotchTab.Stats);
 
         NewClaude.Click += (_, _) => OpenSession(TerminalProfile.Claude);
         NewCodex.Click += (_, _) => OpenSession(TerminalProfile.Codex);
@@ -64,14 +80,11 @@ public partial class NotchWindow
         _tab = tab;
         HomePanel.Visibility = tab == NotchTab.Home ? Visibility.Visible : Visibility.Collapsed;
         TerminalPanel.Visibility = tab == NotchTab.Terminal ? Visibility.Visible : Visibility.Collapsed;
-
-        // The content keeps a fixed size per tab; the island grows or shrinks around it.
-        Shape shape = ShapeFor(Core.Shell.NotchMode.Expanded);
-        ExpandedLayer.Width = shape.Width - 40;
-        ExpandedLayer.Height = shape.Height - 36;
+        StatsPanel.Visibility = tab == NotchTab.Stats ? Visibility.Visible : Visibility.Collapsed;
 
         Refresh();
         UpdateTerminalInteraction();
+        UpdateStatsTimer();
         if (tab == NotchTab.Terminal)
         {
             FocusTerminal();

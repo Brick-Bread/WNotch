@@ -62,8 +62,13 @@ public partial class App : Application
             window.PinOpen();
         }
 
+        if (Option(e, "--tab=") is { } tab)
+        {
+            window.ShowTab(tab);
+        }
+
         // --open=claude|codex|shell starts a terminal session straight away.
-        string? open = e.Args.FirstOrDefault(a => a.StartsWith("--open=", StringComparison.OrdinalIgnoreCase))?["--open=".Length..];
+        string? open = Option(e, "--open=");
         if (TerminalProfile.All.FirstOrDefault(p => p.Id.Equals(open, StringComparison.OrdinalIgnoreCase)) is { } profile)
         {
             window.OpenTerminal(profile);
@@ -95,6 +100,10 @@ public partial class App : Application
 
     private static bool HasFlag(StartupEventArgs e, string flag) =>
         e.Args.Contains(flag, StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>The value of a <c>--name=value</c> argument, or null when it was not given.</summary>
+    private static string? Option(StartupEventArgs e, string prefix) =>
+        e.Args.FirstOrDefault(a => a.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))?[prefix.Length..];
 
     private static async Task StartMediaAsync(GsmtcMediaService media)
     {

@@ -38,7 +38,6 @@ public partial class NotchWindow : Window
     private bool _hoverWantsExpanded;
     private bool _pinnedOpen;
     private byte[]? _compactArtBytes;
-    private bool _hasListedActivities;
 
     internal NotchWindow(
         ActivityManager activities,
@@ -57,6 +56,7 @@ public partial class NotchWindow : Window
         _settings = settings;
         InitializeMedia();
         InitializeTerminal();
+        InitializeWidgets();
 
         Shape idle = ShapeFor(NotchMode.Idle);
         _animator = new NotchAnimator(idle.Width, idle.Height, idle.Radius);
@@ -86,7 +86,10 @@ public partial class NotchWindow : Window
         NotchMode.Compact => new Shape(320, 34, 17),
         NotchMode.Peek => new Shape(360, 44, 22),
         NotchMode.Expanded when _tab == NotchTab.Terminal => new Shape(920, 540, 30),
-        NotchMode.Expanded => new Shape(640, 360, 30),
+        NotchMode.Expanded when _tab == NotchTab.Stats => new Shape(640, 290, 30),
+
+        // Home is taller while the media card is showing.
+        NotchMode.Expanded => new Shape(640, _media.Current is null ? 236 : 364, 30),
         _ => new Shape(180, 32, 16),
     };
 
@@ -190,8 +193,14 @@ public partial class NotchWindow : Window
         if (_expanded != expanded)
         {
             _expanded = expanded;
+            if (expanded)
+            {
+                UpdateCalendar();
+            }
+
             Refresh();
             UpdateTerminalInteraction();
+            UpdateStatsTimer();
         }
     }
 
@@ -227,20 +236,16 @@ public partial class NotchWindow : Window
             CompactProgress.Value = top.Progress ?? 0;
         }
 
-        // Media has its own card on the Home tab.
-        Activity[] listed = [.. activities.Where(a => a.Id != MediaActivityPublisher.ActivityId)];
-        ActivityList.ItemsSource = listed;
-        _hasListedActivities = listed.Length > 0;
-        UpdateEmptyText();
+        // The content keeps a fixed size per tab; the island grows or shrinks around it.
+        Shape expanded = ShapeFor(NotchMode.Expanded);
+        ExpandedLayer.Width = expanded.Width - 40;
+        ExpandedLayer.Height = expanded.Height - 36;
         UpdateMediaTimer();
 
         Fade(CompactLayer, mode is NotchMode.Compact or NotchMode.Peek);
         Fade(ExpandedLayer, mode is NotchMode.Expanded);
         ExpandedLayer.IsHitTestVisible = mode is NotchMode.Expanded;
     }
-
-    private void UpdateEmptyText() =>
-        EmptyText.Visibility = _hasListedActivities || _media.Current is not null ? Visibility.Collapsed : Visibility.Visible;
 
     private static void Fade(UIElement element, bool visible) =>
         element.BeginAnimation(OpacityProperty, new DoubleAnimation(visible ? 1 : 0, FadeDuration));

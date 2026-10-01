@@ -1,0 +1,142 @@
+using Microsoft.Extensions.Time.Testing;
+using Notch.Core.Widgets;
+
+namespace Notch.Core.Tests;
+
+public class WidgetTests
+{
+    [Fact]
+    public void Countdown_runs_pauses_and_finishes()
+    {
+        var time = new FakeTimeProvider();
+        var timer = new CountdownTimer(time);
+        Assert.Equal(CountdownState.Idle, timer.State);
+
+        timer.Start(TimeSpan.FromMinutes(5));
+        time.Advance(TimeSpan.FromMinutes(2));
+        Assert.Equal(CountdownState.Running, timer.State);
+        Assert.Equal(TimeSpan.FromMinutes(3), timer.Remaining);
+        Assert.Equal(0.4, timer.Progress, precision: 6);
+
+        timer.Pause();
+        time.Advance(TimeSpan.FromHours(1));
+        Assert.Equal(CountdownState.Paused, timer.State);
+        Assert.Equal(TimeSpan.FromMinutes(3), timer.Remaining);
+
+        timer.Resume();
+        time.Advance(TimeSpan.FromMinutes(3));
+        Assert.Equal(CountdownState.Finished, timer.State);
+        Assert.Equal(TimeSpan.Zero, timer.Remaining);
+
+        timer.Reset();
+        Assert.Equal(CountdownState.Idle, timer.State);
+    }
+
+    [Theory]
+    [InlineData(300, "5:00")]
+    [InlineData(299.2, "5:00")]
+    [InlineData(59, "0:59")]
+    [InlineData(3723, "1:02:03")]
+    [InlineData(-4, "0:00")]
+    public void Countdown_formats_remaining_time(double seconds, string expected) =>
+        Assert.Equal(expected, CountdownTimer.Format(TimeSpan.FromSeconds(seconds)));
+
+    [Theory]
+    [InlineData(512, "512 B")]
+    [InlineData(1536, "1.5 KB")]
+    [InlineData(12.4 * 1024 * 1024, "12 MB")]
+    [InlineData(3.25 * 1024 * 1024 * 1024, "3.3 GB")]
+    public void Byte_sizes_are_compact(double bytes, string expected) =>
+        Assert.Equal(expected, StatsFormat.Bytes(bytes));
+
+    [Fact]
+    public void Webcal_links_become_https() =>
+        Assert.Equal("https://example.com/cal.ics", CalendarService.NormalizeUrl(" webcal://example.com/cal.ics "));
+
+    private const string Ics = """
+        BEGIN:VCALENDAR
+        VERSION:2.0
+        PRODID:-//test//EN
+        BEGIN:VEVENT
+        UID:standup
+        DTSTAMP:20260101T000000Z
+        DTSTART:20261001T090000Z
+        DTEND:20261001T091500Z
+        RRULE:FREQ=DAILY;COUNT=5
+        SUMMARY:Standup
+        LOCATION:Room 2
+        END:VEVENT
+        BEGIN:VEVENT
+        UID:holiday
+        DTSTAMP:20260101T000000Z
+        DTSTART;VALUE=DATE:20261002
+        DTEND;VALUE=DATE:20261003
+        SUMMARY:Holiday
+        END:VEVENT
+        BEGIN:VEVENT
+        UID:old
+        DTSTAMP:20260101T000000Z
+        DTSTART:20260901T090000Z
+        DTEND:20260901T100000Z
+        SUMMARY:Long gone
+        END:VEVENT
+        END:VCALENDAR
+        """;
+
+    [Fact]
+    public void Feed_expands_recurrences_within_the_window()
+    {
+        var from = new DateTimeOffset(2026, 10, 1, 0, 0, 0, TimeSpan.Zero);
+
+        IReadOnlyList<CalendarEntry> entries = CalendarFeed.ReadEntries(Ics, from, from.AddDays(3));
+
+        Assert.Equal(3, entries.Count(e => e.Title == "Standup"));
+        Assert.DoesNotContain(entries, e => e.Title == "Long gone");
+
+        CalendarEntry standup = entries.First(e => e.Title == "Standup");
+        Assert.Equal(new DateTimeOffset(2026, 10, 1, 9, 0, 0, TimeSpan.Zero), standup.Start.ToUniversalTime());
+        Assert.Equal(TimeSpan.FromMinutes(15), standup.End - standup.Start);
+        Assert.Equal("Room 2", standup.Location);
+        Assert.False(standup.IsAllDay);
+    }
+
+    [Fact]
+    public void Feed_reads_all_day_events_as_local_dates()
+    {
+        var from = new DateTimeOffset(2026, 10, 1, 0, 0, 0, TimeSpan.Zero);
+
+        CalendarEntry holiday = CalendarFeed.ReadEntries(Ics, from, from.AddDays(3)).Single(e => e.Title == "Holiday");
+
+        Assert.True(holiday.IsAllDay);
+        Assert.Equal(new DateTime(2026, 10, 2), holiday.Start.DateTime);
+    }
+
+    [Fact]
+    public void Feed_rejects_text_that_is_not_a_calendar() =>
+        Assert.Throws<FormatException>(() => CalendarFeed.ReadEntries("<html>Sign in</html>", DateTimeOffset.Now, DateTimeOffset.Now.AddDays(1)));
+
+    [Fact]
+    public async Task Service_merges_feeds_and_counts_failures()
+    {
+        var time = new FakeTimeProvider(new DateTimeOffset(2026, 10, 1, 0, 0, 0, TimeSpan.Zero));
+        using var http = new HttpClient(new StubHandler(url => url.Contains("good") ? Ics : null));
+        var service = new CalendarService(http, time);
+
+        await service.RefreshAsync(["webcal://feeds.test/good.ics", "https://feeds.test/missing.ics"]);
+
+        Assert.Equal(1, service.FailedFeeds);
+        Assert.Contains(service.Upcoming, e => e.Title == "Holiday");
+        Assert.Equal(service.Upcoming.OrderBy(e => e.Start), service.Upcoming);
+    }
+
+    private sealed class StubHandler(Func<string, string?> respond) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            string? body = respond(request.RequestUri!.ToString());
+            return Task.FromResult(body is null
+                ? new HttpResponseMessage(System.Net.HttpStatusCode.NotFound)
+                : new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent(body) });
+        }
+    }
+}
