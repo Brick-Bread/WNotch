@@ -125,6 +125,11 @@ public partial class App : Application
             window.UseDisplay(display - 1);
         }
 
+        // --style=notch|island and --position=topcenter|taskbarleft show that look for this run only.
+        window.UseAppearance(
+            Enum.TryParse(Option(e, "--style="), ignoreCase: true, out NotchStyle style) ? style : null,
+            Enum.TryParse(Option(e, "--position="), ignoreCase: true, out NotchPosition position) ? position : null);
+
         window.Show();
         if (HasFlag(e, "--pin-open"))
         {

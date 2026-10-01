@@ -58,6 +58,9 @@ public partial class NotchWindow : Window
     private bool _hoverWantsExpanded;
     private bool _pinnedOpen;
     private int? _displayOverride;
+    private NotchStyle? _styleOverride;
+    private NotchPosition? _positionOverride;
+    private IslandPlacement _placement;
     private byte[]? _compactArtBytes;
     private GlowColor? _artAccent;
     private bool _largeWindow;
@@ -93,28 +96,13 @@ public partial class NotchWindow : Window
         Island.Clip = _islandClip;
         ApplyShape();
 
-        Island.MouseEnter += (_, _) =>
+        // The bridge is the strip between a floating island and the screen edge; it counts as the island.
+        foreach (FrameworkElement surface in new FrameworkElement[] { Island, EdgeBridge })
         {
-            HoverTrace.Write("enter");
-
-            // Entering also cancels a pending close, which matters even when hover-to-open is off.
-            if (_settings.ExpandOnHover || _expanded)
-            {
-                ScheduleExpanded(true, OpenDelay);
-            }
-        };
-        Island.MouseLeave += (_, _) =>
-        {
-            // WPF also reports a leave when the window is resized under a pointer that has not
-            // moved, so the pointer's real position decides.
-            bool over = PointerOverIsland();
-            HoverTrace.Write($"leave over={over}");
-            if (!over)
-            {
-                ScheduleExpanded(false, CloseDelay);
-            }
-        };
-        Island.MouseLeftButtonDown += OnIslandClicked;
+            surface.MouseEnter += (_, _) => OnPointerEntered();
+            surface.MouseLeave += (_, _) => OnPointerLeft();
+            surface.MouseLeftButtonDown += OnIslandClicked;
+        }
 
         _hoverTimer.Tick += (_, _) =>
         {
@@ -200,10 +188,18 @@ public partial class NotchWindow : Window
             // Let WPF finish its own DPI handling before measuring against the new layout.
             Dispatcher.BeginInvoke(Reposition, DispatcherPriority.Background);
         }
-        else if (msg == WM_SETTINGCHANGE && _settings.Theme == NotchTheme.System)
+        else if (msg == WM_SETTINGCHANGE)
         {
-            // Windows sends this for many settings, the app theme among them.
-            Dispatcher.BeginInvoke(() => ThemeManager.Apply(_settings), DispatcherPriority.Background);
+            // Windows sends this for many settings, the app theme and the taskbar's size among them.
+            if (_settings.Theme == NotchTheme.System)
+            {
+                Dispatcher.BeginInvoke(() => ThemeManager.Apply(_settings), DispatcherPriority.Background);
+            }
+
+            if (_placement.AtBottom)
+            {
+                Dispatcher.BeginInvoke(Reposition, DispatcherPriority.Background);
+            }
         }
 
         return 0;
@@ -254,7 +250,10 @@ public partial class NotchWindow : Window
         }
     }
 
-    /// <summary>Pins the window to the top-center of the chosen display, in physical pixels.</summary>
+    /// <summary>
+    /// Pins the window to the chosen display, in physical pixels: centred on the top edge, or in
+    /// the bottom-left corner when the island lives in the taskbar.
+    /// </summary>
     private void Reposition()
     {
         // The saved display may have been unplugged since; fall back to the primary one.
@@ -264,16 +263,66 @@ public partial class NotchWindow : Window
             : Displays.GetPrimary();
         _display = display;
 
-        Size size = _largeWindow ? LargeWindowSize : SmallWindowSize;
+        // An auto-hiding taskbar takes no room from the work area; assume the usual height then.
+        double taskbar = (display.Bounds.Bottom - display.WorkArea.Bottom) / display.Scale;
+        var placement = new IslandPlacement(
+            _positionOverride ?? _settings.Position,
+            _styleOverride ?? _settings.Style,
+            taskbar > 0 ? taskbar : IslandPlacement.DefaultTaskbarHeight);
+        if (placement != _placement)
+        {
+            _placement = placement;
+            ApplyPlacement();
+        }
+
+        // At the bottom the window would have to grow upwards, moving its top edge, and the
+        // frame drawn before the resize would show in the wrong place. It stays large there.
+        Size size = _largeWindow || placement.AtBottom ? LargeWindowSize : SmallWindowSize;
         int width = (int)Math.Round(size.Width * display.Scale);
         int height = (int)Math.Round(size.Height * display.Scale);
-        int left = display.Bounds.Left + ((display.Bounds.Width - width) / 2);
-        var target = new PixelRect(left, display.Bounds.Top, left + width, display.Bounds.Top + height);
+        PixelRect target;
+        if (placement.AtBottom)
+        {
+            target = new PixelRect(display.Bounds.Left, display.Bounds.Bottom - height, display.Bounds.Left + width, display.Bounds.Bottom);
+        }
+        else
+        {
+            int left = display.Bounds.Left + ((display.Bounds.Width - width) / 2);
+            target = new PixelRect(left, display.Bounds.Top, left + width, display.Bounds.Top + height);
+        }
 
         if (OverlayWindow.GetBounds(_hwnd) != target)
         {
             OverlayWindow.SetBounds(_hwnd, target);
         }
+    }
+
+    /// <summary>Anchors the island, its glow and its content to the edge the placement puts them on.</summary>
+    private void ApplyPlacement()
+    {
+        bool bottom = _placement.AtBottom;
+        HorizontalAlignment horizontal = bottom ? HorizontalAlignment.Left : HorizontalAlignment.Center;
+        VerticalAlignment vertical = bottom ? VerticalAlignment.Bottom : VerticalAlignment.Top;
+        foreach (FrameworkElement element in new FrameworkElement[] { Island, EdgeBridge, GlowLayer, GlowCore })
+        {
+            element.HorizontalAlignment = horizontal;
+            element.VerticalAlignment = vertical;
+        }
+
+        double gap = _placement.EdgeGap;
+        double inset = bottom ? IslandPlacement.SideInset : 0;
+        Island.Margin = bottom ? new Thickness(inset, 0, 0, gap) : new Thickness(0, gap, 0, 0);
+        EdgeBridge.Margin = new Thickness(inset, 0, 0, 0);
+        EdgeBridge.Height = gap;
+        EdgeBridge.Visibility = gap > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        // The content keeps its place while the island grows away from its edge: downwards and
+        // to both sides at the top, upwards and to the right in the taskbar.
+        ExpandedLayer.HorizontalAlignment = horizontal;
+        ExpandedLayer.VerticalAlignment = vertical;
+        ExpandedLayer.Margin = bottom ? new Thickness(20, 0, 0, 20) : new Thickness(0, 16, 0, 0);
+
+        ApplyShape();
     }
 
     private void Housekeeping()
@@ -349,10 +398,11 @@ public partial class NotchWindow : Window
             return Island.IsMouseOver;
         }
 
-        return IslandHitTest.Contains(
+        return _placement.Contains(
             display.Bounds.Left,
             display.Bounds.Top,
-            display.Bounds.Width,
+            display.Bounds.Right,
+            display.Bounds.Bottom,
             display.Scale,
             _animator.Width,
             _animator.Height,
@@ -386,6 +436,29 @@ public partial class NotchWindow : Window
     private void OnActivitiesChanged(object? sender, EventArgs e) =>
         Dispatcher.BeginInvoke(Refresh);
 
+    private void OnPointerEntered()
+    {
+        HoverTrace.Write("enter");
+
+        // Entering also cancels a pending close, which matters even when hover-to-open is off.
+        if (_settings.ExpandOnHover || _expanded)
+        {
+            ScheduleExpanded(true, OpenDelay);
+        }
+    }
+
+    private void OnPointerLeft()
+    {
+        // WPF also reports a leave when the window is resized under a pointer that has not
+        // moved, so the pointer's real position decides.
+        bool over = PointerOverIsland();
+        HoverTrace.Write($"leave over={over}");
+        if (!over)
+        {
+            ScheduleExpanded(false, CloseDelay);
+        }
+    }
+
     private void OnIslandClicked(object sender, MouseButtonEventArgs e)
     {
         _hoverTimer.Stop();
@@ -413,6 +486,17 @@ public partial class NotchWindow : Window
     public void UseDisplay(int index)
     {
         _displayOverride = index;
+        if (_hwnd != 0)
+        {
+            Reposition();
+        }
+    }
+
+    /// <summary>Shows a style and position for this run without changing the saved settings (<c>--style=</c> and <c>--position=</c>, for development).</summary>
+    public void UseAppearance(NotchStyle? style, NotchPosition? position)
+    {
+        _styleOverride = style ?? _styleOverride;
+        _positionOverride = position ?? _positionOverride;
         if (_hwnd != 0)
         {
             Reposition();
@@ -528,15 +612,30 @@ public partial class NotchWindow : Window
         Island.Width = width;
         Island.Height = height;
 
-        // The glow layers follow the island's outline, a little outside it.
-        double spread = _glow.Spread;
-        GlowLayer.Width = GlowCore.Width = width + (2 * spread);
-        GlowLayer.Height = GlowCore.Height = height + spread;
-        GlowLayer.CornerRadius = GlowCore.CornerRadius = new CornerRadius(0, 0, radius + spread, radius + spread);
+        EdgeBridge.Width = width;
 
-        // The rounded rectangle starts one radius above the island, so only the bottom corners
-        // are rounded and the top edge sits flush against the screen edge.
-        _islandClip.Rect = new Rect(0, -radius, width, height + radius);
+        // The glow layers follow the island's outline, a little outside it: on every side of a
+        // floating island, and on all but the side a notch has against the screen edge.
+        bool bottom = _placement.AtBottom;
+        bool floating = _placement.Floating;
+        double spread = _glow.Spread;
+        double outer = radius + spread;
+        double away = floating ? outer : 0;
+        GlowLayer.Width = GlowCore.Width = width + (2 * spread);
+        GlowLayer.Height = GlowCore.Height = height + (floating ? 2 * spread : spread);
+        GlowLayer.CornerRadius = GlowCore.CornerRadius = bottom
+            ? new CornerRadius(outer, outer, away, away)
+            : new CornerRadius(away, away, outer, outer);
+
+        double edge = _placement.EdgeGap - (floating ? spread : 0);
+        double side = bottom ? IslandPlacement.SideInset - spread : 0;
+        GlowLayer.Margin = GlowCore.Margin = bottom ? new Thickness(side, 0, 0, edge) : new Thickness(0, edge, 0, 0);
+
+        // A notch's rounded rectangle reaches one radius past the screen edge, so the corners
+        // on that side fall outside the island and it sits flush against the edge.
+        _islandClip.Rect = floating
+            ? new Rect(0, 0, width, height)
+            : new Rect(0, bottom ? 0 : -radius, width, height + radius);
         _islandClip.RadiusX = radius;
         _islandClip.RadiusY = radius;
     }

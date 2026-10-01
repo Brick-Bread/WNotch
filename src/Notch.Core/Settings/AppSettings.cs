@@ -16,6 +16,14 @@ public sealed class AppSettings
     /// <summary>Which display hosts the notch, as an index into the system's display list. Null means the primary display.</summary>
     public int? DisplayIndex { get; set; }
 
+    /// <summary>A notch attached to the screen edge, or a floating island.</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<NotchStyle>))]
+    public NotchStyle Style { get; set; } = NotchStyle.Notch;
+
+    /// <summary>Top of the screen, or the far left of the taskbar.</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<NotchPosition>))]
+    public NotchPosition Position { get; set; } = NotchPosition.TopCenter;
+
     /// <summary>Open the notch by hovering over it. When off, it opens on click only.</summary>
     public bool ExpandOnHover { get; set; } = true;
 

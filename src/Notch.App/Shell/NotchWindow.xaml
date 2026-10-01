@@ -36,6 +36,13 @@
         <Border x:Name="GlowCore" Width="180" Height="32" HorizontalAlignment="Center" VerticalAlignment="Top"
                 IsHitTestVisible="False" />
 
+        <!-- Fills the gap between a floating island and the screen edge. All but invisible, yet
+             enough for Windows to deliver the pointer here, so pushing it against the edge opens the island. -->
+        <Border x:Name="EdgeBridge" Background="#01000000" HorizontalAlignment="Center" VerticalAlignment="Top"
+                Visibility="Collapsed" />
+
+        <!-- Alignment and margins of the island, the glow and the bridge are set in code from the
+             position and style settings; these are the values for a notch at the top. -->
         <Grid x:Name="Island" Width="180" Height="32"
               HorizontalAlignment="Center" VerticalAlignment="Top" Background="{DynamicResource IslandBrush}">
 

@@ -29,6 +29,23 @@ public class SettingsTests
     }
 
     [Fact]
+    public void Style_and_position_default_to_a_notch_at_the_top_and_are_saved_by_name()
+    {
+        WithStore(store =>
+        {
+            AppSettings fresh = store.Load();
+            Assert.Equal((NotchStyle.Notch, NotchPosition.TopCenter), (fresh.Style, fresh.Position));
+
+            store.Save(new AppSettings { Style = NotchStyle.Island, Position = NotchPosition.TaskbarLeft });
+
+            string json = File.ReadAllText(store.FilePath);
+            Assert.Contains("\"Style\": \"Island\"", json);
+            Assert.Contains("\"Position\": \"TaskbarLeft\"", json);
+            Assert.Equal(NotchPosition.TaskbarLeft, store.Load().Position);
+        });
+    }
+
+    [Fact]
     public void Accent_defaults_to_a_preset_and_none_switches_it_off()
     {
         Assert.NotNull(GlowColor.FromName(new AppSettings().AccentColor));

@@ -39,6 +39,8 @@ public partial class SettingsWindow : Window
         ThemeManager.Changed += OnThemeChanged;
         Closed += (_, _) => ThemeManager.Changed -= OnThemeChanged;
 
+        Position.SelectedIndex = (int)settings.Position;
+        IslandStyle.SelectedIndex = (int)settings.Style;
         ListAccents(settings.AccentColor);
         StartWithWindows.IsChecked = StartupRegistration.IsEnabled;
         ExpandOnHover.IsChecked = settings.ExpandOnHover;
@@ -149,6 +151,8 @@ public partial class SettingsWindow : Window
         _settings.TimerPresets = presets;
         _settings.ExpandOnHover = ExpandOnHover.IsChecked == true;
         _settings.Theme = (NotchTheme)Math.Max(0, Theme.SelectedIndex);
+        _settings.Position = (NotchPosition)Math.Max(0, Position.SelectedIndex);
+        _settings.Style = (NotchStyle)Math.Max(0, IslandStyle.SelectedIndex);
         _settings.AccentColor = AccentSwatches.Children.OfType<RadioButton>()
             .FirstOrDefault(swatch => swatch.IsChecked == true)?.Tag as string ?? _settings.AccentColor;
         _settings.HideInFullscreen = HideInFullscreen.IsChecked == true;

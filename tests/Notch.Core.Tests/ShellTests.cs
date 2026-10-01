@@ -1,5 +1,6 @@
 using Notch.Core.Activities;
 using Notch.Core.Animation;
+using Notch.Core.Settings;
 using Notch.Core.Shell;
 
 namespace Notch.Core.Tests;
@@ -33,14 +34,50 @@ public class ShellTests
     [InlineData(3200, 48, false)]
     [InlineData(3200, -1, false)]
     public void Island_hit_test_follows_the_display(int x, int y, bool expected) =>
-        Assert.Equal(expected, IslandHitTest.Contains(1920, 0, 2560, 1.5, 180, 32, x, y));
+        Assert.Equal(expected, new IslandPlacement(NotchPosition.TopCenter, NotchStyle.Notch).Contains(1920, 0, 4480, 1440, 1.5, 180, 32, x, y));
 
     [Fact]
     public void Island_hit_test_margin_reaches_past_the_edge()
     {
-        Assert.False(IslandHitTest.Contains(0, 0, 1920, 1, 180, 32, 871, 33));
-        Assert.True(IslandHitTest.Contains(0, 0, 1920, 1, 180, 32, 869, 33, margin: 2));
+        var notch = new IslandPlacement(NotchPosition.TopCenter, NotchStyle.Notch);
+
+        Assert.False(notch.Contains(0, 0, 1920, 1080, 1, 180, 32, 871, 33));
+        Assert.True(notch.Contains(0, 0, 1920, 1080, 1, 180, 32, 869, 33, margin: 2));
     }
+
+    [Fact]
+    public void A_floating_island_keeps_clear_of_the_edge_but_is_reached_through_the_gap()
+    {
+        var island = new IslandPlacement(NotchPosition.TopCenter, NotchStyle.Island);
+
+        Assert.Equal(IslandPlacement.TopGap, island.EdgeGap);
+        Assert.Equal(0, new IslandPlacement(NotchPosition.TopCenter, NotchStyle.Notch).EdgeGap);
+
+        // The very top row of pixels, the island itself, and just below it.
+        Assert.True(island.Contains(0, 0, 1920, 1080, 1, 180, 32, 960, 0));
+        Assert.True(island.Contains(0, 0, 1920, 1080, 1, 180, 32, 960, 39));
+        Assert.False(island.Contains(0, 0, 1920, 1080, 1, 180, 32, 960, 40));
+    }
+
+    // A 1920 x 1080 display at 100% with the usual 48-high taskbar; the idle pill is 180 x 32.
+    [Theory]
+    [InlineData(NotchStyle.Island, 12, 1079, true)]
+    [InlineData(NotchStyle.Island, 191, 1040, true)]
+    [InlineData(NotchStyle.Island, 192, 1050, false)]
+    [InlineData(NotchStyle.Island, 11, 1050, false)]
+    [InlineData(NotchStyle.Island, 100, 1039, false)]
+    [InlineData(NotchStyle.Notch, 100, 1048, true)]
+    [InlineData(NotchStyle.Notch, 100, 1047, false)]
+    [InlineData(NotchStyle.Notch, 960, 0, false)]
+    public void In_the_taskbar_the_island_sits_bottom_left(NotchStyle style, int x, int y, bool expected) =>
+        Assert.Equal(expected, new IslandPlacement(NotchPosition.TaskbarLeft, style, 48).Contains(0, 0, 1920, 1080, 1, 180, 32, x, y));
+
+    [Theory]
+    [InlineData(48, 8)]
+    [InlineData(72, 20)]
+    [InlineData(30, 4)]
+    public void A_floating_island_is_centred_in_the_taskbar(double taskbarHeight, double gap) =>
+        Assert.Equal(gap, new IslandPlacement(NotchPosition.TaskbarLeft, NotchStyle.Island, taskbarHeight).EdgeGap);
 
     private static readonly StackedWindow Fullscreen = new(CoversDisplay: true, IsTopmost: false);
     private static readonly StackedWindow Ordinary = new(CoversDisplay: false, IsTopmost: false);

@@ -10,11 +10,12 @@ A dynamic notch for Windows 11, in the spirit of Atoll on macOS: a small black p
 - **System HUDs.** Volume, audio output changes, brightness, charger and low battery, Bluetooth devices connecting.
 - **Terminal for Claude Code and Codex.** A real terminal inside the notch that runs the `claude` and `codex` CLIs (or PowerShell) in a folder you pick. The pill shows whether an agent is working, needs input, or is done.
 - **Glow effects.** The pill lights up in a colour and rhythm that matches what is happening: it pulses to the music in the album art's colour, breathes blue while an agent works, pulses amber when it needs you, turns green when it is done, and flashes for volume, charging, Bluetooth and low battery. Brightness is adjustable in settings.
+- **Notch or Dynamic Island, top or taskbar.** The pill can grow out of the screen edge like a notch or float clear of it as an island, and sit at the top of the screen or in the far left of the taskbar, where it opens upwards.
 - **Themes and colour.** Dark, light, or following Windows, with an accent colour of your choice. Stats, the timer and calendars each have their own colour.
 - **Widgets.** A countdown timer with a Pomodoro mode (focus and break sessions back to back), your own presets and any length you type (`12`, `1:30`, `90s`, `1h20m`), upcoming events from iCalendar (.ics) feeds, and a Stats tab with CPU, memory, GPU, network and battery.
 - **Plugins.** Small .NET libraries can add their own activities to the pill and cards to a Plugins tab. See [Plugins](#plugins).
 - **Automatic updates.** An installed copy checks this repository's releases, installs a newer one in the background and restarts itself. Can be switched off in settings.
-- **Settings.** From the tray icon: start with Windows, automatic updates, which display to use, theme and accent colour, what the pill shows, glow brightness, timer presets, calendar feeds, plugins.
+- **Settings.** From the tray icon: start with Windows, automatic updates, which display to use, position and style, theme and accent colour, what the pill shows, glow brightness, timer presets, calendar feeds, plugins.
 
 ## Install
 
@@ -65,6 +66,7 @@ Development flags for `Notch.exe`:
 | `--open=claude\|codex\|shell` | Start a terminal session at launch |
 | `--settings` | Open the settings window at launch |
 | `--theme=dark\|light\|system` | Show that theme for this run without changing the saved setting |
+| `--style=notch\|island`, `--position=topcenter\|taskbarleft` | Show that style or position for this run without changing the saved settings |
 | `--display=<n>` | Use display *n* (as numbered in settings) for this run, e.g. to keep a debug build off the screen an installed copy is on |
 | `--plugin=<folder>` | Load a plugin from its build output and run it whether or not it is enabled; can be repeated |
 | `--trace-hover` | Log pointer enter/leave, opening, closing and window resizes to `%LocalAppData%\Notch\hover.log`, to diagnose hover problems |

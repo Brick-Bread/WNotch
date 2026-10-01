@@ -51,6 +51,20 @@
             <ComboBox x:Name="Display" />
         </DockPanel>
         <DockPanel Margin="0,8,0,0">
+            <TextBlock Text="Position" VerticalAlignment="Center" Width="64" />
+            <ComboBox x:Name="Position">
+                <ComboBoxItem Content="Top of the screen" />
+                <ComboBoxItem Content="Taskbar, far left" />
+            </ComboBox>
+        </DockPanel>
+        <DockPanel Margin="0,8,0,0">
+            <TextBlock Text="Style" VerticalAlignment="Center" Width="64" />
+            <ComboBox x:Name="IslandStyle">
+                <ComboBoxItem Content="Notch (attached to the screen edge)" />
+                <ComboBoxItem Content="Dynamic Island (floating pill)" />
+            </ComboBox>
+        </DockPanel>
+        <DockPanel Margin="0,8,0,0">
             <TextBlock Text="Theme" VerticalAlignment="Center" Width="64" />
             <ComboBox x:Name="Theme">
                 <ComboBoxItem Content="Dark" />
