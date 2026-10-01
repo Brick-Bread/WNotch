@@ -1,0 +1,48 @@
+<Window x:Class="Notch.App.Settings.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Notch settings"
+        Width="460" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        ThemeMode="System">
+    <StackPanel Margin="24,20,24,20">
+        <StackPanel.Resources>
+            <Style x:Key="Heading" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="15" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Margin" Value="0,0,0,8" />
+            </Style>
+        </StackPanel.Resources>
+
+        <TextBlock Text="General" Style="{StaticResource Heading}" />
+        <CheckBox x:Name="StartWithWindows" Content="Start with Windows" />
+        <CheckBox x:Name="ExpandOnHover" Content="Open the notch when the pointer hovers over it" />
+        <CheckBox x:Name="HideInFullscreen" Content="Hide while an app is fullscreen" />
+        <DockPanel Margin="0,10,0,0">
+            <TextBlock Text="Display" VerticalAlignment="Center" Margin="0,0,12,0" />
+            <ComboBox x:Name="Display" />
+        </DockPanel>
+
+        <TextBlock Text="Show in the pill" Style="{StaticResource Heading}" Margin="0,22,0,8" />
+        <CheckBox x:Name="ShowMedia" Content="Media that is playing" />
+        <CheckBox x:Name="ShowVolume" Content="Volume and audio output changes" />
+        <CheckBox x:Name="ShowBrightness" Content="Brightness changes" />
+        <CheckBox x:Name="ShowPower" Content="Charging and low battery" />
+        <CheckBox x:Name="ShowBluetooth" Content="Bluetooth devices connecting" />
+
+        <TextBlock Text="Calendar feeds" Style="{StaticResource Heading}" Margin="0,22,0,4" />
+        <TextBlock TextWrapping="Wrap" Opacity="0.7" Margin="0,0,0,8"
+                   Text="One iCalendar (.ics) link per line. Google Calendar and Outlook both offer a private link under their sharing settings." />
+        <TextBox x:Name="CalendarFeeds" AcceptsReturn="True" Height="76" TextWrapping="NoWrap"
+                 VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" />
+
+        <DockPanel Margin="0,24,0,0">
+            <TextBlock x:Name="VersionText" VerticalAlignment="Center" Opacity="0.6" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="Cancel" Content="Cancel" MinWidth="88" IsCancel="True" />
+                <Button x:Name="Save" Content="Save" MinWidth="88" Margin="8,0,0,0" IsDefault="True"
+                        Style="{DynamicResource AccentButtonStyle}" />
+            </StackPanel>
+        </DockPanel>
+    </StackPanel>
+</Window>

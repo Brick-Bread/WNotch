@@ -8,6 +8,10 @@
     <AssemblyName>Notch</AssemblyName>
     <RootNamespace>Notch.App</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- WPF0001: Window.ThemeMode (Fluent theme for the settings window) is still marked experimental. -->
+    <NoWarn>$(NoWarn);WPF0001</NoWarn>
+    <!-- Notch.Hook.exe is published into the same folder with the same runtime settings; see release.yml. -->
+    <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
   </PropertyGroup>
 
   <ItemGroup>

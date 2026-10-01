@@ -81,6 +81,22 @@ public class ActivityManagerTests
     }
 
     [Fact]
+    public void Suppressed_ids_are_removed_and_ignored()
+    {
+        using var manager = new ActivityManager(new FakeTimeProvider());
+        manager.Publish(Make("media", ActivityTier.Ongoing));
+        manager.Publish(Make("timer", ActivityTier.Ongoing));
+
+        manager.SetSuppressed(["media"]);
+        manager.Publish(Make("media", ActivityTier.Ongoing));
+        Assert.Equal(["timer"], manager.Snapshot().Select(a => a.Id));
+
+        manager.SetSuppressed([]);
+        manager.Publish(Make("media", ActivityTier.Ongoing));
+        Assert.Equal(2, manager.Snapshot().Count);
+    }
+
+    [Fact]
     public void Remove_reports_whether_anything_was_removed()
     {
         using var manager = new ActivityManager(new FakeTimeProvider());

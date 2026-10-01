@@ -64,7 +64,14 @@ public partial class NotchWindow : Window
         Island.Clip = _islandClip;
         ApplyShape();
 
-        Island.MouseEnter += (_, _) => ScheduleExpanded(true, OpenDelay);
+        Island.MouseEnter += (_, _) =>
+        {
+            // Entering also cancels a pending close, which matters even when hover-to-open is off.
+            if (_settings.ExpandOnHover || _expanded)
+            {
+                ScheduleExpanded(true, OpenDelay);
+            }
+        };
         Island.MouseLeave += (_, _) => ScheduleExpanded(false, CloseDelay);
         Island.MouseLeftButtonDown += OnIslandClicked;
 
@@ -126,10 +133,22 @@ public partial class NotchWindow : Window
         return 0;
     }
 
-    /// <summary>Pins the window to the top-center of the primary display, in physical pixels.</summary>
+    /// <summary>Re-reads the settings object after the user saved changes.</summary>
+    public void ApplySettings()
+    {
+        Reposition();
+        Housekeeping();
+        RefreshCalendar();
+    }
+
+    /// <summary>Pins the window to the top-center of the chosen display, in physical pixels.</summary>
     private void Reposition()
     {
-        DisplayInfo display = Displays.GetPrimary();
+        // The saved display may have been unplugged since; fall back to the primary one.
+        IReadOnlyList<DisplayInfo> displays = Displays.GetAll();
+        DisplayInfo display = _settings.DisplayIndex is { } index && index >= 0 && index < displays.Count
+            ? displays[index]
+            : Displays.GetPrimary();
         _display = display;
 
         int width = (int)Math.Round(Width * display.Scale);
@@ -150,7 +169,7 @@ public partial class NotchWindow : Window
             return;
         }
 
-        bool fullscreen = FullscreenDetector.IsFullscreenAppOn(_display, _hwnd);
+        bool fullscreen = _settings.HideInFullscreen && FullscreenDetector.IsFullscreenAppOn(_display, _hwnd);
         Root.Visibility = fullscreen ? Visibility.Hidden : Visibility.Visible;
         if (!fullscreen)
         {

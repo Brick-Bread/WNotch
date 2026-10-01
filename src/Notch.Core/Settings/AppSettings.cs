@@ -1,4 +1,6 @@
 using System.Text.Json;
+using Notch.Core.Hud;
+using Notch.Core.Media;
 
 namespace Notch.Core.Settings;
 
@@ -6,11 +8,59 @@ public sealed class AppSettings
 {
     private const int MaxRecentFolders = 8;
 
-    /// <summary>Folders terminal sessions were started in, most recent first.</summary>
-    public List<string> RecentFolders { get; set; } = [];
+    /// <summary>Which display hosts the notch, as an index into the system's display list. Null means the primary display.</summary>
+    public int? DisplayIndex { get; set; }
+
+    /// <summary>Open the notch by hovering over it. When off, it opens on click only.</summary>
+    public bool ExpandOnHover { get; set; } = true;
+
+    public bool HideInFullscreen { get; set; } = true;
+
+    public bool ShowMedia { get; set; } = true;
+
+    public bool ShowVolume { get; set; } = true;
+
+    public bool ShowBrightness { get; set; } = true;
+
+    public bool ShowPower { get; set; } = true;
+
+    public bool ShowBluetooth { get; set; } = true;
 
     /// <summary>iCalendar (.ics) links shown on the Home tab's calendar card.</summary>
     public List<string> CalendarFeeds { get; set; } = [];
+
+    /// <summary>Folders terminal sessions were started in, most recent first.</summary>
+    public List<string> RecentFolders { get; set; } = [];
+
+    /// <summary>The activity ids the user has switched off.</summary>
+    public IEnumerable<string> SuppressedActivityIds()
+    {
+        if (!ShowMedia)
+        {
+            yield return MediaActivityPublisher.ActivityId;
+        }
+
+        if (!ShowVolume)
+        {
+            yield return HudActivities.VolumeId;
+            yield return HudActivities.AudioOutputId;
+        }
+
+        if (!ShowBrightness)
+        {
+            yield return HudActivities.BrightnessId;
+        }
+
+        if (!ShowPower)
+        {
+            yield return HudActivities.PowerId;
+        }
+
+        if (!ShowBluetooth)
+        {
+            yield return HudActivities.BluetoothId;
+        }
+    }
 
     public void RememberFolder(string folder)
     {

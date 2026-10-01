@@ -11,6 +11,7 @@ public sealed class ActivityManager : IDisposable
     private readonly TimeProvider _time;
     private readonly Lock _gate = new();
     private readonly Dictionary<string, Entry> _entries = [];
+    private HashSet<string> _suppressed = [];
     private long _sequence;
     private bool _disposed;
 
@@ -19,13 +20,39 @@ public sealed class ActivityManager : IDisposable
     /// <summary>Raised on whichever thread caused the change, including timer threads.</summary>
     public event EventHandler? Changed;
 
+    /// <summary>
+    /// Turns sources off by id (the user's "show in the pill" settings). Suppressed ids are
+    /// dropped on publish, and any that are currently showing are removed.
+    /// </summary>
+    public void SetSuppressed(IEnumerable<string> ids)
+    {
+        bool removed = false;
+        lock (_gate)
+        {
+            _suppressed = [.. ids];
+            foreach (string id in _suppressed)
+            {
+                if (_entries.Remove(id, out Entry? entry))
+                {
+                    entry.Expiry?.Dispose();
+                    removed = true;
+                }
+            }
+        }
+
+        if (removed)
+        {
+            Changed?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
     public void Publish(Activity activity)
     {
         ArgumentNullException.ThrowIfNull(activity);
 
         lock (_gate)
         {
-            if (_disposed)
+            if (_disposed || _suppressed.Contains(activity.Id))
             {
                 return;
             }

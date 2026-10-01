@@ -6,8 +6,11 @@ namespace Notch.App.Shell;
 
 internal static class TrayIcon
 {
-    public static TaskbarIcon Create(Action quit)
+    public static TaskbarIcon Create(Action openSettings, Action quit)
     {
+        var settingsItem = new MenuItem { Header = "Settings…" };
+        settingsItem.Click += (_, _) => openSettings();
+
         var quitItem = new MenuItem { Header = "Quit Notch" };
         quitItem.Click += (_, _) => quit();
 
@@ -15,8 +18,9 @@ internal static class TrayIcon
         {
             ToolTipText = "Notch",
             Icon = DrawIcon(),
-            ContextMenu = new ContextMenu { Items = { quitItem } },
+            ContextMenu = new ContextMenu { Items = { settingsItem, new Separator(), quitItem } },
         };
+        icon.TrayLeftMouseUp += (_, _) => openSettings();
 
         // Efficiency mode would throttle the animation timers of the whole process.
         icon.ForceCreate(enablesEfficiencyMode: false);

@@ -1,6 +1,7 @@
 using System.IO;
 using System.Windows;
 using H.NotifyIcon;
+using Notch.App.Settings;
 using Notch.App.Shell;
 using Notch.App.Terminal;
 using Notch.Core.Activities;
@@ -21,11 +22,19 @@ public partial class App : Application
     private TerminalController? _terminal;
     private volatile SystemHudSources? _huds;
     private TaskbarIcon? _tray;
+    private SettingsWindow? _settingsWindow;
     private DemoDriver? _demo;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // A background utility should survive a bug in one feature; record it and carry on.
+        DispatcherUnhandledException += (_, args) =>
+        {
+            LogError(args.Exception);
+            args.Handled = true;
+        };
 
         _singleInstance = new Mutex(initiallyOwned: true, @"Local\Notch.SingleInstance", out bool isFirstInstance);
         if (!isFirstInstance)
@@ -62,6 +71,11 @@ public partial class App : Application
             window.PinOpen();
         }
 
+        if (HasFlag(e, "--settings"))
+        {
+            OpenSettings(window, settings, settingsStore);
+        }
+
         if (Option(e, "--tab=") is { } tab)
         {
             window.ShowTab(tab);
@@ -74,7 +88,8 @@ public partial class App : Application
             window.OpenTerminal(profile);
         }
 
-        _tray = TrayIcon.Create(Shutdown);
+        _activities.SetSuppressed(settings.SuppressedActivityIds());
+        _tray = TrayIcon.Create(() => OpenSettings(window, settings, settingsStore), Shutdown);
 
         ActivityManager activities = _activities;
         Task.Run(() => _huds = SystemHudSources.Start(activities));
@@ -96,6 +111,39 @@ public partial class App : Application
         _activities?.Dispose();
         _singleInstance?.Dispose();
         base.OnExit(e);
+    }
+
+    private void OpenSettings(NotchWindow notch, AppSettings settings, SettingsStore store)
+    {
+        if (_settingsWindow is not null)
+        {
+            _settingsWindow.Activate();
+            return;
+        }
+
+        _settingsWindow = new SettingsWindow(settings, store);
+        _settingsWindow.Saved += (_, _) =>
+        {
+            _activities?.SetSuppressed(settings.SuppressedActivityIds());
+            notch.ApplySettings();
+        };
+        _settingsWindow.Closed += (_, _) => _settingsWindow = null;
+        _settingsWindow.Show();
+        _settingsWindow.Activate();
+    }
+
+    private static void LogError(Exception exception)
+    {
+        try
+        {
+            string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Notch");
+            Directory.CreateDirectory(folder);
+            File.AppendAllText(Path.Combine(folder, "errors.log"), $"{DateTimeOffset.Now:u} {exception}{Environment.NewLine}{Environment.NewLine}");
+        }
+        catch (Exception)
+        {
+            // Nowhere left to report to.
+        }
     }
 
     private static bool HasFlag(StartupEventArgs e, string flag) =>
