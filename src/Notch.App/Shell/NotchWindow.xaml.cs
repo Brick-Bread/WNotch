@@ -222,6 +222,9 @@ public partial class NotchWindow : Window
     }
 
     /// <summary>True while restarting the app would interrupt something: the notch is open, a terminal session exists, or a timer is counting.</summary>
+    /// <summary>Whether restarting would close terminal sessions.</summary>
+    public bool HasTerminalSessions => _terminal.Sessions.Count > 0;
+
     public bool IsBusy =>
         _expanded
         || _terminal.Sessions.Count > 0

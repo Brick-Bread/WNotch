@@ -30,7 +30,9 @@ public sealed record PluginInfo(
     string Directory,
     PluginStatus Status,
     string? Error,
-    bool AlwaysEnabled);
+    bool AlwaysEnabled,
+    string? Repository = null,
+    string? InstalledTag = null);
 
 /// <summary>
 /// Finds plugins on disk and starts and stops them. A plugin is a folder holding a
@@ -326,6 +328,8 @@ public sealed class PluginManager : IDisposable
             Directory,
             Status,
             Error,
-            Pinned);
+            Pinned,
+            PluginOrigin.SourceOf(Directory, Manifest)?.ToString(),
+            PluginOrigin.Read(Directory)?.Tag);
     }
 }

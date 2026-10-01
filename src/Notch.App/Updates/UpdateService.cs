@@ -101,6 +101,59 @@ internal sealed class UpdateService : IDisposable
         _timer.Start();
     }
 
+    /// <summary>
+    /// Updates now, for the "Update Notch now" button: ignores the automatic-update setting, the
+    /// record of earlier attempts and whether the notch is in use. The installer restarts the app.
+    /// </summary>
+    /// <param name="confirmRestart">Asked once the installer is downloaded; false leaves it unused.</param>
+    /// <returns>What to tell the user. When an update starts, the app is shutting down.</returns>
+    public async Task<string> ForceUpdateAsync(Func<bool> confirmRestart)
+    {
+        if (!IsInstalledCopy)
+        {
+            return "This copy of Notch was not set up by its installer, so it cannot update itself.";
+        }
+
+        if (_working)
+        {
+            return "An update is already being downloaded. Try again in a moment.";
+        }
+
+        _working = true;
+        try
+        {
+            ReleaseInfo? release = await _updater.CheckAsync(CurrentVersion);
+            if (release is null)
+            {
+                return $"Notch {CurrentVersion.ToString(3)} is the latest version.";
+            }
+
+            string installer = _pendingInstaller is not null && _pendingRelease?.Tag == release.Tag
+                ? _pendingInstaller
+                : await _updater.DownloadAsync(release, _downloadFolder);
+            _pendingInstaller = installer;
+            _pendingRelease = release;
+
+            if (!confirmRestart())
+            {
+                return $"Notch {release.Tag} is downloaded. Press the button again when you are ready to restart.";
+            }
+
+            return Install(release, installer)
+                ? $"Installing Notch {release.Tag}…"
+                : "The installer could not be started.";
+        }
+        catch (Exception e) when (e is HttpRequestException or TaskCanceledException or IOException or InvalidDataException or UnauthorizedAccessException)
+        {
+            _pendingInstaller = null;
+            return "Could not update: " + e.Message;
+        }
+        finally
+        {
+            _working = false;
+        }
+    }
+
     /// <summary>Deletes installers left behind by earlier updates.</summary>
     public void CleanUpDownloads()
     {
@@ -176,7 +229,8 @@ internal sealed class UpdateService : IDisposable
         && _settings.LastUpdateAttemptAt is { } at
         && DateTimeOffset.UtcNow - at < RetrySameReleaseAfter;
 
-    private void Install(ReleaseInfo release, string installer)
+    /// <returns>False when the installer could not be started; the app is then still running.</returns>
+    private bool Install(ReleaseInfo release, string installer)
     {
         // Recorded first: if this release's installer fails, the app must not retry it on every start.
         _settings.LastUpdateAttemptTag = release.Tag;
@@ -191,10 +245,11 @@ internal sealed class UpdateService : IDisposable
         catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException)
         {
             _pendingInstaller = null;
-            return;
+            return false;
         }
 
         _timer.Stop();
         _shutdown();
+        return true;
     }
 }

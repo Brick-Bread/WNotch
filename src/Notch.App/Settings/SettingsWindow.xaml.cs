@@ -23,15 +23,33 @@ public partial class SettingsWindow : Window
     private readonly SettingsStore _store;
     private readonly PluginManager _plugins;
     private readonly PluginInstaller _installer;
+    private readonly Func<Func<bool>, Task<string>> _forceNotchUpdate;
+    private readonly Func<bool> _hasOpenTerminals;
+    private readonly Action _restart;
+    private readonly Dictionary<string, PluginUpdate> _pluginUpdates = [];
+    private bool _checkingUpdates;
     private NotchTheme _shownTheme;
 
-    public SettingsWindow(AppSettings settings, SettingsStore store, PluginManager plugins, PluginInstaller installer)
+    /// <param name="forceNotchUpdate">Updates Notch now, whatever the automatic-update setting says; given a question to ask before restarting. Returns what to tell the user.</param>
+    /// <param name="hasOpenTerminals">Whether restarting would close terminal sessions.</param>
+    /// <param name="restart">Restarts Notch, so plugins run their new versions.</param>
+    public SettingsWindow(
+        AppSettings settings,
+        SettingsStore store,
+        PluginManager plugins,
+        PluginInstaller installer,
+        Func<Func<bool>, Task<string>> forceNotchUpdate,
+        Func<bool> hasOpenTerminals,
+        Action restart)
     {
         InitializeComponent();
         _settings = settings;
         _store = store;
         _plugins = plugins;
         _installer = installer;
+        _forceNotchUpdate = forceNotchUpdate;
+        _hasOpenTerminals = hasOpenTerminals;
+        _restart = restart;
         MaxHeight = SystemParameters.WorkArea.Height;
 
         // The theme can also change from the tray menu while this window is open.
@@ -88,6 +106,11 @@ public partial class SettingsWindow : Window
             }
         };
         OpenPluginsFolder.Click += (_, _) => OnOpenPluginsFolder();
+        CheckPluginUpdates.Click += (_, _) => _ = CheckPluginUpdatesAsync(userInitiated: true);
+        UpdateNotch.Click += (_, _) => OnUpdateNotch();
+
+        // Quietly, so an update shows up beside its plugin without the user asking.
+        _ = CheckPluginUpdatesAsync(userInitiated: false);
 
         Save.Click += (_, _) => OnSave();
         Cancel.Click += (_, _) => Close();
@@ -269,7 +292,177 @@ public partial class SettingsWindow : Window
                     Margin = new Thickness(28, 0, 0, 6),
                 });
             }
+
+            if (plugin.Id is { } id && _pluginUpdates.TryGetValue(id, out PluginUpdate? update))
+            {
+                PluginList.Children.Add(UpdateRow(update));
+            }
         }
+    }
+
+    /// <summary>"Update available" and a button that installs it and restarts Notch.</summary>
+    private UIElement UpdateRow(PluginUpdate update)
+    {
+        var button = new Button { Content = "Update and restart", Tag = update, Padding = new Thickness(10, 3, 10, 3) };
+        button.Click += (_, _) => OnUpdatePlugin(update, button);
+        return new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Margin = new Thickness(28, 0, 0, 8),
+            Children =
+            {
+                new TextBlock
+                {
+                    Text = $"{update.LatestTag} is available" + (update.InstalledVersion is null ? "" : $" (you have {update.InstalledVersion})"),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(0, 0, 10, 0),
+                },
+                button,
+            },
+        };
+    }
+
+    /// <summary>Asks each plugin's repository for its latest release and shows the ones that are newer.</summary>
+    private async Task CheckPluginUpdatesAsync(bool userInitiated)
+    {
+        if (_checkingUpdates)
+        {
+            return;
+        }
+
+        PluginInfo[] checkable = [.. _plugins.Plugins.Where(p => p is { Id: not null, Repository: not null, AlwaysEnabled: false })];
+        if (checkable.Length == 0)
+        {
+            if (userInitiated)
+            {
+                ShowPluginUpdateStatus("None of the installed plugins say where they come from, so there is nothing to check. Plugins installed from GitHub here are checked.");
+            }
+
+            return;
+        }
+
+        _checkingUpdates = true;
+        CheckPluginUpdates.IsEnabled = false;
+        if (userInitiated)
+        {
+            ShowPluginUpdateStatus("Checking GitHub for plugin updates…");
+        }
+
+        try
+        {
+            var results = await Task.WhenAll(checkable.Select(async plugin =>
+            {
+                try
+                {
+                    return (plugin, update: await Task.Run(() => _installer.CheckForUpdateAsync(plugin)), error: (string?)null);
+                }
+                catch (PluginLoadException e)
+                {
+                    return (plugin, update: (PluginUpdate?)null, error: e.Message);
+                }
+            }));
+
+            _pluginUpdates.Clear();
+            foreach (var (plugin, update, _) in results.Where(r => r.update is not null))
+            {
+                _pluginUpdates[plugin.Id!] = update!;
+            }
+
+            ListPlugins(TickedPlugins());
+
+            string[] failures = [.. results.Where(r => r.error is not null).Select(r => $"{r.plugin.Name}: {r.error}")];
+            if (_pluginUpdates.Count > 0)
+            {
+                ShowPluginUpdateStatus(_pluginUpdates.Count == 1 ? "1 plugin update is available." : $"{_pluginUpdates.Count} plugin updates are available.");
+            }
+            else if (userInitiated)
+            {
+                ShowPluginUpdateStatus(failures.Length > 0 ? string.Join(Environment.NewLine, failures) : "All plugins are up to date.");
+            }
+        }
+        finally
+        {
+            _checkingUpdates = false;
+            CheckPluginUpdates.IsEnabled = true;
+        }
+    }
+
+    private async void OnUpdatePlugin(PluginUpdate update, Button button)
+    {
+        button.IsEnabled = CheckPluginUpdates.IsEnabled = InstallPlugin.IsEnabled = false;
+        ShowPluginUpdateStatus($"Downloading {update.Name} {update.LatestTag}…");
+        try
+        {
+            PluginInstallResult result = await Task.Run(() => _installer.InstallAsync(update.Source.ToString()));
+            _pluginUpdates.Remove(update.PluginId);
+
+            if (!result.Pending)
+            {
+                // Not running, so its files were replaced on the spot and nothing needs restarting.
+                ListPlugins(TickedPlugins());
+                ShowPluginUpdateStatus($"Updated {update.Name} to {result.Tag}.");
+                return;
+            }
+
+            if (_hasOpenTerminals()
+                && MessageBox.Show(
+                    this,
+                    $"{update.Name} {result.Tag} is downloaded. Notch has to restart to switch to it, which closes the open terminal sessions. Restart now?",
+                    "Notch",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question) != MessageBoxResult.Yes)
+            {
+                ListPlugins(TickedPlugins());
+                ShowPluginUpdateStatus($"Downloaded {update.Name} {result.Tag}. It takes over the next time Notch starts.");
+                return;
+            }
+
+            // The ticks are what the user sees; keep them across the restart.
+            _settings.EnabledPlugins = [.. TickedPlugins()];
+            _store.Save(_settings);
+            ShowPluginUpdateStatus($"Updated {update.Name} to {result.Tag}. Restarting Notch…");
+            _restart();
+        }
+        catch (PluginLoadException e)
+        {
+            ShowPluginUpdateStatus(e.Message);
+        }
+        finally
+        {
+            CheckPluginUpdates.IsEnabled = InstallPlugin.IsEnabled = true;
+            button.IsEnabled = true;
+        }
+    }
+
+    private void ShowPluginUpdateStatus(string text)
+    {
+        PluginUpdateStatus.Text = text;
+        PluginUpdateStatus.Visibility = Visibility.Visible;
+    }
+
+    private async void OnUpdateNotch()
+    {
+        UpdateNotch.IsEnabled = false;
+        ShowNotchUpdateStatus("Checking GitHub for a newer Notch…");
+        try
+        {
+            ShowNotchUpdateStatus(await _forceNotchUpdate(() => !_hasOpenTerminals() || MessageBox.Show(
+                this,
+                "Notch has to restart to finish updating, which closes the open terminal sessions. Update now?",
+                "Notch",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question) == MessageBoxResult.Yes));
+        }
+        finally
+        {
+            UpdateNotch.IsEnabled = true;
+        }
+    }
+
+    private void ShowNotchUpdateStatus(string text)
+    {
+        NotchUpdateStatus.Text = text;
+        NotchUpdateStatus.Visibility = Visibility.Visible;
     }
 
     private async void OnInstallPlugin()

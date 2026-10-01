@@ -177,6 +177,7 @@ Notch reads the manifest to list a plugin in Settings before running any of its 
 | `version` | no | The plugin's own version, shown in Settings. |
 | `author` | no | Shown in the plugin's tooltip in Settings. |
 | `description` | no | Shown in the plugin's tooltip in Settings. |
+| `repository` | no | Where the plugin is published, as `owner/name`. Lets Notch look for updates to a copy that was not installed from GitHub. A plugin installed from GitHub is checked without it. |
 
 Property names are not case-sensitive. Comments and trailing commas are accepted. Unknown properties are ignored.
 
@@ -431,7 +432,9 @@ dotnet publish -c Release -o dist\yourname.hello
 
 Zip the resulting folder. `.pdb` files are optional.
 
-To update a plugin installed from GitHub, install it again the same way. If the plugin has been running, the new version is set aside and takes over the next time Notch starts; Settings says so. To update by hand, quit Notch, replace the folder's contents and start Notch again. To remove a plugin, switch it off, quit Notch and delete its folder; its data folder under `plugin-data` can be deleted too.
+**Updates.** Settings checks each plugin's repository when it opens, and again when you press **Check for updates** next to the plugin list. A plugin installed from GitHub remembers where it came from; one copied in by hand is checked only if its manifest has a `repository`. When a newer release exists, an **Update and restart** button appears under the plugin: it downloads the release, replaces the plugin and restarts Notch so the new version runs (open terminal sessions are not closed without asking). Notch itself can be updated from the same window with **Update Notch now**.
+
+To update by hand, quit Notch, replace the folder's contents and start Notch again. To remove a plugin, switch it off, quit Notch and delete its folder; its data folder under `plugin-data` can be deleted too.
 
 ## Publishing on GitHub
 

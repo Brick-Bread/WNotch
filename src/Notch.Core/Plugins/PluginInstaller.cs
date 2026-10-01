@@ -114,6 +114,7 @@ public sealed class PluginInstaller(HttpClient http, string pluginsDirectory, Fu
             await DownloadAsync(package, archive, cancellation);
 
             PluginManifest manifest = Unpack(archive, staging);
+            PluginOrigin.Write(staging, repository, package.Tag);
             bool pending = Place(staging, manifest);
             return new PluginInstallResult(manifest, package.Tag, pending);
         }
@@ -140,6 +141,40 @@ public sealed class PluginInstaller(HttpClient http, string pluginsDirectory, Fu
                     Directory.Delete(staging, recursive: true);
                 }
             });
+        }
+    }
+
+    /// <summary>
+    /// Asks the plugin's repository whether its latest release is newer than what is installed.
+    /// Null when it is not (or when the plugin has no known repository, or an unreadable version).
+    /// </summary>
+    /// <exception cref="PluginLoadException">The repository could not be asked; the message, meant for the user, says why.</exception>
+    public async Task<PluginUpdate?> CheckForUpdateAsync(PluginInfo plugin, CancellationToken cancellation = default)
+    {
+        if (plugin.Id is null || plugin.Repository is null || PluginSource.Parse(plugin.Repository) is not { } source)
+        {
+            return null;
+        }
+
+        try
+        {
+            Package package = await FindPackageAsync(source, cancellation);
+            return PluginOrigin.IsNewer(package.Tag, plugin.InstalledTag, plugin.Version)
+                ? new PluginUpdate(plugin.Id, plugin.Name, plugin.Version, package.Tag, source)
+                : null;
+        }
+        catch (HttpRequestException e)
+        {
+            throw new PluginLoadException(e.StatusCode switch
+            {
+                HttpStatusCode.NotFound => $"{source} was not found on GitHub, or has not published a release.",
+                HttpStatusCode.Forbidden or HttpStatusCode.TooManyRequests => "GitHub is not accepting more requests right now. Try again in a few minutes.",
+                _ => "GitHub could not be reached: " + e.Message,
+            }, e);
+        }
+        catch (TaskCanceledException e)
+        {
+            throw new PluginLoadException("GitHub did not answer in time.", e);
         }
     }
 

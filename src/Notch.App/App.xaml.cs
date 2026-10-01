@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Windows;
@@ -38,6 +39,10 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // A restarted copy starts while the old one is still shutting down. Its plugin files must
+        // be free before pending plugin updates are put in place, so wait for it to exit first.
+        WaitForPreviousInstance(e);
 
         // A background utility should survive a bug in one feature; record it and carry on.
         DispatcherUnhandledException += (_, args) =>
@@ -209,7 +214,14 @@ public partial class App : Application
             return;
         }
 
-        _settingsWindow = new SettingsWindow(settings, store, _plugins!, _pluginInstaller!);
+        _settingsWindow = new SettingsWindow(
+            settings,
+            store,
+            _plugins!,
+            _pluginInstaller!,
+            confirm => _updates?.ForceUpdateAsync(confirm) ?? Task.FromResult("Updates are not available yet."),
+            () => notch.HasTerminalSessions,
+            Restart);
         _settingsWindow.Saved += (_, _) =>
         {
             _activities?.SetSuppressed(settings.SuppressedActivityIds());
@@ -222,6 +234,62 @@ public partial class App : Application
         _settingsWindow.Closed += (_, _) => _settingsWindow = null;
         _settingsWindow.Show();
         _settingsWindow.Activate();
+    }
+
+    private const string WaitForFlag = "--wait-for=";
+
+    /// <summary>
+    /// Starts a new copy of the app that waits for this one to exit, then closes this one. Used
+    /// after a plugin update, which only takes over when the plugin's files are no longer loaded.
+    /// </summary>
+    private void Restart()
+    {
+        try
+        {
+            string? exe = Environment.ProcessPath;
+            if (exe is null)
+            {
+                return;
+            }
+
+            var start = new ProcessStartInfo(exe) { UseShellExecute = false };
+
+            // Same switches as this run (--plugin=, --display=, ...), minus the ones that only mean "just restarted".
+            foreach (string arg in Environment.GetCommandLineArgs().Skip(1)
+                .Where(a => !a.StartsWith(WaitForFlag, StringComparison.OrdinalIgnoreCase)
+                    && !a.Equals(UpdateService.UpdatedFlag, StringComparison.OrdinalIgnoreCase)))
+            {
+                start.ArgumentList.Add(arg);
+            }
+
+            start.ArgumentList.Add(WaitForFlag + Environment.ProcessId);
+            Process.Start(start)?.Dispose();
+        }
+        catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException)
+        {
+            LogError(e);
+            return;
+        }
+
+        Shutdown();
+    }
+
+    private static void WaitForPreviousInstance(StartupEventArgs e)
+    {
+        if (!int.TryParse(Option(e, WaitForFlag), out int pid))
+        {
+            return;
+        }
+
+        try
+        {
+            using Process previous = Process.GetProcessById(pid);
+            previous.WaitForExit(TimeSpan.FromSeconds(20));
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            // It has already exited, which is what was being waited for.
+        }
     }
 
     private static void LogError(Exception exception)

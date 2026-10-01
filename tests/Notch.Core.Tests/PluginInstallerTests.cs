@@ -162,6 +162,73 @@ public sealed class PluginInstallerTests : IDisposable
         await Assert.ThrowsAsync<PluginLoadException>(() => new PluginInstaller(http, _plugins).InstallAsync("hello"));
     }
 
+    [Fact]
+    public async Task An_installed_plugin_remembers_its_repository_and_release()
+    {
+        await CreateInstaller(Zip("", version: "1.0.0")).InstallAsync("acme/hello");
+
+        PluginOrigin.Record? origin = PluginOrigin.Read(Path.Combine(_plugins, "acme.hello"));
+
+        Assert.Equal(new PluginOrigin.Record("acme/hello", "v1.0.0"), origin);
+    }
+
+    [Fact]
+    public async Task Finds_an_update_when_the_latest_release_is_newer()
+    {
+        PluginInfo installed = Info(version: "0.9.0", installedTag: "v0.9.0");
+
+        PluginUpdate? update = await CreateInstaller(Zip("", version: "1.0.0")).CheckForUpdateAsync(installed);
+
+        Assert.NotNull(update);
+        Assert.Equal("v1.0.0", update.LatestTag);
+        Assert.Equal(new PluginSource("acme", "hello"), update.Source);
+    }
+
+    [Fact]
+    public async Task Finds_no_update_when_up_to_date_or_the_repository_is_unknown()
+    {
+        PluginInstaller installer = CreateInstaller(Zip("", version: "1.0.0"));
+
+        Assert.Null(await installer.CheckForUpdateAsync(Info(version: "1.0.0", installedTag: "v1.0.0")));
+        Assert.Null(await installer.CheckForUpdateAsync(Info(version: "0.1.0", installedTag: "v0.1.0") with { Repository = null }));
+    }
+
+    [Fact]
+    public async Task A_repository_that_cannot_be_reached_is_reported_to_the_user()
+    {
+        PluginInstaller installer = CreateInstaller(Zip("", version: "1.0.0"));
+
+        var e = await Assert.ThrowsAsync<PluginLoadException>(
+            () => installer.CheckForUpdateAsync(Info(version: "0.1.0", installedTag: null) with { Repository = "acme/missing" }));
+
+        Assert.Contains("acme/missing", e.Message);
+    }
+
+    [Theory]
+    [InlineData("v1.1.0", "v1.0.0", null, true)]
+    [InlineData("v1.0.0", "v1.0.0", null, false)]
+    [InlineData("v1.0.0", "v1.1.0", null, false)]
+    [InlineData("v1.1.0", null, "1.0.0", true)]
+    [InlineData("v1.1.0", "v1.1.0", "1.0.0", false)]
+    [InlineData("v1.1.0-beta", "v1.0.0", null, true)]
+    [InlineData("nightly", "v1.0.0", null, false)]
+    [InlineData("v1.1.0", null, null, false)]
+    public void Compares_release_tags_with_the_installed_version(string latest, string? installedTag, string? manifest, bool newer) =>
+        Assert.Equal(newer, PluginOrigin.IsNewer(latest, installedTag, manifest));
+
+    [Fact]
+    public void A_manifest_may_name_its_repository()
+    {
+        PluginManifest manifest = PluginManifest.Parse(
+            """{ "id": "a.b", "name": "B", "assembly": "B.dll", "apiVersion": 1, "repository": "acme/hello" }""");
+
+        Assert.Equal("acme/hello", manifest.Repository);
+        Assert.Equal(new PluginSource("acme", "hello"), PluginOrigin.SourceOf(Path.Combine(_plugins, "none"), manifest));
+    }
+
+    private static PluginInfo Info(string version, string? installedTag) => new(
+        "acme.hello", "Hello", version, null, null, "unused", PluginStatus.Running, null, false, "acme/hello", installedTag);
+
     private static string ManifestJson(string version) =>
         $$"""{ "id": "acme.hello", "name": "Hello", "version": "{{version}}", "assembly": "Hello.dll", "apiVersion": 1 }""";
 

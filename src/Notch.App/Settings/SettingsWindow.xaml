@@ -116,16 +116,19 @@
                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" />
 
         <DockPanel Margin="0,22,0,4">
+            <Button x:Name="CheckPluginUpdates" DockPanel.Dock="Right" Content="Check for updates" Margin="8,0,0,0"
+                    ToolTip="Asks GitHub whether the plugins installed from it have newer releases." />
             <Button x:Name="OpenPluginsFolder" DockPanel.Dock="Right" Content="Open folder"
                     ToolTip="Each plugin is a folder in here. Reopen settings after adding one." />
             <TextBlock Text="Plugins" Style="{StaticResource Heading}" Margin="0" VerticalAlignment="Center" />
         </DockPanel>
         <TextBlock TextWrapping="Wrap" Opacity="0.7" Margin="0,0,0,8"
                    Text="Plugins can do anything Notch itself can do on this PC. Only switch on plugins you trust." />
-        <ScrollViewer MaxHeight="132" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer MaxHeight="190" VerticalScrollBarVisibility="Auto">
             <!-- One check box per installed plugin, added in code. -->
             <StackPanel x:Name="PluginList" />
         </ScrollViewer>
+        <TextBlock x:Name="PluginUpdateStatus" TextWrapping="Wrap" Margin="0,6,0,0" Visibility="Collapsed" />
         <TextBlock Text="Install from GitHub: a repository as owner/name, or its link" Opacity="0.7"
                    Margin="0,12,0,6" />
         <DockPanel>
@@ -135,8 +138,13 @@
         </DockPanel>
         <TextBlock x:Name="InstallStatus" TextWrapping="Wrap" Margin="0,6,0,0" Visibility="Collapsed" />
 
-        <DockPanel Margin="0,24,0,0">
-            <TextBlock x:Name="VersionText" VerticalAlignment="Center" Opacity="0.6" />
+        <TextBlock x:Name="NotchUpdateStatus" TextWrapping="Wrap" Margin="0,18,0,0" Visibility="Collapsed" />
+        <DockPanel Margin="0,12,0,0">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock x:Name="VersionText" VerticalAlignment="Center" Opacity="0.6" />
+                <Button x:Name="UpdateNotch" Content="Update Notch now" Margin="12,0,0,0"
+                        ToolTip="Checks GitHub for a newer Notch, installs it even if automatic updates are off, and restarts Notch." />
+            </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button x:Name="Cancel" Content="Cancel" MinWidth="88" IsCancel="True" />
                 <Button x:Name="Save" Content="Save" MinWidth="88" Margin="8,0,0,0" IsDefault="True"
