@@ -33,6 +33,8 @@ internal static unsafe partial class NativeMethods
     internal const int GWL_EXSTYLE = -20;
 
     internal const long WS_CAPTION = 0x00C00000;
+    internal const long WS_EX_TOPMOST = 0x00000008;
+    internal const long WS_EX_TRANSPARENT = 0x00000020;
     internal const long WS_EX_TOOLWINDOW = 0x00000080;
     internal const long WS_EX_NOACTIVATE = 0x08000000;
 
@@ -43,6 +45,13 @@ internal static unsafe partial class NativeMethods
     internal const uint MONITOR_DEFAULTTONEAREST = 2;
     internal const uint MONITORINFOF_PRIMARY = 1;
     internal const int MDT_EFFECTIVE_DPI = 0;
+
+    internal const uint GW_HWNDNEXT = 2;
+    internal const int DWMWA_CLOAKED = 14;
+
+    internal const uint EVENT_SYSTEM_FOREGROUND = 0x0003;
+    internal const uint WINEVENT_OUTOFCONTEXT = 0x0000;
+    internal const uint WINEVENT_SKIPOWNPROCESS = 0x0002;
 
     internal static readonly nint HWND_TOPMOST = -1;
 
@@ -73,6 +82,37 @@ internal static unsafe partial class NativeMethods
 
     [LibraryImport("user32.dll")]
     internal static partial nint GetShellWindow();
+
+    [LibraryImport("user32.dll")]
+    internal static partial nint GetTopWindow(nint parent);
+
+    [LibraryImport("user32.dll")]
+    internal static partial nint GetWindow(nint hwnd, uint command);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool IsWindowVisible(nint hwnd);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool IsIconic(nint hwnd);
+
+    [LibraryImport("dwmapi.dll")]
+    internal static partial int DwmGetWindowAttribute(nint hwnd, int attribute, out int value, int size);
+
+    [LibraryImport("user32.dll")]
+    internal static partial nint SetWinEventHook(
+        uint eventMin,
+        uint eventMax,
+        nint module,
+        delegate* unmanaged<nint, uint, nint, int, int, uint, uint, void> callback,
+        uint processId,
+        uint threadId,
+        uint flags);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool UnhookWinEvent(nint hook);
 
     [LibraryImport("user32.dll", EntryPoint = "GetClassNameW")]
     internal static partial int GetClassName(nint hwnd, char* buffer, int capacity);

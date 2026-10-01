@@ -13,6 +13,10 @@ public readonly record struct PixelRect(int Left, int Top, int Right, int Bottom
     public bool Contains(PixelRect other) =>
         Left <= other.Left && Top <= other.Top && Right >= other.Right && Bottom >= other.Bottom;
 
+    /// <summary>True when the two share any area; touching edges do not count.</summary>
+    public bool Intersects(PixelRect other) =>
+        Left < other.Right && other.Left < Right && Top < other.Bottom && other.Top < Bottom;
+
     internal static PixelRect From(RECT rect) => new(rect.Left, rect.Top, rect.Right, rect.Bottom);
 }
 

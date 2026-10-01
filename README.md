@@ -4,15 +4,17 @@ A dynamic notch for Windows 11, in the spirit of Atoll on macOS: a small black p
 
 ## Features
 
-- **Pill and live activities.** Always on top, never takes focus, hides while an app is fullscreen. It widens for ongoing activity and briefly enlarges for system events.
+- **Pill and live activities.** Always on top, never takes focus. It widens for ongoing activity and briefly enlarges for system events.
+- **Out of the way of games.** While a game or any other fullscreen app shows on its display the notch is taken off the screen completely, HUDs and glow included, also when you are working on another display.
 - **Media.** Whatever is playing (Spotify, a browser tab, any app that reports to Windows) shows with its artwork. The expanded view has play/pause, skip and click-to-seek.
 - **System HUDs.** Volume, audio output changes, brightness, charger and low battery, Bluetooth devices connecting.
 - **Terminal for Claude Code and Codex.** A real terminal inside the notch that runs the `claude` and `codex` CLIs (or PowerShell) in a folder you pick. The pill shows whether an agent is working, needs input, or is done.
 - **Glow effects.** The pill lights up in a colour and rhythm that matches what is happening: it pulses to the music in the album art's colour, breathes blue while an agent works, pulses amber when it needs you, turns green when it is done, and flashes for volume, charging, Bluetooth and low battery. Brightness is adjustable in settings.
-- **Widgets.** A countdown timer with a Pomodoro mode (focus and break sessions back to back), upcoming events from iCalendar (.ics) feeds, and a Stats tab with CPU, memory, GPU, network and battery.
+- **Themes and colour.** Dark, light, or following Windows, with an accent colour of your choice. Stats, the timer and calendars each have their own colour.
+- **Widgets.** A countdown timer with a Pomodoro mode (focus and break sessions back to back), your own presets and any length you type (`12`, `1:30`, `90s`, `1h20m`), upcoming events from iCalendar (.ics) feeds, and a Stats tab with CPU, memory, GPU, network and battery.
 - **Plugins.** Small .NET libraries can add their own activities to the pill and cards to a Plugins tab. See [Plugins](#plugins).
 - **Automatic updates.** An installed copy checks this repository's releases, installs a newer one in the background and restarts itself. Can be switched off in settings.
-- **Settings.** From the tray icon: start with Windows, automatic updates, which display to use, what the pill shows, glow brightness, calendar feeds, plugins.
+- **Settings.** From the tray icon: start with Windows, automatic updates, which display to use, theme and accent colour, what the pill shows, glow brightness, timer presets, calendar feeds, plugins.
 
 ## Install
 
@@ -24,7 +26,8 @@ The terminal uses the WebView2 runtime, which ships with Windows 11.
 
 - Hover over the pill (or click it) to expand it. Move away to close it.
 - **Terminal tab:** pick a folder, then `+ Claude`, `+ Codex` or `+ Shell`. While the terminal has keyboard focus the notch stays open; click any other window to close it.
-- **Tray icon:** left-click for settings, right-click to quit.
+- **Timer:** press a preset, or **+ Custom** and type a length; a bare number is minutes. Enter starts it, Esc cancels.
+- **Tray icon:** left-click for settings, right-click to switch theme or quit.
 
 Things to know:
 

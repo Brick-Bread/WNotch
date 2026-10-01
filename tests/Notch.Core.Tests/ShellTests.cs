@@ -42,6 +42,36 @@ public class ShellTests
         Assert.True(IslandHitTest.Contains(0, 0, 1920, 1, 180, 32, 869, 33, margin: 2));
     }
 
+    private static readonly StackedWindow Fullscreen = new(CoversDisplay: true, IsTopmost: false);
+    private static readonly StackedWindow Ordinary = new(CoversDisplay: false, IsTopmost: false);
+    private static readonly StackedWindow Pinned = new(CoversDisplay: false, IsTopmost: true);
+
+    [Fact]
+    public void A_fullscreen_app_on_top_covers_the_display()
+    {
+        Assert.True(FullscreenRule.IsCovered([Fullscreen, Ordinary]));
+        Assert.True(FullscreenRule.IsCovered([new StackedWindow(CoversDisplay: true, IsTopmost: true)]));
+    }
+
+    [Fact]
+    public void Always_on_top_windows_above_a_game_are_looked_past() =>
+        Assert.True(FullscreenRule.IsCovered([Pinned, Pinned, Fullscreen]));
+
+    [Fact]
+    public void An_ordinary_window_over_a_fullscreen_app_uncovers_the_display()
+    {
+        Assert.False(FullscreenRule.IsCovered([Ordinary, Fullscreen]));
+        Assert.False(FullscreenRule.IsCovered([Pinned, Ordinary, Fullscreen]));
+    }
+
+    [Fact]
+    public void A_display_without_a_fullscreen_app_is_not_covered()
+    {
+        Assert.False(FullscreenRule.IsCovered([]));
+        Assert.False(FullscreenRule.IsCovered([Pinned]));
+        Assert.False(FullscreenRule.IsCovered([Ordinary, Ordinary]));
+    }
+
     [Fact]
     public void Spring_settles_on_its_target()
     {

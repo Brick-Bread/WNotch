@@ -25,6 +25,9 @@ public partial class NotchWindow : Window
     private static readonly TimeSpan CloseDelay = TimeSpan.FromMilliseconds(350);
     private static readonly Duration FadeDuration = TimeSpan.FromMilliseconds(160);
 
+    // A game takes the foreground a moment before its window fills the screen.
+    private static readonly TimeSpan FullscreenRecheckDelay = TimeSpan.FromMilliseconds(400);
+
     // How far outside the island, in DIPs, the pointer still counts as on it.
     private const double HoverMargin = 2;
 
@@ -46,6 +49,8 @@ public partial class NotchWindow : Window
     private readonly DispatcherTimer _hoverTimer = new();
     private readonly DispatcherTimer _pointerWatch = new() { Interval = TimeSpan.FromMilliseconds(100) };
     private readonly DispatcherTimer _housekeepingTimer = new() { Interval = TimeSpan.FromSeconds(1) };
+    private readonly DispatcherTimer _fullscreenRecheck = new() { Interval = FullscreenRecheckDelay };
+    private ForegroundWatcher? _foregroundWatcher;
 
     private nint _hwnd;
     private DisplayInfo? _display;
@@ -56,6 +61,7 @@ public partial class NotchWindow : Window
     private byte[]? _compactArtBytes;
     private GlowColor? _artAccent;
     private bool _largeWindow;
+    private bool _hiddenForFullscreen;
 
     internal NotchWindow(
         ActivityManager activities,
@@ -122,6 +128,11 @@ public partial class NotchWindow : Window
         };
         _pointerWatch.Tick += (_, _) => WatchPointer();
         _housekeepingTimer.Tick += (_, _) => Housekeeping();
+        _fullscreenRecheck.Tick += (_, _) =>
+        {
+            _fullscreenRecheck.Stop();
+            Housekeeping();
+        };
 
         // Colours everything that is coloured in code, and does the first Refresh.
         ThemeManager.Changed += OnThemeChanged;
@@ -154,6 +165,16 @@ public partial class NotchWindow : Window
 
         Reposition();
         _housekeepingTimer.Start();
+
+        // The periodic check alone would leave the notch over a game for up to a second after it starts.
+        _foregroundWatcher = new ForegroundWatcher(() => Dispatcher.BeginInvoke(OnForegroundChanged));
+    }
+
+    private void OnForegroundChanged()
+    {
+        Housekeeping();
+        _fullscreenRecheck.Stop();
+        _fullscreenRecheck.Start();
     }
 
     protected override void OnClosed(EventArgs e)
@@ -167,6 +188,8 @@ public partial class NotchWindow : Window
         _hoverTimer.Stop();
         _pointerWatch.Stop();
         _housekeepingTimer.Stop();
+        _fullscreenRecheck.Stop();
+        _foregroundWatcher?.Dispose();
         base.OnClosed(e);
     }
 
@@ -261,8 +284,10 @@ public partial class NotchWindow : Window
         }
 
         NoteForegroundWindow();
-        bool fullscreen = _settings.HideInFullscreen && FullscreenDetector.IsFullscreenAppOn(_display, _hwnd);
-        Root.Visibility = fullscreen ? Visibility.Hidden : Visibility.Visible;
+
+        // Not while the user is typing into the notch: then it is the foreground window, by their choice.
+        bool fullscreen = _settings.HideInFullscreen && !KeyboardInUse && FullscreenDetector.IsFullscreenAppOn(_display, _hwnd);
+        SetHiddenForFullscreen(fullscreen);
         if (!fullscreen)
         {
             OverlayWindow.BringToTop(_hwnd);
@@ -272,6 +297,34 @@ public partial class NotchWindow : Window
         if (!_animator.IsRunning)
         {
             ShrinkWindowWhenClear();
+        }
+    }
+
+    /// <summary>
+    /// Takes the whole window off the screen while a fullscreen app shows on this display, so
+    /// nothing of the notch, not even a HUD or its glow, is drawn over a game, and no
+    /// always-on-top window sits above it.
+    /// </summary>
+    private void SetHiddenForFullscreen(bool hidden)
+    {
+        if (_hiddenForFullscreen == hidden)
+        {
+            return;
+        }
+
+        _hiddenForFullscreen = hidden;
+        HoverTrace.Write($"hidden for fullscreen={hidden}");
+        if (hidden)
+        {
+            _hoverTimer.Stop();
+            SetExpanded(false);
+            Hide();
+        }
+        else
+        {
+            // ShowActivated is off, so coming back does not take the keyboard.
+            Show();
+            Reposition();
         }
     }
 
