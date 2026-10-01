@@ -79,6 +79,12 @@
         <CheckBox x:Name="ShowPower" Content="Charging and low battery" />
         <CheckBox x:Name="ShowBluetooth" Content="Bluetooth devices connecting" />
 
+        <TextBlock Text="Timer presets" Style="{StaticResource Heading}" Margin="0,22,0,4" />
+        <TextBlock TextWrapping="Wrap" Opacity="0.7" Margin="0,0,0,8"
+                   Text="One per line, up to six: a length such as 5m, 1:30 or 1h20m, with a name in front if you like (Tea 3m). The + button on the timer card takes any other length." />
+        <TextBox x:Name="TimerPresets" AcceptsReturn="True" Height="96" TextWrapping="NoWrap"
+                 VerticalScrollBarVisibility="Auto" />
+
         <TextBlock Text="Pomodoro (minutes)" Style="{StaticResource Heading}" Margin="0,22,0,8" />
         <StackPanel Orientation="Horizontal">
             <TextBlock Text="Focus" VerticalAlignment="Center" Margin="0,0,8,0" />

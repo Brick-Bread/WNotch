@@ -10,6 +10,7 @@ using Notch.App.Shell;
 using Notch.Core.Activities;
 using Notch.Core.Plugins;
 using Notch.Core.Settings;
+using Notch.Core.Widgets;
 using Notch.Platform.Display;
 using Notch.Platform.Startup;
 
@@ -48,6 +49,7 @@ public partial class SettingsWindow : Window
         GlowIntensity.Maximum = GlowOutput.MaxPercent;
         GlowIntensity.ValueChanged += (_, _) => GlowIntensityText.Text = $"{GlowIntensity.Value:0}%";
         GlowIntensity.Value = Math.Clamp(settings.GlowIntensity, GlowOutput.MinPercent, GlowOutput.MaxPercent);
+        TimerPresets.Text = string.Join(Environment.NewLine, settings.Timers().Select(preset => preset.ToLine()));
         PomodoroFocus.Text = settings.PomodoroFocusMinutes.ToString();
         PomodoroShortBreak.Text = settings.PomodoroShortBreakMinutes.ToString();
         PomodoroLongBreak.Text = settings.PomodoroLongBreakMinutes.ToString();
@@ -139,6 +141,12 @@ public partial class SettingsWindow : Window
 
     private void OnSave()
     {
+        if (!TryReadTimerPresets(out List<TimerPreset> presets))
+        {
+            return;
+        }
+
+        _settings.TimerPresets = presets;
         _settings.ExpandOnHover = ExpandOnHover.IsChecked == true;
         _settings.Theme = (NotchTheme)Math.Max(0, Theme.SelectedIndex);
         _settings.AccentColor = AccentSwatches.Children.OfType<RadioButton>()
@@ -173,6 +181,31 @@ public partial class SettingsWindow : Window
 
         Saved?.Invoke(this, EventArgs.Empty);
         Close();
+    }
+
+    /// <summary>Reads the presets box. Says which line is wrong, and returns false, when one cannot be read.</summary>
+    private bool TryReadTimerPresets(out List<TimerPreset> presets)
+    {
+        presets = [];
+        string[] lines = TimerPresets.Text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        foreach (string line in lines.Take(AppSettings.MaxTimerPresets))
+        {
+            if (!TimerPreset.TryParse(line, out TimerPreset preset))
+            {
+                MessageBox.Show(
+                    this,
+                    $"This timer preset could not be read:\n\n{line}\n\nUse a length such as 5m, 1:30 or 1h20m, with a name in front if you like, for example \"Tea 3m\".",
+                    "Notch",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                TimerPresets.Focus();
+                return false;
+            }
+
+            presets.Add(preset);
+        }
+
+        return true;
     }
 
     /// <summary>The ids ticked in the list right now, which may differ from the saved settings.</summary>

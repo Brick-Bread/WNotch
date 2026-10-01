@@ -74,6 +74,73 @@ public class WidgetTests
         Assert.Equal(expected, CountdownTimer.Format(TimeSpan.FromSeconds(seconds)));
 
     [Theory]
+    [InlineData("12", 720)]
+    [InlineData("1.5", 90)]
+    [InlineData(" 1:30 ", 90)]
+    [InlineData("1:02:03", 3723)]
+    [InlineData("90s", 90)]
+    [InlineData("45m", 2700)]
+    [InlineData("1h20m", 4800)]
+    [InlineData("1 hr 20 min", 4800)]
+    [InlineData("2 Hours", 7200)]
+    [InlineData("1m30s", 90)]
+    [InlineData("24h", 86400)]
+    public void Durations_are_read_as_typed(string text, int seconds)
+    {
+        Assert.True(DurationParser.TryParse(text, out TimeSpan duration));
+        Assert.Equal(TimeSpan.FromSeconds(seconds), duration);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("soon")]
+    [InlineData("0")]
+    [InlineData("-5")]
+    [InlineData("1h 20")]
+    [InlineData("1:2:3:4")]
+    [InlineData("1:xx")]
+    [InlineData("25h")]
+    [InlineData("0.001s")]
+    public void Durations_that_make_no_sense_are_rejected(string? text) =>
+        Assert.False(DurationParser.TryParse(text, out _));
+
+    [Theory]
+    [InlineData(300, "5m")]
+    [InlineData(5400, "1h30m")]
+    [InlineData(90, "1m30s")]
+    [InlineData(45, "45s")]
+    [InlineData(3600, "1h")]
+    public void Durations_are_described_in_a_form_that_reads_back(int seconds, string expected)
+    {
+        Assert.Equal(expected, DurationParser.Describe(TimeSpan.FromSeconds(seconds)));
+        Assert.True(DurationParser.TryParse(expected, out TimeSpan duration));
+        Assert.Equal(seconds, duration.TotalSeconds);
+    }
+
+    [Theory]
+    [InlineData("15m", "", 900, "15m")]
+    [InlineData("Tea 3m", "Tea", 180, "Tea")]
+    [InlineData("Long walk 1h 20m", "Long walk", 4800, "Long walk")]
+    [InlineData("Round 2 1:30", "Round 2", 90, "Round 2")]
+    [InlineData("A very long preset name 10m", "A very lon", 600, "A very lon")]
+    public void Preset_lines_have_an_optional_name(string line, string name, int seconds, string label)
+    {
+        Assert.True(TimerPreset.TryParse(line, out TimerPreset preset));
+        Assert.Equal(new TimerPreset(name, seconds), preset);
+        Assert.Equal(label, preset.Label);
+        Assert.True(TimerPreset.TryParse(preset.ToLine(), out TimerPreset again));
+        Assert.Equal(preset, again);
+    }
+
+    [Theory]
+    [InlineData("Tea")]
+    [InlineData("Tea soon")]
+    [InlineData("")]
+    public void Preset_lines_without_a_length_are_rejected(string line) =>
+        Assert.False(TimerPreset.TryParse(line, out _));
+
+    [Theory]
     [InlineData(512, "512 B")]
     [InlineData(1536, "1.5 KB")]
     [InlineData(12.4 * 1024 * 1024, "12 MB")]

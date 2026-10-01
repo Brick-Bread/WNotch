@@ -208,6 +208,7 @@ public partial class NotchWindow : Window
         Reposition();
         Housekeeping();
         RefreshCalendar();
+        ShowTimerPresets();
         _glow.Gain = GlowOutput.Gain(_settings.GlowIntensity);
         ApplyShape();
         Refresh();
@@ -259,6 +260,7 @@ public partial class NotchWindow : Window
             return;
         }
 
+        NoteForegroundWindow();
         bool fullscreen = _settings.HideInFullscreen && FullscreenDetector.IsFullscreenAppOn(_display, _hwnd);
         Root.Visibility = fullscreen ? Visibility.Hidden : Visibility.Visible;
         if (!fullscreen)
@@ -339,7 +341,7 @@ public partial class NotchWindow : Window
 
     private void ScheduleExpanded(bool expanded, TimeSpan delay)
     {
-        if (!expanded && TerminalHasFocus)
+        if (!expanded && KeyboardInUse)
         {
             return;
         }
@@ -386,10 +388,11 @@ public partial class NotchWindow : Window
             else
             {
                 _pointerWatch.Stop();
+                SetTimerEntryOpen(false);
             }
 
             Refresh();
-            UpdateTerminalInteraction();
+            UpdateKeyboardInteraction();
             UpdateStatsTimer();
         }
     }

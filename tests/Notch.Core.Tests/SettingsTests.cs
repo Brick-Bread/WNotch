@@ -1,5 +1,6 @@
 using Notch.Core.Activities;
 using Notch.Core.Settings;
+using Notch.Core.Widgets;
 
 namespace Notch.Core.Tests;
 
@@ -32,6 +33,43 @@ public class SettingsTests
     {
         Assert.NotNull(GlowColor.FromName(new AppSettings().AccentColor));
         Assert.Null(GlowColor.FromName(AppSettings.NoAccent));
+    }
+
+    [Fact]
+    public void Timer_presets_default_to_the_classic_four_and_round_trip()
+    {
+        WithStore(store =>
+        {
+            Assert.Equal(["5m", "15m", "30m", "1h"], store.Load().Timers().Select(preset => preset.Label));
+
+            store.Save(new AppSettings { TimerPresets = [new("Tea", 180)] });
+
+            Assert.Equal([new TimerPreset("Tea", 180)], store.Load().Timers());
+            Assert.DoesNotContain("Label", File.ReadAllText(store.FilePath));
+        });
+    }
+
+    [Fact]
+    public void Timer_presets_from_a_hand_edited_file_are_tidied()
+    {
+        var settings = new AppSettings
+        {
+            TimerPresets =
+            [
+                new("  Stretch  ", 120),
+                new("Never", 0),
+                new("Far too long a name", 60),
+                new("", 100_000),
+                .. Enumerable.Range(1, 10).Select(i => new TimerPreset("", i * 60)),
+            ],
+        };
+
+        IReadOnlyList<TimerPreset> timers = settings.Timers();
+
+        Assert.Equal(AppSettings.MaxTimerPresets, timers.Count);
+        Assert.Equal(new TimerPreset("Stretch", 120), timers[0]);
+        Assert.Equal("Far too lo", timers[1].Name);
+        Assert.All(timers, preset => Assert.True(preset.IsValid));
     }
 
     private static void WithStore(Action<SettingsStore> test)

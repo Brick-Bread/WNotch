@@ -10,6 +10,9 @@ public sealed class AppSettings
 {
     private const int MaxRecentFolders = 8;
 
+    /// <summary>As many preset buttons as the timer card has room for.</summary>
+    public const int MaxTimerPresets = 6;
+
     /// <summary>Which display hosts the notch, as an index into the system's display list. Null means the primary display.</summary>
     public int? DisplayIndex { get; set; }
 
@@ -72,6 +75,25 @@ public sealed class AppSettings
         static TimeSpan Minutes(int value, TimeSpan fallback) =>
             value is >= 1 and <= 600 ? TimeSpan.FromMinutes(value) : fallback;
     }
+
+    /// <summary>The one-click timers on the timer card, in the order shown.</summary>
+    public List<Widgets.TimerPreset> TimerPresets { get; set; } =
+    [
+        new("", 5 * 60),
+        new("", 15 * 60),
+        new("", 30 * 60),
+        new("", 60 * 60),
+    ];
+
+    /// <summary>The presets from the settings that can be used: sensible lengths, tidy names, no more than fit.</summary>
+    public IReadOnlyList<Widgets.TimerPreset> Timers() => [.. TimerPresets
+        .Where(preset => preset is { IsValid: true })
+        .Take(MaxTimerPresets)
+        .Select(preset =>
+        {
+            string name = (preset.Name ?? "").Trim();
+            return preset with { Name = name.Length > Widgets.TimerPreset.MaxNameLength ? name[..Widgets.TimerPreset.MaxNameLength].TrimEnd() : name };
+        })];
 
     /// <summary>iCalendar (.ics) links shown on the Home tab's calendar card.</summary>
     public List<string> CalendarFeeds { get; set; } = [];

@@ -23,8 +23,8 @@ public partial class NotchWindow
         Plugins,
     }
 
-    /// <summary>The terminal takes keyboard input, so the notch must not close under the user while it has focus.</summary>
-    private bool TerminalHasFocus => _expanded && _tab == NotchTab.Terminal && IsActive;
+    /// <summary>Something in the notch is taking keyboard input, so it must not close under the user while it has focus.</summary>
+    private bool KeyboardInUse => _expanded && IsActive && (_tab == NotchTab.Terminal || _timerEntryOpen);
 
     /// <summary>Selects a tab by name ("home", "terminal", "stats", "plugins"); unknown names are ignored.</summary>
     public void ShowTab(string name)
@@ -71,7 +71,7 @@ public partial class NotchWindow
         // Clicking another window is how the user leaves a focused terminal.
         Deactivated += (_, _) =>
         {
-            if (!Island.IsMouseOver)
+            if (!PointerOverIsland())
             {
                 SetExpanded(false);
             }
@@ -86,8 +86,13 @@ public partial class NotchWindow
         StatsPanel.Visibility = tab == NotchTab.Stats ? Visibility.Visible : Visibility.Collapsed;
         PluginsPanel.Visibility = tab == NotchTab.Plugins ? Visibility.Visible : Visibility.Collapsed;
 
+        if (tab != NotchTab.Home)
+        {
+            SetTimerEntryOpen(false);
+        }
+
         Refresh();
-        UpdateTerminalInteraction();
+        UpdateKeyboardInteraction();
         UpdateStatsTimer();
         if (tab == NotchTab.Terminal)
         {
@@ -97,17 +102,18 @@ public partial class NotchWindow
 
     /// <summary>
     /// The notch normally refuses activation so it never steals focus. While the terminal is
-    /// showing it has to accept it, or it could not receive keystrokes.
+    /// showing, or a timer length is being typed, it has to accept it or it could not receive
+    /// keystrokes.
     /// </summary>
-    private void UpdateTerminalInteraction()
+    private void UpdateKeyboardInteraction()
     {
-        bool interactive = _expanded && _tab == NotchTab.Terminal;
+        bool terminal = _expanded && _tab == NotchTab.Terminal;
         if (_hwnd != 0)
         {
-            OverlayWindow.SetNoActivate(_hwnd, !interactive);
+            OverlayWindow.SetNoActivate(_hwnd, !(terminal || (_expanded && _timerEntryOpen)));
         }
 
-        _terminal.IsViewing = interactive;
+        _terminal.IsViewing = terminal;
     }
 
     private void FocusTerminal()

@@ -2,10 +2,12 @@ using System.Media;
 using System.Net.Http;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Notch.Core.Activities;
 using Notch.Core.Widgets;
+using Notch.Platform.Display;
 using Notch.Platform.Stats;
 
 namespace Notch.App.Shell;
@@ -16,6 +18,7 @@ public partial class NotchWindow
     private const string TimerActivityId = "timer";
     private const string PomodoroNoticeId = "timer.phase";
     private const string TimerGlyph = "";
+    private const string TimerEntryHint = "Timer: 12, 1:30, 90s, 1h20m";
     private const int MaxCalendarEntries = 4;
 
     // Each calendar feed gets the next of these for its dot, starting over after the last.
@@ -33,6 +36,15 @@ public partial class NotchWindow
 
     /// <summary>Set while the timer runs a Pomodoro cycle rather than a single countdown.</summary>
     private PomodoroCycle? _pomodoro;
+
+    /// <summary>Name of the preset that is running, when it has one; shown in place of "Timer".</summary>
+    private string? _timerName;
+
+    /// <summary>Set while the box for typing a timer length is showing.</summary>
+    private bool _timerEntryOpen;
+
+    /// <summary>The last window other than the notch that had the keyboard, to hand it back to after typing.</summary>
+    private nint _lastOtherWindow;
     private string? _lastTimerDisplay;
     private bool _timerAnnounced;
     private bool _statsSampling;
@@ -60,14 +72,35 @@ public partial class NotchWindow
         TimerReset.Click += (_, _) =>
         {
             _pomodoro = null;
+            _timerName = null;
             _countdown.Reset();
             UpdateTimer();
         };
         TimerPomodoro.Click += (_, _) =>
         {
             _pomodoro = new PomodoroCycle(_settings.PomodoroDurations());
+            _timerName = null;
             StartCountdown(_pomodoro.CurrentDuration);
         };
+
+        TimerCustom.Click += (_, _) => SetTimerEntryOpen(true);
+        TimerEntryStart.Click += (_, _) => StartTypedTimer();
+        TimerEntryCancel.Click += (_, _) => SetTimerEntryOpen(false);
+        TimerInput.TextChanged += (_, _) => TimerInput.ClearValue(BorderBrushProperty);
+        TimerInput.KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Enter)
+            {
+                e.Handled = true;
+                StartTypedTimer();
+            }
+            else if (e.Key == Key.Escape)
+            {
+                e.Handled = true;
+                SetTimerEntryOpen(false);
+            }
+        };
+        ShowTimerPresets();
 
         _calendar.Changed += (_, _) => Dispatcher.BeginInvoke(UpdateCalendar);
         _calendarTimer.Tick += (_, _) => RefreshCalendar();
@@ -122,14 +155,110 @@ public partial class NotchWindow
         _ => GlowColor.Orange,
     };
 
-    private void OnTimerPresetClicked(object sender, RoutedEventArgs e)
+    /// <summary>Puts a button for each preset in the settings after "Pomodoro".</summary>
+    private void ShowTimerPresets()
     {
-        if (((FrameworkElement)sender).Tag is string minutes)
+        TimerPresets.Children.RemoveRange(1, TimerPresets.Children.Count - 1);
+
+        foreach (TimerPreset preset in _settings.Timers())
         {
-            _pomodoro = null;
-            StartCountdown(TimeSpan.FromMinutes(int.Parse(minutes)));
+            var button = new Button
+            {
+                Style = TimerPomodoro.Style,
+                Margin = TimerPomodoro.Margin,
+                Content = preset.Label,
+                Tag = preset,
+                ToolTip = preset.Name.Length > 0 ? DurationParser.Describe(preset.Duration) : null,
+            };
+            button.Click += OnTimerPresetClicked;
+            TimerPresets.Children.Add(button);
         }
     }
+
+    private void OnTimerPresetClicked(object sender, RoutedEventArgs e)
+    {
+        if (((FrameworkElement)sender).Tag is TimerPreset preset)
+        {
+            _pomodoro = null;
+            _timerName = preset.Name.Length > 0 ? preset.Name : null;
+            StartCountdown(preset.Duration);
+        }
+    }
+
+    /// <summary>
+    /// Swaps the preset buttons for a box to type a length in, or back. The box needs the
+    /// keyboard, which the notch otherwise never takes; when done it goes back to the window
+    /// that had it.
+    /// </summary>
+    private void SetTimerEntryOpen(bool open)
+    {
+        if (_timerEntryOpen == open)
+        {
+            return;
+        }
+
+        _timerEntryOpen = open;
+        UpdateTimerRows();
+        TimerLabel.Text = open ? TimerEntryHint : TimerTitle;
+
+        if (open)
+        {
+            NoteForegroundWindow();
+            UpdateKeyboardInteraction();
+            TimerInput.Clear();
+            Activate();
+            TimerInput.Focus();
+        }
+        else
+        {
+            // Only while the notch still has the keyboard: if the user clicked another window, that one keeps it.
+            bool handBack = IsActive && _lastOtherWindow != 0;
+            UpdateKeyboardInteraction();
+            if (handBack)
+            {
+                OverlayWindow.SetForeground(_lastOtherWindow);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Remembers which window the user is working in. Called regularly rather than only when
+    /// the box opens, because by then the notch may already have been given the keyboard.
+    /// </summary>
+    private void NoteForegroundWindow()
+    {
+        nint foreground = OverlayWindow.GetForeground();
+        if (foreground != 0 && foreground != _hwnd)
+        {
+            _lastOtherWindow = foreground;
+        }
+    }
+
+    private void StartTypedTimer()
+    {
+        if (!DurationParser.TryParse(TimerInput.Text, out TimeSpan duration))
+        {
+            TimerInput.BorderBrush = ThemeManager.Brush(GlowColor.Red);
+            return;
+        }
+
+        _pomodoro = null;
+        _timerName = null;
+        SetTimerEntryOpen(false);
+        StartCountdown(duration);
+    }
+
+    /// <summary>Under the digits: the presets or the entry box while idle, pause and cancel otherwise.</summary>
+    private void UpdateTimerRows()
+    {
+        bool idle = _countdown.State == CountdownState.Idle;
+        TimerPresets.Visibility = TimerCustom.Visibility = idle && !_timerEntryOpen ? Visibility.Visible : Visibility.Collapsed;
+        TimerEntry.Visibility = idle && _timerEntryOpen ? Visibility.Visible : Visibility.Collapsed;
+        TimerControls.Visibility = idle ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    /// <summary>What is being timed: the Pomodoro phase, the preset's name, or plain "Timer".</summary>
+    private string TimerTitle => _pomodoro?.Label ?? _timerName ?? "Timer";
 
     private void StartCountdown(TimeSpan duration)
     {
@@ -166,7 +295,7 @@ public partial class NotchWindow
             return;
         }
 
-        TimerLabel.Text = _pomodoro?.Label ?? "Timer";
+        TimerLabel.Text = _timerEntryOpen ? TimerEntryHint : TimerTitle;
         string display = state switch
         {
             CountdownState.Idle => "0:00",
@@ -175,7 +304,7 @@ public partial class NotchWindow
         };
 
         // Ticks arrive four times a second; only touch the UI and the pill when something visible changed.
-        string signature = $"{state}:{display}:{_pomodoro?.Label}";
+        string signature = $"{state}:{display}:{TimerTitle}";
         if (signature == _lastTimerDisplay)
         {
             return;
@@ -193,8 +322,7 @@ public partial class NotchWindow
             TimerText.Foreground = ThemeManager.Brush(TimerColor);
         }
 
-        TimerPresets.Visibility = state == CountdownState.Idle ? Visibility.Visible : Visibility.Collapsed;
-        TimerControls.Visibility = state == CountdownState.Idle ? Visibility.Collapsed : Visibility.Visible;
+        UpdateTimerRows();
         TimerPauseResume.Visibility = state == CountdownState.Finished ? Visibility.Collapsed : Visibility.Visible;
         TimerPauseResume.Content = state == CountdownState.Paused ? "Resume" : "Pause";
         TimerReset.Content = state == CountdownState.Finished ? "Dismiss" : "Cancel";
@@ -213,17 +341,17 @@ public partial class NotchWindow
                     SystemSounds.Asterisk.Play();
                 }
 
-                PublishTimer(ActivityTier.Attention, "Timer", "Done", new Glow(TimerColor, GlowPattern.Pulse));
+                PublishTimer(ActivityTier.Attention, TimerTitle, "Done", new Glow(TimerColor, GlowPattern.Pulse));
                 break;
 
             case CountdownState.Paused:
-                PublishTimer(ActivityTier.Ongoing, $"{_pomodoro?.Label ?? "Timer"} paused", display, glow: null);
+                PublishTimer(ActivityTier.Ongoing, $"{TimerTitle} paused", display, glow: null);
                 break;
 
             // The glow breathes in the same colour as the digits; focus a touch stronger.
             default:
                 var running = new Glow(TimerColor, GlowPattern.Breathe, _pomodoro is { Phase: PomodoroPhase.Focus } ? 0.55 : 0.5);
-                PublishTimer(ActivityTier.Ongoing, _pomodoro?.Label ?? "Timer", display, running);
+                PublishTimer(ActivityTier.Ongoing, TimerTitle, display, running);
                 break;
         }
     }

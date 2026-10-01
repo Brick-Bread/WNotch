@@ -34,6 +34,11 @@ public static class OverlayWindow
             bounds.Height,
             NativeMethods.SWP_NOACTIVATE);
 
+    /// <summary>The window that has the keyboard, to hand it back to later with <see cref="SetForeground"/>.</summary>
+    public static nint GetForeground() => NativeMethods.GetForegroundWindow();
+
+    public static void SetForeground(nint hwnd) => NativeMethods.SetForegroundWindow(hwnd);
+
     /// <summary>The pointer's position in physical screen pixels, or null when Windows will not say (e.g. on the lock screen).</summary>
     public static (int X, int Y)? GetCursorPosition() =>
         NativeMethods.GetCursorPos(out POINT point) ? (point.X, point.Y) : null;

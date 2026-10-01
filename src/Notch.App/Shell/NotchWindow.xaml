@@ -139,24 +139,38 @@
 
                         <Border Style="{StaticResource Card}">
                             <DockPanel>
-                                <TextBlock x:Name="TimerLabel" DockPanel.Dock="Top" Text="Timer" Style="{StaticResource CardLabel}" />
-                                <StackPanel x:Name="TimerPresets" DockPanel.Dock="Bottom" Orientation="Horizontal"
-                                            Margin="-6,0,0,0">
+                                <DockPanel DockPanel.Dock="Top">
+                                    <!-- Negative margins keep the label row as low as it is without the button. -->
+                                    <Button x:Name="TimerCustom" DockPanel.Dock="Right" Style="{StaticResource PillButton}"
+                                            Content="+ Custom" FontSize="11" Padding="8,2" Margin="0,-4,-4,-4"
+                                            ToolTip="Set a timer of any length" />
+                                    <TextBlock x:Name="TimerLabel" Text="Timer" Style="{StaticResource CardLabel}" />
+                                </DockPanel>
+                                <!-- Wraps to a second row when the presets do not fit on one. -->
+                                <WrapPanel x:Name="TimerPresets" DockPanel.Dock="Bottom" Margin="-6,0,0,0">
                                     <Button x:Name="TimerPomodoro" Style="{StaticResource PillButton}" Content="Pomodoro"
-                                            Background="{DynamicResource AccentHoverBrush}"
+                                            Margin="6,6,0,0" Background="{DynamicResource AccentHoverBrush}"
                                             ToolTip="Focus and break sessions back to back; lengths are in Settings" />
-                                    <Button Style="{StaticResource PillButton}" Content="5m" Tag="5" Click="OnTimerPresetClicked" />
-                                    <Button Style="{StaticResource PillButton}" Content="15m" Tag="15" Click="OnTimerPresetClicked" />
-                                    <Button Style="{StaticResource PillButton}" Content="30m" Tag="30" Click="OnTimerPresetClicked" />
-                                    <Button Style="{StaticResource PillButton}" Content="60m" Tag="60" Click="OnTimerPresetClicked" />
-                                </StackPanel>
+                                    <!-- A button per preset from the settings follows, added in code. -->
+                                </WrapPanel>
+                                <!-- Takes the place of the presets while a length is being typed. -->
+                                <DockPanel x:Name="TimerEntry" DockPanel.Dock="Bottom" Margin="0,6,0,0" Visibility="Collapsed">
+                                    <Button x:Name="TimerEntryCancel" DockPanel.Dock="Right" Style="{StaticResource PillButton}"
+                                            Content="Cancel" />
+                                    <Button x:Name="TimerEntryStart" DockPanel.Dock="Right" Style="{StaticResource PillButton}"
+                                            Content="Start" Background="{DynamicResource AccentHoverBrush}" />
+                                    <TextBox x:Name="TimerInput" Style="{StaticResource PillTextBox}" MaxLength="24"
+                                             ToolTip="A number is minutes. Also 1:30, 90s, 1h20m. Enter starts, Esc cancels." />
+                                </DockPanel>
                                 <StackPanel x:Name="TimerControls" DockPanel.Dock="Bottom" Orientation="Horizontal"
-                                            Margin="-6,0,0,0" Visibility="Collapsed">
+                                            Margin="-6,6,0,0" Visibility="Collapsed">
                                     <Button x:Name="TimerPauseResume" Style="{StaticResource PillButton}" Content="Pause" />
                                     <Button x:Name="TimerReset" Style="{StaticResource PillButton}" Content="Cancel" />
                                 </StackPanel>
-                                <TextBlock x:Name="TimerText" Text="0:00" FontSize="34" FontWeight="SemiBold"
-                                           VerticalAlignment="Center" />
+                                <!-- Shrinks the digits when two rows of presets leave them less room. -->
+                                <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                    <TextBlock x:Name="TimerText" Text="0:00" FontSize="34" FontWeight="SemiBold" />
+                                </Viewbox>
                             </DockPanel>
                         </Border>
 

@@ -68,6 +68,10 @@ internal static unsafe partial class NativeMethods
     internal static partial nint GetForegroundWindow();
 
     [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool SetForegroundWindow(nint hwnd);
+
+    [LibraryImport("user32.dll")]
     internal static partial nint GetShellWindow();
 
     [LibraryImport("user32.dll", EntryPoint = "GetClassNameW")]
