@@ -22,9 +22,12 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock x:Name="CompactGlyph" FontFamily="{StaticResource IconFont}" FontSize="15"
                            VerticalAlignment="Center" />
+                <Border x:Name="CompactArt" Width="22" Height="22" CornerRadius="6"
+                        VerticalAlignment="Center" Visibility="Collapsed" />
                 <TextBlock x:Name="CompactTitle" Grid.Column="1" Margin="10,0" VerticalAlignment="Center"
                            FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                <TextBlock x:Name="CompactDetail" Grid.Column="2" VerticalAlignment="Center" Opacity="0.65" />
+                <TextBlock x:Name="CompactDetail" Grid.Column="2" VerticalAlignment="Center" Opacity="0.65"
+                           MaxWidth="130" TextTrimming="CharacterEllipsis" />
                 <ProgressBar x:Name="CompactProgress" Grid.Column="2" Width="110" Height="4" Maximum="1"
                              VerticalAlignment="Center" BorderThickness="0"
                              Foreground="White" Background="#40FFFFFF" />
@@ -35,6 +38,7 @@
                   HorizontalAlignment="Center" VerticalAlignment="Top" Opacity="0" IsHitTestVisible="False">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
@@ -44,7 +48,60 @@
                     <TextBlock Text="Stats" Margin="20,0,0,0" Opacity="0.45" />
                 </StackPanel>
 
-                <ItemsControl x:Name="ActivityList" Grid.Row="1" Margin="0,18,0,0">
+                <Grid x:Name="MediaCard" Grid.Row="1" Margin="0,18,0,0" Visibility="Collapsed">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Grid Width="112" Height="112">
+                        <Border CornerRadius="14" Background="#1AFFFFFF">
+                            <TextBlock Text="&#xE8D6;" FontFamily="{StaticResource IconFont}" FontSize="34"
+                                       Opacity="0.5" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <Border x:Name="MediaArt" CornerRadius="14" />
+                    </Grid>
+
+                    <Grid Grid.Column="1" Margin="18,0,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock x:Name="MediaTitle" FontSize="17" FontWeight="SemiBold"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock x:Name="MediaArtist" Grid.Row="1" Margin="0,2,0,0" Opacity="0.65"
+                                   TextTrimming="CharacterEllipsis" />
+
+                        <Grid x:Name="MediaTimeline" Grid.Row="2" VerticalAlignment="Center">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="44" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="44" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="MediaElapsed" FontSize="11" Opacity="0.65" VerticalAlignment="Center" />
+                            <!-- Taller than the bar so it is easy to hit. -->
+                            <Border x:Name="MediaSeekArea" Grid.Column="1" Height="18" Background="Transparent">
+                                <ProgressBar x:Name="MediaProgress" Height="4" Maximum="1" BorderThickness="0"
+                                             VerticalAlignment="Center" IsHitTestVisible="False"
+                                             Foreground="White" Background="#40FFFFFF" />
+                            </Border>
+                            <TextBlock x:Name="MediaRemaining" Grid.Column="2" FontSize="11" Opacity="0.65"
+                                       VerticalAlignment="Center" HorizontalAlignment="Right" />
+                        </Grid>
+
+                        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button x:Name="MediaPrevious" Style="{StaticResource IconButton}" Content="&#xE892;" />
+                            <Button x:Name="MediaPlayPause" Style="{StaticResource IconButton}" Content="&#xE768;"
+                                    FontSize="22" Margin="14,0" />
+                            <Button x:Name="MediaNext" Style="{StaticResource IconButton}" Content="&#xE893;" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+
+                <ItemsControl x:Name="ActivityList" Grid.Row="2" Margin="0,18,0,0">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Background="#1AFFFFFF" CornerRadius="12" Padding="14,10" Margin="0,0,0,8">
@@ -67,7 +124,7 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <TextBlock x:Name="EmptyText" Grid.Row="1" Text="Nothing happening right now"
+                <TextBlock x:Name="EmptyText" Grid.Row="2" Text="Nothing happening right now"
                            Opacity="0.45" HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Grid>
         </Grid>

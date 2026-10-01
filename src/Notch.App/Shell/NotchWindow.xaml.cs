@@ -5,6 +5,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using Notch.Core.Activities;
+using Notch.Core.Media;
 using Notch.Core.Shell;
 using Notch.Platform.Display;
 
@@ -20,6 +21,7 @@ public partial class NotchWindow : Window
     private static readonly Duration FadeDuration = TimeSpan.FromMilliseconds(160);
 
     private readonly ActivityManager _activities;
+    private readonly IMediaService _media;
     private readonly NotchAnimator _animator;
     private readonly RectangleGeometry _islandClip = new();
     private readonly DispatcherTimer _hoverTimer = new();
@@ -29,13 +31,18 @@ public partial class NotchWindow : Window
     private DisplayInfo? _display;
     private bool _expanded;
     private bool _hoverWantsExpanded;
+    private bool _pinnedOpen;
+    private byte[]? _compactArtBytes;
+    private bool _hasListedActivities;
 
-    public NotchWindow(ActivityManager activities)
+    public NotchWindow(ActivityManager activities, IMediaService media)
     {
         InitializeComponent();
 
         _activities = activities;
         _activities.Changed += OnActivitiesChanged;
+        _media = media;
+        InitializeMedia();
 
         Shape idle = ShapeFor(NotchMode.Idle);
         _animator = new NotchAnimator(idle.Width, idle.Height, idle.Radius);
@@ -55,6 +62,7 @@ public partial class NotchWindow : Window
         _housekeepingTimer.Tick += (_, _) => Housekeeping();
 
         Refresh();
+        UpdateMediaCard();
     }
 
     private readonly record struct Shape(double Width, double Height, double Radius);
@@ -82,6 +90,8 @@ public partial class NotchWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         _activities.Changed -= OnActivitiesChanged;
+        _media.Changed -= OnMediaChanged;
+        _mediaTimer.Stop();
         _hoverTimer.Stop();
         _housekeepingTimer.Stop();
         base.OnClosed(e);
@@ -147,8 +157,16 @@ public partial class NotchWindow : Window
         _hoverTimer.Start();
     }
 
+    /// <summary>Keeps the notch expanded regardless of the pointer (<c>--pin-open</c>, for development).</summary>
+    public void PinOpen()
+    {
+        _pinnedOpen = true;
+        SetExpanded(true);
+    }
+
     private void SetExpanded(bool expanded)
     {
+        expanded |= _pinnedOpen;
         if (_expanded != expanded)
         {
             _expanded = expanded;
@@ -168,6 +186,16 @@ public partial class NotchWindow : Window
         {
             Activity top = activities[0];
             CompactGlyph.Text = top.Glyph;
+            if (!ReferenceEquals(top.Image, _compactArtBytes))
+            {
+                _compactArtBytes = top.Image;
+                CompactArt.Background = ImageLoader.ToCoverBrush(ImageLoader.Decode(top.Image, 64));
+            }
+
+            // Album art and the like replace the glyph when the image decodes.
+            bool showArt = CompactArt.Background is not null;
+            CompactArt.Visibility = showArt ? Visibility.Visible : Visibility.Collapsed;
+            CompactGlyph.Visibility = showArt ? Visibility.Collapsed : Visibility.Visible;
             CompactTitle.Text = top.Title;
             CompactDetail.Text = top.Detail;
 
@@ -178,13 +206,20 @@ public partial class NotchWindow : Window
             CompactProgress.Value = top.Progress ?? 0;
         }
 
-        ActivityList.ItemsSource = activities;
-        EmptyText.Visibility = activities.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        // Media has its own card on the Home tab.
+        Activity[] listed = [.. activities.Where(a => a.Id != MediaActivityPublisher.ActivityId)];
+        ActivityList.ItemsSource = listed;
+        _hasListedActivities = listed.Length > 0;
+        UpdateEmptyText();
+        UpdateMediaTimer();
 
         Fade(CompactLayer, mode is NotchMode.Compact or NotchMode.Peek);
         Fade(ExpandedLayer, mode is NotchMode.Expanded);
         ExpandedLayer.IsHitTestVisible = mode is NotchMode.Expanded;
     }
+
+    private void UpdateEmptyText() =>
+        EmptyText.Visibility = _hasListedActivities || _media.Current is not null ? Visibility.Collapsed : Visibility.Visible;
 
     private static void Fade(UIElement element, bool visible) =>
         element.BeginAnimation(OpacityProperty, new DoubleAnimation(visible ? 1 : 0, FadeDuration));

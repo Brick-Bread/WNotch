@@ -16,13 +16,11 @@ internal sealed class DemoDriver : IDisposable
         _activities = activities;
         _script =
         [
-            () => _activities.Publish(new Activity { Id = "media", Tier = ActivityTier.Ongoing, Glyph = "", Title = "Weightless", Detail = "Marconi Union", Progress = 0.35 }),
             () => _activities.Publish(new Activity { Id = "hud.volume", Tier = ActivityTier.Transient, Glyph = "", Title = "Volume", Progress = 0.6 }),
             () => _activities.Publish(new Activity { Id = "agent", Tier = ActivityTier.Ongoing, Glyph = "", Title = "Claude", Detail = "Working" }),
             () => _activities.Publish(new Activity { Id = "agent", Tier = ActivityTier.Attention, Glyph = "", Title = "Claude", Detail = "Needs input" }),
             () => _activities.Publish(new Activity { Id = "hud.power", Tier = ActivityTier.Transient, Glyph = "", Title = "Charging", Detail = "82%" }),
             () => _activities.Remove("agent"),
-            () => _activities.Remove("media"),
         ];
 
         _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };

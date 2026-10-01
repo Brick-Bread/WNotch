@@ -27,6 +27,9 @@ public sealed record Activity
     /// <summary>A Segoe Fluent Icons code point.</summary>
     public string? Glyph { get; init; }
 
+    /// <summary>Encoded image bytes (PNG or JPEG) shown in place of <see cref="Glyph"/>, e.g. album art.</summary>
+    public byte[]? Image { get; init; }
+
     /// <summary>0..1, or null when the activity has no meaningful progress.</summary>
     public double? Progress { get; init; }
 
