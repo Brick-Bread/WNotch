@@ -18,6 +18,8 @@
         <CheckBox x:Name="StartWithWindows" Content="Start with Windows" />
         <CheckBox x:Name="ExpandOnHover" Content="Open the notch when the pointer hovers over it" />
         <CheckBox x:Name="HideInFullscreen" Content="Hide while an app is fullscreen" />
+        <CheckBox x:Name="AutoUpdate" Content="Install updates automatically"
+                  ToolTip="Checks GitHub for new releases, installs them in the background and restarts Notch when it is not in use." />
         <DockPanel Margin="0,10,0,0">
             <TextBlock Text="Display" VerticalAlignment="Center" Margin="0,0,12,0" />
             <ComboBox x:Name="Display" />

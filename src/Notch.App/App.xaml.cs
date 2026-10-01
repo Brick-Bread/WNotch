@@ -4,6 +4,7 @@ using H.NotifyIcon;
 using Notch.App.Settings;
 using Notch.App.Shell;
 using Notch.App.Terminal;
+using Notch.App.Updates;
 using Notch.Core.Activities;
 using Notch.Core.Media;
 using Notch.Core.Settings;
@@ -23,6 +24,7 @@ public partial class App : Application
     private volatile SystemHudSources? _huds;
     private TaskbarIcon? _tray;
     private SettingsWindow? _settingsWindow;
+    private UpdateService? _updates;
     private DemoDriver? _demo;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -36,7 +38,13 @@ public partial class App : Application
             args.Handled = true;
         };
 
-        _singleInstance = new Mutex(initiallyOwned: true, @"Local\Notch.SingleInstance", out bool isFirstInstance);
+        // Debug builds use their own name so they can run next to an installed copy.
+#if DEBUG
+        const string instanceName = @"Local\Notch.SingleInstance.Debug";
+#else
+        const string instanceName = @"Local\Notch.SingleInstance";
+#endif
+        _singleInstance = new Mutex(initiallyOwned: true, instanceName, out bool isFirstInstance);
         if (!isFirstInstance)
         {
             Shutdown();
@@ -94,6 +102,13 @@ public partial class App : Application
         ActivityManager activities = _activities;
         Task.Run(() => _huds = SystemHudSources.Start(activities));
 
+        _updates = new UpdateService(settings, settingsStore, _activities, () => window.IsBusy, Shutdown);
+        _updates.CleanUpDownloads();
+        if (HasFlag(e, UpdateService.UpdatedFlag))
+        {
+            UpdateService.AnnounceUpdated(_activities);
+        }
+
         if (demo)
         {
             _demo = new DemoDriver(_activities);
@@ -103,6 +118,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _demo?.Dispose();
+        _updates?.Dispose();
         _terminal?.Dispose();
         _huds?.Dispose();
         _tray?.Dispose();
@@ -126,6 +142,7 @@ public partial class App : Application
         {
             _activities?.SetSuppressed(settings.SuppressedActivityIds());
             notch.ApplySettings();
+            _updates?.CheckSoon();
         };
         _settingsWindow.Closed += (_, _) => _settingsWindow = null;
         _settingsWindow.Show();

@@ -16,6 +16,14 @@ public sealed class AppSettings
 
     public bool HideInFullscreen { get; set; } = true;
 
+    /// <summary>Download and install new releases without asking.</summary>
+    public bool AutoUpdate { get; set; } = true;
+
+    /// <summary>The release tag the updater last tried to install, so a release that fails to install is not retried in a loop.</summary>
+    public string? LastUpdateAttemptTag { get; set; }
+
+    public DateTimeOffset? LastUpdateAttemptAt { get; set; }
+
     public bool ShowMedia { get; set; } = true;
 
     public bool ShowVolume { get; set; } = true;

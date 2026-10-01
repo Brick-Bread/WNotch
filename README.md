@@ -9,7 +9,8 @@ A dynamic notch for Windows 11, in the spirit of Atoll on macOS: a small black p
 - **System HUDs.** Volume, audio output changes, brightness, charger and low battery, Bluetooth devices connecting.
 - **Terminal for Claude Code and Codex.** A real terminal inside the notch that runs the `claude` and `codex` CLIs (or PowerShell) in a folder you pick. The pill shows whether an agent is working, needs input, or is done.
 - **Widgets.** A countdown timer, upcoming events from iCalendar (.ics) feeds, and a Stats tab with CPU, memory, GPU, network and battery.
-- **Settings.** From the tray icon: start with Windows, which display to use, what the pill shows, calendar feeds.
+- **Automatic updates.** An installed copy checks this repository's releases, installs a newer one in the background and restarts itself. Can be switched off in settings.
+- **Settings.** From the tray icon: start with Windows, automatic updates, which display to use, what the pill shows, calendar feeds.
 
 ## Install
 
@@ -28,6 +29,7 @@ Things to know:
 - Windows still shows its own volume and brightness flyout next to the notch's. There is no supported way to turn it off.
 - Brightness HUDs only work for built-in panels; external monitors do not report brightness changes.
 - Calendar events come from .ics links. Google Calendar and Outlook both offer one in their sharing settings.
+- Updates are checked shortly after start and every four hours. The installer is only taken from this repository's release downloads and is checked against the size and SHA-256 digest GitHub lists before it runs. The restart waits until the notch is closed, no terminal session is open and no timer is running. Copies not installed by the installer (development builds) never update themselves.
 - Agent status relies on hooks the app passes when it starts a CLI (`--settings` for Claude, a `notify` override for Codex). Sessions you start in other terminals are not tracked. Codex only reports the end of a turn, so its "working" state is inferred from terminal activity.
 
 ## Building
@@ -54,7 +56,9 @@ Settings live in `%AppData%\Notch\settings.json`; unexpected errors are logged t
 
 ### Releasing
 
-Pushing a tag such as `v0.1.0` runs `.github/workflows/release.yml`, which tests, publishes a self-contained build, compiles the NSIS installer (`installer/Notch.nsi`) and attaches it to a GitHub release. Running that workflow by hand builds the installer as a workflow artifact without releasing.
+Set `<Version>` in `Directory.Build.props` to match the tag; installed copies compare it with the latest release to decide whether to update.
+
+Pushing a tag such as `v0.2.0` runs `.github/workflows/release.yml`, which tests, publishes a self-contained build, compiles the NSIS installer (`installer/Notch.nsi`) and attaches it to a GitHub release. Running that workflow by hand builds the installer as a workflow artifact without releasing.
 
 ## Layout
 

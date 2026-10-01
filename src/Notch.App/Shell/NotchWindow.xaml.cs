@@ -9,6 +9,7 @@ using Notch.App.Terminal;
 using Notch.Core.Media;
 using Notch.Core.Settings;
 using Notch.Core.Shell;
+using Notch.Core.Widgets;
 using Notch.Platform.Display;
 
 namespace Notch.App.Shell;
@@ -132,6 +133,12 @@ public partial class NotchWindow : Window
 
         return 0;
     }
+
+    /// <summary>True while restarting the app would interrupt something: the notch is open, a terminal session exists, or a timer is counting.</summary>
+    public bool IsBusy =>
+        _expanded
+        || _terminal.Sessions.Count > 0
+        || _countdown.State is CountdownState.Running or CountdownState.Paused;
 
     /// <summary>Re-reads the settings object after the user saved changes.</summary>
     public void ApplySettings()

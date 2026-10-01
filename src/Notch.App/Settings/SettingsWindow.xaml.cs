@@ -21,6 +21,7 @@ public partial class SettingsWindow : Window
         StartWithWindows.IsChecked = StartupRegistration.IsEnabled;
         ExpandOnHover.IsChecked = settings.ExpandOnHover;
         HideInFullscreen.IsChecked = settings.HideInFullscreen;
+        AutoUpdate.IsChecked = settings.AutoUpdate;
         ShowMedia.IsChecked = settings.ShowMedia;
         ShowVolume.IsChecked = settings.ShowVolume;
         ShowBrightness.IsChecked = settings.ShowBrightness;
@@ -53,6 +54,7 @@ public partial class SettingsWindow : Window
     {
         _settings.ExpandOnHover = ExpandOnHover.IsChecked == true;
         _settings.HideInFullscreen = HideInFullscreen.IsChecked == true;
+        _settings.AutoUpdate = AutoUpdate.IsChecked == true;
         _settings.ShowMedia = ShowMedia.IsChecked == true;
         _settings.ShowVolume = ShowVolume.IsChecked == true;
         _settings.ShowBrightness = ShowBrightness.IsChecked == true;
