@@ -22,6 +22,10 @@ public partial class SettingsWindow : Window
         ExpandOnHover.IsChecked = settings.ExpandOnHover;
         HideInFullscreen.IsChecked = settings.HideInFullscreen;
         AutoUpdate.IsChecked = settings.AutoUpdate;
+        GlowEffects.IsChecked = settings.GlowEffects;
+        PomodoroFocus.Text = settings.PomodoroFocusMinutes.ToString();
+        PomodoroShortBreak.Text = settings.PomodoroShortBreakMinutes.ToString();
+        PomodoroLongBreak.Text = settings.PomodoroLongBreakMinutes.ToString();
         ShowMedia.IsChecked = settings.ShowMedia;
         ShowVolume.IsChecked = settings.ShowVolume;
         ShowBrightness.IsChecked = settings.ShowBrightness;
@@ -55,6 +59,10 @@ public partial class SettingsWindow : Window
         _settings.ExpandOnHover = ExpandOnHover.IsChecked == true;
         _settings.HideInFullscreen = HideInFullscreen.IsChecked == true;
         _settings.AutoUpdate = AutoUpdate.IsChecked == true;
+        _settings.GlowEffects = GlowEffects.IsChecked == true;
+        _settings.PomodoroFocusMinutes = ReadMinutes(PomodoroFocus.Text, _settings.PomodoroFocusMinutes);
+        _settings.PomodoroShortBreakMinutes = ReadMinutes(PomodoroShortBreak.Text, _settings.PomodoroShortBreakMinutes);
+        _settings.PomodoroLongBreakMinutes = ReadMinutes(PomodoroLongBreak.Text, _settings.PomodoroLongBreakMinutes);
         _settings.ShowMedia = ShowMedia.IsChecked == true;
         _settings.ShowVolume = ShowVolume.IsChecked == true;
         _settings.ShowBrightness = ShowBrightness.IsChecked == true;
@@ -78,4 +86,8 @@ public partial class SettingsWindow : Window
         Saved?.Invoke(this, EventArgs.Empty);
         Close();
     }
+
+    /// <summary>Keeps the previous value when the box does not hold a sensible number of minutes.</summary>
+    private static int ReadMinutes(string text, int previous) =>
+        int.TryParse(text.Trim(), out int minutes) && minutes is >= 1 and <= 600 ? minutes : previous;
 }

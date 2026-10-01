@@ -8,6 +8,7 @@ using Notch.Core.Activities;
 using Notch.Core.Settings;
 using Notch.Core.Updates;
 using Activity = Notch.Core.Activities.Activity;
+using Glow = Notch.Core.Activities.Glow;
 
 namespace Notch.App.Updates;
 
@@ -88,6 +89,7 @@ internal sealed class UpdateService : IDisposable
         Title = "Notch updated",
         Detail = CurrentVersion.ToString(3),
         Glyph = UpdateGlyph,
+        Glow = new Glow(GlowColor.Green, GlowPattern.Flash),
         Lifetime = TimeSpan.FromSeconds(6),
     });
 

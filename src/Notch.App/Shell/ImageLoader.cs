@@ -1,6 +1,7 @@
 using System.IO;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Notch.Core.Activities;
 
 namespace Notch.App.Shell;
 
@@ -25,6 +26,28 @@ internal static class ImageLoader
             image.EndInit();
             image.Freeze();
             return image;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>A glow colour that represents the image, or null for greyscale or unreadable images.</summary>
+    public static GlowColor? AccentOf(ImageSource? image)
+    {
+        if (image is not BitmapSource bitmap)
+        {
+            return null;
+        }
+
+        try
+        {
+            var pixels32 = new FormatConvertedBitmap(bitmap, PixelFormats.Bgra32, null, 0);
+            int stride = pixels32.PixelWidth * 4;
+            byte[] pixels = new byte[stride * pixels32.PixelHeight];
+            pixels32.CopyPixels(pixels, stride, 0);
+            return AccentColor.FromPixels(pixels);
         }
         catch (Exception)
         {

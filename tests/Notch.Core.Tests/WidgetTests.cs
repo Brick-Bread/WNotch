@@ -32,6 +32,38 @@ public class WidgetTests
         Assert.Equal(CountdownState.Idle, timer.State);
     }
 
+    [Fact]
+    public void Pomodoro_alternates_and_takes_a_long_break_every_fourth_focus()
+    {
+        var cycle = new PomodoroCycle(PomodoroDurations.Classic);
+        var phases = new List<string> { cycle.Label };
+
+        for (int i = 0; i < 9; i++)
+        {
+            cycle.Advance();
+            phases.Add(cycle.Label);
+        }
+
+        Assert.Equal(
+            ["Focus 1/4", "Short break", "Focus 2/4", "Short break", "Focus 3/4", "Short break", "Focus 4/4", "Long break", "Focus 1/4", "Short break"],
+            phases);
+        Assert.Equal(5, cycle.CompletedFocuses);
+    }
+
+    [Fact]
+    public void Pomodoro_durations_follow_the_phase()
+    {
+        var cycle = new PomodoroCycle(new PomodoroDurations(TimeSpan.FromMinutes(50), TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(30), 2));
+
+        Assert.Equal(TimeSpan.FromMinutes(50), cycle.CurrentDuration);
+        cycle.Advance();
+        Assert.Equal(TimeSpan.FromMinutes(10), cycle.CurrentDuration);
+        cycle.Advance();
+        cycle.Advance();
+        Assert.Equal(PomodoroPhase.LongBreak, cycle.Phase);
+        Assert.Equal(TimeSpan.FromMinutes(30), cycle.CurrentDuration);
+    }
+
     [Theory]
     [InlineData(300, "5:00")]
     [InlineData(299.2, "5:00")]

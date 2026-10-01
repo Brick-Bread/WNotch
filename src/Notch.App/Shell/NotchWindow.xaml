@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:Notch.App.Shell"
         Title="Notch"
-        Width="980" Height="600"
+        Width="450" Height="96"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False" Topmost="True"
         Foreground="White"
@@ -30,6 +30,12 @@
     <!-- The window is as large as the notch ever gets. Everything outside the island is
          transparent, and transparent pixels of a layered window pass clicks through. -->
     <Grid x:Name="Root">
+        <!-- Exactly behind the island: only its glow shows. Sized and shaped in code. -->
+        <Border x:Name="GlowLayer" Width="180" Height="32" HorizontalAlignment="Center" VerticalAlignment="Top"
+                IsHitTestVisible="False" />
+        <Border x:Name="GlowCore" Width="180" Height="32" HorizontalAlignment="Center" VerticalAlignment="Top"
+                IsHitTestVisible="False" />
+
         <Grid x:Name="Island" Width="180" Height="32"
               HorizontalAlignment="Center" VerticalAlignment="Top" Background="Black">
 
@@ -130,13 +136,14 @@
 
                         <Border Style="{StaticResource Card}">
                             <DockPanel>
-                                <TextBlock DockPanel.Dock="Top" Text="Timer" Style="{StaticResource CardLabel}" />
+                                <TextBlock x:Name="TimerLabel" DockPanel.Dock="Top" Text="Timer" Style="{StaticResource CardLabel}" />
                                 <StackPanel x:Name="TimerPresets" DockPanel.Dock="Bottom" Orientation="Horizontal"
                                             Margin="-6,0,0,0">
-                                    <Button Style="{StaticResource PillButton}" Content="1m" Tag="1" Click="OnTimerPresetClicked" />
+                                    <Button x:Name="TimerPomodoro" Style="{StaticResource PillButton}" Content="Pomodoro"
+                                            ToolTip="Focus and break sessions back to back; lengths are in Settings" />
                                     <Button Style="{StaticResource PillButton}" Content="5m" Tag="5" Click="OnTimerPresetClicked" />
                                     <Button Style="{StaticResource PillButton}" Content="15m" Tag="15" Click="OnTimerPresetClicked" />
-                                    <Button Style="{StaticResource PillButton}" Content="25m" Tag="25" Click="OnTimerPresetClicked" />
+                                    <Button Style="{StaticResource PillButton}" Content="30m" Tag="30" Click="OnTimerPresetClicked" />
                                     <Button Style="{StaticResource PillButton}" Content="60m" Tag="60" Click="OnTimerPresetClicked" />
                                 </StackPanel>
                                 <StackPanel x:Name="TimerControls" DockPanel.Dock="Bottom" Orientation="Horizontal"

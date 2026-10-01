@@ -23,12 +23,17 @@ public partial class NotchWindow : Window
     private static readonly TimeSpan CloseDelay = TimeSpan.FromMilliseconds(350);
     private static readonly Duration FadeDuration = TimeSpan.FromMilliseconds(160);
 
+    // In DIPs. Large fits the biggest expanded tab; small fits the pill plus room for its glow.
+    private static readonly Size LargeWindowSize = new(980, 600);
+    private static readonly Size SmallWindowSize = new(450, 96);
+
     private readonly ActivityManager _activities;
     private readonly IMediaService _media;
     private readonly TerminalController _terminal;
     private readonly SettingsStore _settingsStore;
     private readonly AppSettings _settings;
     private readonly NotchAnimator _animator;
+    private readonly GlowController _glow;
     private readonly RectangleGeometry _islandClip = new();
     private readonly DispatcherTimer _hoverTimer = new();
     private readonly DispatcherTimer _housekeepingTimer = new() { Interval = TimeSpan.FromSeconds(1) };
@@ -39,6 +44,8 @@ public partial class NotchWindow : Window
     private bool _hoverWantsExpanded;
     private bool _pinnedOpen;
     private byte[]? _compactArtBytes;
+    private GlowColor? _artAccent;
+    private bool _largeWindow;
 
     internal NotchWindow(
         ActivityManager activities,
@@ -55,6 +62,7 @@ public partial class NotchWindow : Window
         _terminal = terminal;
         _settingsStore = settingsStore;
         _settings = settings;
+        _glow = new GlowController(GlowLayer, GlowCore);
         InitializeMedia();
         InitializeTerminal();
         InitializeWidgets();
@@ -62,6 +70,13 @@ public partial class NotchWindow : Window
         Shape idle = ShapeFor(NotchMode.Idle);
         _animator = new NotchAnimator(idle.Width, idle.Height, idle.Radius);
         _animator.Frame += ApplyShape;
+        _animator.Settled += () =>
+        {
+            if (!_expanded)
+            {
+                SetLargeWindow(false);
+            }
+        };
         Island.Clip = _islandClip;
         ApplyShape();
 
@@ -118,6 +133,7 @@ public partial class NotchWindow : Window
         _activities.Changed -= OnActivitiesChanged;
         _media.Changed -= OnMediaChanged;
         _mediaTimer.Stop();
+        _glow.Dispose();
         _hoverTimer.Stop();
         _housekeepingTimer.Stop();
         base.OnClosed(e);
@@ -146,6 +162,23 @@ public partial class NotchWindow : Window
         Reposition();
         Housekeeping();
         RefreshCalendar();
+        Refresh();
+    }
+
+    /// <summary>
+    /// Every repaint of a transparent window copies the whole window, so it stays only as big
+    /// as the pill needs and grows just before the notch expands. This keeps glow animations cheap.
+    /// </summary>
+    private void SetLargeWindow(bool large)
+    {
+        if (_largeWindow != large)
+        {
+            _largeWindow = large;
+            if (_hwnd != 0)
+            {
+                Reposition();
+            }
+        }
     }
 
     /// <summary>Pins the window to the top-center of the chosen display, in physical pixels.</summary>
@@ -158,8 +191,9 @@ public partial class NotchWindow : Window
             : Displays.GetPrimary();
         _display = display;
 
-        int width = (int)Math.Round(Width * display.Scale);
-        int height = (int)Math.Round(Height * display.Scale);
+        Size size = _largeWindow ? LargeWindowSize : SmallWindowSize;
+        int width = (int)Math.Round(size.Width * display.Scale);
+        int height = (int)Math.Round(size.Height * display.Scale);
         int left = display.Bounds.Left + ((display.Bounds.Width - width) / 2);
         var target = new PixelRect(left, display.Bounds.Top, left + width, display.Bounds.Top + height);
 
@@ -235,6 +269,11 @@ public partial class NotchWindow : Window
         IReadOnlyList<Activity> activities = _activities.Snapshot();
         NotchMode mode = NotchModeResolver.Resolve(_expanded, activities);
 
+        if (mode == NotchMode.Expanded)
+        {
+            SetLargeWindow(true);
+        }
+
         Shape shape = ShapeFor(mode);
         _animator.AnimateTo(shape.Width, shape.Height, shape.Radius);
 
@@ -245,7 +284,9 @@ public partial class NotchWindow : Window
             if (!ReferenceEquals(top.Image, _compactArtBytes))
             {
                 _compactArtBytes = top.Image;
-                CompactArt.Background = ImageLoader.ToCoverBrush(ImageLoader.Decode(top.Image, 64));
+                ImageSource? art = ImageLoader.Decode(top.Image, 64);
+                CompactArt.Background = ImageLoader.ToCoverBrush(art);
+                _artAccent = ImageLoader.AccentOf(art);
             }
 
             // Album art and the like replace the glyph when the image decodes.
@@ -268,6 +309,11 @@ public partial class NotchWindow : Window
         ExpandedLayer.Height = expanded.Height - 36;
         UpdateMediaTimer();
 
+        // No glow while expanded: the halo around the large panel would swallow clicks meant
+        // for the windows next to it, including the click that closes the notch.
+        Activity? lit = mode is NotchMode.Compact or NotchMode.Peek && _settings.GlowEffects ? activities[0] : null;
+        _glow.Show(lit?.Glow, lit?.Id == MediaActivityPublisher.ActivityId && lit.Image is not null ? _artAccent : null);
+
         Fade(CompactLayer, mode is NotchMode.Compact or NotchMode.Peek);
         Fade(ExpandedLayer, mode is NotchMode.Expanded);
         ExpandedLayer.IsHitTestVisible = mode is NotchMode.Expanded;
@@ -284,6 +330,10 @@ public partial class NotchWindow : Window
 
         Island.Width = width;
         Island.Height = height;
+        var corners = new CornerRadius(0, 0, radius, radius);
+        GlowLayer.Width = GlowCore.Width = width;
+        GlowLayer.Height = GlowCore.Height = height;
+        GlowLayer.CornerRadius = GlowCore.CornerRadius = corners;
 
         // The rounded rectangle starts one radius above the island, so only the bottom corners
         // are rounded and the top edge sits flush against the screen edge.

@@ -12,6 +12,7 @@ namespace Notch.App.Shell;
 public partial class NotchWindow
 {
     private const string TimerActivityId = "timer";
+    private const string PomodoroNoticeId = "timer.phase";
     private const string TimerGlyph = "";
     private const int MaxCalendarEntries = 4;
 
@@ -24,6 +25,8 @@ public partial class NotchWindow
     private readonly SystemStatsSampler _stats = new();
     private readonly DispatcherTimer _statsTimer = new() { Interval = TimeSpan.FromSeconds(1) };
 
+    /// <summary>Set while the timer runs a Pomodoro cycle rather than a single countdown.</summary>
+    private PomodoroCycle? _pomodoro;
     private string? _lastTimerDisplay;
     private bool _timerAnnounced;
     private bool _statsSampling;
@@ -49,8 +52,14 @@ public partial class NotchWindow
         };
         TimerReset.Click += (_, _) =>
         {
+            _pomodoro = null;
             _countdown.Reset();
             UpdateTimer();
+        };
+        TimerPomodoro.Click += (_, _) =>
+        {
+            _pomodoro = new PomodoroCycle(_settings.PomodoroDurations());
+            StartCountdown(_pomodoro.CurrentDuration);
         };
 
         _calendar.Changed += (_, _) => Dispatcher.BeginInvoke(UpdateCalendar);
@@ -66,16 +75,47 @@ public partial class NotchWindow
     {
         if (((FrameworkElement)sender).Tag is string minutes)
         {
-            _countdown.Start(TimeSpan.FromMinutes(int.Parse(minutes)));
-            _timerAnnounced = false;
-            _countdownTick.Start();
-            UpdateTimer();
+            _pomodoro = null;
+            StartCountdown(TimeSpan.FromMinutes(int.Parse(minutes)));
         }
+    }
+
+    private void StartCountdown(TimeSpan duration)
+    {
+        _countdown.Start(duration);
+        _timerAnnounced = false;
+        _countdownTick.Start();
+        UpdateTimer();
+    }
+
+    /// <summary>A Pomodoro phase ran out: chime, say what comes next, and carry straight on.</summary>
+    private void AdvancePomodoro(PomodoroCycle pomodoro)
+    {
+        bool focusNext = pomodoro.Advance() == PomodoroPhase.Focus;
+        SystemSounds.Asterisk.Play();
+        _activities.Publish(new Activity
+        {
+            Id = PomodoroNoticeId,
+            Tier = ActivityTier.Transient,
+            Title = focusNext ? "Back to focus" : "Break time",
+            Detail = pomodoro.Label,
+            Glyph = TimerGlyph,
+            Glow = new Glow(focusNext ? GlowColor.Red : GlowColor.Green, GlowPattern.Flash),
+            Lifetime = TimeSpan.FromSeconds(4),
+        });
+        StartCountdown(pomodoro.CurrentDuration);
     }
 
     private void UpdateTimer()
     {
         CountdownState state = _countdown.State;
+        if (state == CountdownState.Finished && _pomodoro is { } pomodoro)
+        {
+            AdvancePomodoro(pomodoro);
+            return;
+        }
+
+        TimerLabel.Text = _pomodoro?.Label ?? "Timer";
         string display = state switch
         {
             CountdownState.Idle => "0:00",
@@ -84,7 +124,7 @@ public partial class NotchWindow
         };
 
         // Ticks arrive four times a second; only touch the UI and the pill when something visible changed.
-        string signature = $"{state}:{display}";
+        string signature = $"{state}:{display}:{_pomodoro?.Label}";
         if (signature == _lastTimerDisplay)
         {
             return;
@@ -113,22 +153,34 @@ public partial class NotchWindow
                     SystemSounds.Asterisk.Play();
                 }
 
-                PublishTimer(ActivityTier.Attention, "Timer", "Done");
+                PublishTimer(ActivityTier.Attention, "Timer", "Done", new Glow(GlowColor.Orange, GlowPattern.Pulse));
                 break;
 
+            case CountdownState.Paused:
+                PublishTimer(ActivityTier.Ongoing, $"{_pomodoro?.Label ?? "Timer"} paused", display, glow: null);
+                break;
+
+            // Pomodoro focus breathes red (the tomato), breaks green; a plain timer orange.
             default:
-                PublishTimer(ActivityTier.Ongoing, state == CountdownState.Paused ? "Timer paused" : "Timer", display);
+                Glow running = _pomodoro?.Phase switch
+                {
+                    PomodoroPhase.Focus => new Glow(GlowColor.Red, GlowPattern.Breathe, 0.55),
+                    PomodoroPhase.ShortBreak or PomodoroPhase.LongBreak => new Glow(GlowColor.Green, GlowPattern.Breathe, 0.5),
+                    _ => new Glow(GlowColor.Orange, GlowPattern.Breathe, 0.5),
+                };
+                PublishTimer(ActivityTier.Ongoing, _pomodoro?.Label ?? "Timer", display, running);
                 break;
         }
     }
 
-    private void PublishTimer(ActivityTier tier, string title, string detail) => _activities.Publish(new Activity
+    private void PublishTimer(ActivityTier tier, string title, string detail, Glow? glow) => _activities.Publish(new Activity
     {
         Id = TimerActivityId,
         Tier = tier,
         Title = title,
         Detail = detail,
         Glyph = TimerGlyph,
+        Glow = glow,
     });
 
     private async Task RefreshCalendarAsync()

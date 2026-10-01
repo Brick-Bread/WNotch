@@ -14,6 +14,9 @@ internal sealed class NotchAnimator(double width, double height, double radius)
 
     public event Action? Frame;
 
+    /// <summary>Raised once the shape has come to rest.</summary>
+    public event Action? Settled;
+
     public double Width => _width.Value;
 
     public double Height => _height.Value;
@@ -60,6 +63,7 @@ internal sealed class NotchAnimator(double width, double height, double radius)
         {
             _running = false;
             CompositionTarget.Rendering -= OnRendering;
+            Settled?.Invoke();
         }
     }
 }

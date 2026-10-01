@@ -1,5 +1,6 @@
 using System.Windows.Threading;
 using Notch.Core.Activities;
+using Notch.Core.Agents;
 using Notch.Core.Hud;
 
 namespace Notch.App.Shell;
@@ -18,12 +19,14 @@ internal sealed class DemoDriver : IDisposable
         _script =
         [
             () => _activities.Publish(HudActivities.Volume(0.6, muted: false)),
-            () => _activities.Publish(new Activity { Id = "agent", Tier = ActivityTier.Ongoing, Glyph = "", Title = "Claude", Detail = "Working" }),
-            () => _activities.Publish(new Activity { Id = "agent", Tier = ActivityTier.Attention, Glyph = "", Title = "Claude", Detail = "Needs input" }),
+            () => _activities.Publish(AgentActivities.For("demo", "Claude", "", AgentState.Working)!),
+            () => _activities.Publish(AgentActivities.For("demo", "Claude", "", AgentState.NeedsInput)!),
+            () => _activities.Publish(AgentActivities.For("demo", "Claude", "", AgentState.Done)!),
             () => _activities.Publish(HudActivities.Power(pluggedIn: true, percent: 82)),
             () => _activities.Publish(HudActivities.Bluetooth("Headphones", connected: true)),
             () => _activities.Publish(HudActivities.Brightness(0.4)),
-            () => _activities.Remove("agent"),
+            () => _activities.Remove(AgentActivities.IdFor("demo")),
+            () => _activities.Publish(HudActivities.LowBattery(9)),
         ];
 
         _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };

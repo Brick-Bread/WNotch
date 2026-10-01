@@ -8,7 +8,8 @@ A dynamic notch for Windows 11, in the spirit of Atoll on macOS: a small black p
 - **Media.** Whatever is playing (Spotify, a browser tab, any app that reports to Windows) shows with its artwork. The expanded view has play/pause, skip and click-to-seek.
 - **System HUDs.** Volume, audio output changes, brightness, charger and low battery, Bluetooth devices connecting.
 - **Terminal for Claude Code and Codex.** A real terminal inside the notch that runs the `claude` and `codex` CLIs (or PowerShell) in a folder you pick. The pill shows whether an agent is working, needs input, or is done.
-- **Widgets.** A countdown timer, upcoming events from iCalendar (.ics) feeds, and a Stats tab with CPU, memory, GPU, network and battery.
+- **Glow effects.** The pill lights up in a colour and rhythm that matches what is happening: it pulses to the music in the album art's colour, breathes blue while an agent works, pulses amber when it needs you, turns green when it is done, and flashes for volume, charging, Bluetooth and low battery.
+- **Widgets.** A countdown timer with a Pomodoro mode (focus and break sessions back to back), upcoming events from iCalendar (.ics) feeds, and a Stats tab with CPU, memory, GPU, network and battery.
 - **Automatic updates.** An installed copy checks this repository's releases, installs a newer one in the background and restarts itself. Can be switched off in settings.
 - **Settings.** From the tray icon: start with Windows, automatic updates, which display to use, what the pill shows, calendar feeds.
 

@@ -16,6 +16,9 @@ public sealed class AppSettings
 
     public bool HideInFullscreen { get; set; } = true;
 
+    /// <summary>Light up the pill in a colour and rhythm that matches what is happening.</summary>
+    public bool GlowEffects { get; set; } = true;
+
     /// <summary>Download and install new releases without asking.</summary>
     public bool AutoUpdate { get; set; } = true;
 
@@ -33,6 +36,25 @@ public sealed class AppSettings
     public bool ShowPower { get; set; } = true;
 
     public bool ShowBluetooth { get; set; } = true;
+
+    public int PomodoroFocusMinutes { get; set; } = 25;
+
+    public int PomodoroShortBreakMinutes { get; set; } = 5;
+
+    public int PomodoroLongBreakMinutes { get; set; } = 15;
+
+    /// <summary>Pomodoro lengths from the settings, with anything out of range replaced by the classic value.</summary>
+    public Widgets.PomodoroDurations PomodoroDurations()
+    {
+        Widgets.PomodoroDurations classic = Widgets.PomodoroDurations.Classic;
+        return new Widgets.PomodoroDurations(
+            Minutes(PomodoroFocusMinutes, classic.Focus),
+            Minutes(PomodoroShortBreakMinutes, classic.ShortBreak),
+            Minutes(PomodoroLongBreakMinutes, classic.LongBreak));
+
+        static TimeSpan Minutes(int value, TimeSpan fallback) =>
+            value is >= 1 and <= 600 ? TimeSpan.FromMinutes(value) : fallback;
+    }
 
     /// <summary>iCalendar (.ics) links shown on the Home tab's calendar card.</summary>
     public List<string> CalendarFeeds { get; set; } = [];

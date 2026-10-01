@@ -40,6 +40,9 @@ public sealed class MediaActivityPublisher : IDisposable
             Image = media.Thumbnail,
             Title = string.IsNullOrWhiteSpace(media.Title) ? "Playing" : media.Title,
             Detail = media.Artist,
+
+            // The shell swaps in a colour taken from the artwork when it has one.
+            Glow = new Glow(GlowColor.Violet, GlowPattern.Audio, 0.85),
         });
     }
 }

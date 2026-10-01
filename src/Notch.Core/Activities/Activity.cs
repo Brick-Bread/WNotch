@@ -33,6 +33,9 @@ public sealed record Activity
     /// <summary>0..1, or null when the activity has no meaningful progress.</summary>
     public double? Progress { get; init; }
 
+    /// <summary>Light around the notch while this activity is on top; null for none.</summary>
+    public Glow? Glow { get; init; }
+
     /// <summary>Only used by <see cref="ActivityTier.Transient"/>; defaults to <see cref="ActivityManager.DefaultTransientLifetime"/>.</summary>
     public TimeSpan? Lifetime { get; init; }
 }

@@ -26,11 +26,22 @@
         </DockPanel>
 
         <TextBlock Text="Show in the pill" Style="{StaticResource Heading}" Margin="0,22,0,8" />
+        <CheckBox x:Name="GlowEffects" Content="Glow effects (colour and rhythm follow what is happening)" />
         <CheckBox x:Name="ShowMedia" Content="Media that is playing" />
         <CheckBox x:Name="ShowVolume" Content="Volume and audio output changes" />
         <CheckBox x:Name="ShowBrightness" Content="Brightness changes" />
         <CheckBox x:Name="ShowPower" Content="Charging and low battery" />
         <CheckBox x:Name="ShowBluetooth" Content="Bluetooth devices connecting" />
+
+        <TextBlock Text="Pomodoro (minutes)" Style="{StaticResource Heading}" Margin="0,22,0,8" />
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Text="Focus" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <TextBox x:Name="PomodoroFocus" Width="56" />
+            <TextBlock Text="Short break" VerticalAlignment="Center" Margin="16,0,8,0" />
+            <TextBox x:Name="PomodoroShortBreak" Width="56" />
+            <TextBlock Text="Long break" VerticalAlignment="Center" Margin="16,0,8,0" />
+            <TextBox x:Name="PomodoroLongBreak" Width="56" />
+        </StackPanel>
 
         <TextBlock Text="Calendar feeds" Style="{StaticResource Heading}" Margin="0,22,0,4" />
         <TextBlock TextWrapping="Wrap" Opacity="0.7" Margin="0,0,0,8"
