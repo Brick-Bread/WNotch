@@ -13,10 +13,18 @@
   <ItemGroup>
     <ProjectReference Include="..\Notch.Core\Notch.Core.csproj" />
     <ProjectReference Include="..\Notch.Platform\Notch.Platform.csproj" />
+    <!-- Not used as a library: referenced so Notch.Hook.exe is built and copied next to Notch.exe. -->
+    <ProjectReference Include="..\Notch.Hook\Notch.Hook.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="H.NotifyIcon.Wpf" Version="2.4.1" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4258.31" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The xterm.js page the terminal's WebView2 loads from disk. -->
+    <Content Include="Assets\terminal\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

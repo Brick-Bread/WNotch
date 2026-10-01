@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="xterm/xterm.css">
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+    .session { position: absolute; inset: 0; display: none; }
+    .session.active { display: block; }
+    /* xterm's own scrollbar, restyled to fit the notch. */
+    .xterm-viewport::-webkit-scrollbar { width: 8px; }
+    .xterm-viewport::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <script src="xterm/xterm.js"></script>
+  <script src="xterm/addon-fit.js"></script>
+  <script src="terminal.js"></script>
+</body>
+</html>

@@ -1,8 +1,12 @@
+using System.IO;
 using System.Windows;
 using H.NotifyIcon;
 using Notch.App.Shell;
+using Notch.App.Terminal;
 using Notch.Core.Activities;
 using Notch.Core.Media;
+using Notch.Core.Settings;
+using Notch.Core.Terminal;
 using Notch.Platform.Hud;
 using Notch.Platform.Media;
 
@@ -14,6 +18,7 @@ public partial class App : Application
     private ActivityManager? _activities;
     private GsmtcMediaService? _media;
     private MediaActivityPublisher? _mediaPublisher;
+    private TerminalController? _terminal;
     private volatile SystemHudSources? _huds;
     private TaskbarIcon? _tray;
     private DemoDriver? _demo;
@@ -29,7 +34,11 @@ public partial class App : Application
             return;
         }
 
-        bool demo = e.Args.Contains("--demo", StringComparer.OrdinalIgnoreCase);
+        bool demo = HasFlag(e, "--demo");
+
+        var settingsStore = new SettingsStore(Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Notch", "settings.json"));
+        AppSettings settings = settingsStore.Load();
 
         _activities = new ActivityManager();
         IMediaService media;
@@ -44,12 +53,20 @@ public partial class App : Application
         }
 
         _mediaPublisher = new MediaActivityPublisher(media, _activities);
+        _terminal = new TerminalController(_activities, Dispatcher);
 
-        var window = new NotchWindow(_activities, media);
+        var window = new NotchWindow(_activities, media, _terminal, settingsStore, settings);
         window.Show();
-        if (e.Args.Contains("--pin-open", StringComparer.OrdinalIgnoreCase))
+        if (HasFlag(e, "--pin-open"))
         {
             window.PinOpen();
+        }
+
+        // --open=claude|codex|shell starts a terminal session straight away.
+        string? open = e.Args.FirstOrDefault(a => a.StartsWith("--open=", StringComparison.OrdinalIgnoreCase))?["--open=".Length..];
+        if (TerminalProfile.All.FirstOrDefault(p => p.Id.Equals(open, StringComparison.OrdinalIgnoreCase)) is { } profile)
+        {
+            window.OpenTerminal(profile);
         }
 
         _tray = TrayIcon.Create(Shutdown);
@@ -66,6 +83,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _demo?.Dispose();
+        _terminal?.Dispose();
         _huds?.Dispose();
         _tray?.Dispose();
         _mediaPublisher?.Dispose();
@@ -74,6 +92,9 @@ public partial class App : Application
         _singleInstance?.Dispose();
         base.OnExit(e);
     }
+
+    private static bool HasFlag(StartupEventArgs e, string flag) =>
+        e.Args.Contains(flag, StringComparer.OrdinalIgnoreCase);
 
     private static async Task StartMediaAsync(GsmtcMediaService media)
     {

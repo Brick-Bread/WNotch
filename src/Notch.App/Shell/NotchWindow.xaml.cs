@@ -5,7 +5,9 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using Notch.Core.Activities;
+using Notch.App.Terminal;
 using Notch.Core.Media;
+using Notch.Core.Settings;
 using Notch.Core.Shell;
 using Notch.Platform.Display;
 
@@ -22,6 +24,9 @@ public partial class NotchWindow : Window
 
     private readonly ActivityManager _activities;
     private readonly IMediaService _media;
+    private readonly TerminalController _terminal;
+    private readonly SettingsStore _settingsStore;
+    private readonly AppSettings _settings;
     private readonly NotchAnimator _animator;
     private readonly RectangleGeometry _islandClip = new();
     private readonly DispatcherTimer _hoverTimer = new();
@@ -35,14 +40,23 @@ public partial class NotchWindow : Window
     private byte[]? _compactArtBytes;
     private bool _hasListedActivities;
 
-    public NotchWindow(ActivityManager activities, IMediaService media)
+    internal NotchWindow(
+        ActivityManager activities,
+        IMediaService media,
+        TerminalController terminal,
+        SettingsStore settingsStore,
+        AppSettings settings)
     {
         InitializeComponent();
 
         _activities = activities;
         _activities.Changed += OnActivitiesChanged;
         _media = media;
+        _terminal = terminal;
+        _settingsStore = settingsStore;
+        _settings = settings;
         InitializeMedia();
+        InitializeTerminal();
 
         Shape idle = ShapeFor(NotchMode.Idle);
         _animator = new NotchAnimator(idle.Width, idle.Height, idle.Radius);
@@ -67,10 +81,11 @@ public partial class NotchWindow : Window
 
     private readonly record struct Shape(double Width, double Height, double Radius);
 
-    private static Shape ShapeFor(NotchMode mode) => mode switch
+    private Shape ShapeFor(NotchMode mode) => mode switch
     {
         NotchMode.Compact => new Shape(320, 34, 17),
         NotchMode.Peek => new Shape(360, 44, 22),
+        NotchMode.Expanded when _tab == NotchTab.Terminal => new Shape(920, 540, 30),
         NotchMode.Expanded => new Shape(640, 360, 30),
         _ => new Shape(180, 32, 16),
     };
@@ -151,6 +166,11 @@ public partial class NotchWindow : Window
 
     private void ScheduleExpanded(bool expanded, TimeSpan delay)
     {
+        if (!expanded && TerminalHasFocus)
+        {
+            return;
+        }
+
         _hoverWantsExpanded = expanded;
         _hoverTimer.Stop();
         _hoverTimer.Interval = delay;
@@ -171,6 +191,7 @@ public partial class NotchWindow : Window
         {
             _expanded = expanded;
             Refresh();
+            UpdateTerminalInteraction();
         }
     }
 
