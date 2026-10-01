@@ -75,6 +75,9 @@ public sealed class PluginManager : IDisposable
 
     public string PluginsDirectory { get; }
 
+    /// <summary>The pages plugins show as tabs, and their consoles.</summary>
+    public PluginPageBoard Pages { get; } = new();
+
     public IReadOnlyList<PluginInfo> Plugins
     {
         get
@@ -253,7 +256,7 @@ public sealed class PluginManager : IDisposable
         {
             slot.Factory ??= _loader(manifest, slot.Directory);
             slot.Host = new PluginHost(
-                manifest, slot.Directory, Path.Combine(_dataDirectory, manifest.Id), _activities, _cards, _log);
+                manifest, slot.Directory, Path.Combine(_dataDirectory, manifest.Id), _activities, _cards, Pages, _log);
             slot.Instance = slot.Factory();
             slot.Instance.Start(slot.Host);
 

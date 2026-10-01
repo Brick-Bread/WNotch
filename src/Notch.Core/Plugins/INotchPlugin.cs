@@ -13,7 +13,7 @@ public static class PluginApi
     /// its manifest (<c>apiVersion</c>); Notch runs plugins written for this version or an older
     /// one, and refuses those that need a newer one.
     /// </summary>
-    public const int Version = 2;
+    public const int Version = 3;
 }
 
 /// <summary>
@@ -63,6 +63,9 @@ public interface IPluginHost
 
     /// <summary>Shows cards on the notch's Plugins tab.</summary>
     IPluginCards Cards { get; }
+
+    /// <summary>Shows tabs of their own, with figures and a console. API version 3.</summary>
+    IPluginPages Pages { get; }
 
     /// <summary>Small values the plugin wants to keep between runs, such as its options.</summary>
     IPluginSettings Settings { get; }

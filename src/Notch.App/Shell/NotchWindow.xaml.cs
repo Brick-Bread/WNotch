@@ -41,6 +41,7 @@ public partial class NotchWindow : Window
     private readonly IMediaService _media;
     private readonly TerminalController _terminal;
     private readonly PluginCardBoard _pluginCards;
+    private readonly PluginPageBoard _pluginPages;
     private readonly SettingsStore _settingsStore;
     private readonly AppSettings _settings;
     private readonly NotchAnimator _animator;
@@ -71,6 +72,7 @@ public partial class NotchWindow : Window
         IMediaService media,
         TerminalController terminal,
         PluginCardBoard pluginCards,
+        PluginPageBoard pluginPages,
         SettingsStore settingsStore,
         AppSettings settings)
     {
@@ -81,6 +83,7 @@ public partial class NotchWindow : Window
         _media = media;
         _terminal = terminal;
         _pluginCards = pluginCards;
+        _pluginPages = pluginPages;
         _settingsStore = settingsStore;
         _settings = settings;
         _glow = new GlowController(GlowLayer, GlowCore) { Gain = GlowOutput.Gain(settings.GlowIntensity) };
@@ -88,6 +91,7 @@ public partial class NotchWindow : Window
         InitializeTerminal();
         InitializeWidgets();
         InitializePlugins();
+        InitializePages();
 
         Shape idle = ShapeFor(NotchMode.Idle);
         _animator = new NotchAnimator(idle.Width, idle.Height, idle.Radius);
@@ -137,6 +141,7 @@ public partial class NotchWindow : Window
         NotchMode.Expanded when _tab == NotchTab.Terminal => new Shape(920, 540, 30),
         NotchMode.Expanded when _tab == NotchTab.Stats => new Shape(640, 290, 30),
         NotchMode.Expanded when _tab == NotchTab.Plugins => new Shape(640, PluginsTabHeight, 30),
+        NotchMode.Expanded when _tab == NotchTab.Page => new Shape(920, 540, 30),
 
         // Home is taller while the media card is showing.
         NotchMode.Expanded => new Shape(640, _media.Current is null ? 236 : 364, 30),
@@ -170,6 +175,7 @@ public partial class NotchWindow : Window
         _activities.Changed -= OnActivitiesChanged;
         _media.Changed -= OnMediaChanged;
         _pluginCards.Changed -= OnPluginCardsChanged;
+        _pluginPages.Changed -= OnPluginPagesChanged;
         ThemeManager.Changed -= OnThemeChanged;
         _mediaTimer.Stop();
         _glow.Dispose();
@@ -211,6 +217,7 @@ public partial class NotchWindow : Window
         _terminal.Bridge.SetTheme(ThemeManager.IsLight);
         ApplyWidgetColors();
         UpdatePluginCards();
+        ShowPageFigures();
         Refresh();
     }
 

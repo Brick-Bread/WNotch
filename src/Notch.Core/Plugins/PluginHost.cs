@@ -12,6 +12,7 @@ internal sealed class PluginHost : IPluginHost
     private readonly string _dataDirectory;
     private readonly ScopedActivities _activities;
     private readonly ScopedCards _cards;
+    private readonly ScopedPages _pages;
 
     public PluginHost(
         PluginManifest manifest,
@@ -19,6 +20,7 @@ internal sealed class PluginHost : IPluginHost
         string dataDirectory,
         ActivityManager activities,
         PluginCardBoard cards,
+        PluginPageBoard pages,
         PluginLog log)
     {
         Manifest = manifest;
@@ -29,6 +31,7 @@ internal sealed class PluginHost : IPluginHost
         Log = scopedLog;
         Activities = _activities = new ScopedActivities(manifest.Id, activities);
         Cards = _cards = new ScopedCards(manifest.Id, cards, scopedLog);
+        Pages = _pages = new ScopedPages(manifest.Id, pages, scopedLog);
         Settings = new PluginSettingsStore(Path.Combine(dataDirectory, "settings.json"));
     }
 
@@ -49,6 +52,8 @@ internal sealed class PluginHost : IPluginHost
 
     public IPluginCards Cards { get; }
 
+    public IPluginPages Pages { get; }
+
     public IPluginSettings Settings { get; }
 
     public IPluginLog Log { get; }
@@ -58,6 +63,7 @@ internal sealed class PluginHost : IPluginHost
     {
         _activities.Close();
         _cards.Close();
+        _pages.Close();
     }
 
     private sealed class ScopedActivities(string pluginId, ActivityManager manager) : IPluginActivities
@@ -167,6 +173,92 @@ internal sealed class PluginHost : IPluginHost
                 catch (Exception e)
                 {
                     log.Error($"The click handler of card '{card.Id}' failed.", e);
+                }
+            });
+        }
+    }
+
+    private sealed class ScopedPages(string pluginId, PluginPageBoard board, ScopedLog log) : IPluginPages
+    {
+        private readonly Lock _gate = new();
+        private bool _closed;
+
+        public void Set(PluginPage page)
+        {
+            ArgumentNullException.ThrowIfNull(page);
+
+            lock (_gate)
+            {
+                if (!_closed)
+                {
+                    board.Set(pluginId, page with { Input = Guard(page) });
+                }
+            }
+        }
+
+        public void Append(string pageId, string line)
+        {
+            lock (_gate)
+            {
+                if (!_closed)
+                {
+                    board.Append(pluginId, pageId, line);
+                }
+            }
+        }
+
+        public void ClearConsole(string pageId)
+        {
+            lock (_gate)
+            {
+                if (!_closed)
+                {
+                    board.ClearConsole(pluginId, pageId);
+                }
+            }
+        }
+
+        public void Open(string pageId)
+        {
+            lock (_gate)
+            {
+                if (!_closed)
+                {
+                    board.RequestOpen(pluginId, pageId);
+                }
+            }
+        }
+
+        public bool Remove(string id) => board.Remove(pluginId, id);
+
+        public void Clear() => board.RemoveAll(pluginId);
+
+        public void Close()
+        {
+            lock (_gate)
+            {
+                _closed = true;
+                Clear();
+            }
+        }
+
+        /// <summary>The shell calls this on the UI thread; plugin code runs elsewhere and cannot throw into it.</summary>
+        private Action<string>? Guard(PluginPage page)
+        {
+            if (page.Input is not { } input)
+            {
+                return null;
+            }
+
+            return text => Task.Run(() =>
+            {
+                try
+                {
+                    input(text);
+                }
+                catch (Exception e)
+                {
+                    log.Error($"The input handler of page '{page.Id}' failed.", e);
                 }
             });
         }

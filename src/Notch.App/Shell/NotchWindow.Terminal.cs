@@ -21,10 +21,11 @@ public partial class NotchWindow
         Terminal,
         Stats,
         Plugins,
+        Page,
     }
 
     /// <summary>Something in the notch is taking keyboard input, so it must not close under the user while it has focus.</summary>
-    private bool KeyboardInUse => _expanded && IsActive && (_tab == NotchTab.Terminal || _timerEntryOpen);
+    private bool KeyboardInUse => _expanded && IsActive && (_tab == NotchTab.Terminal || PageTakesInput || _timerEntryOpen);
 
     /// <summary>Selects a tab by name ("home", "terminal", "stats", "plugins"); unknown names are ignored.</summary>
     public void ShowTab(string name)
@@ -85,6 +86,7 @@ public partial class NotchWindow
         TerminalPanel.Visibility = tab == NotchTab.Terminal ? Visibility.Visible : Visibility.Collapsed;
         StatsPanel.Visibility = tab == NotchTab.Stats ? Visibility.Visible : Visibility.Collapsed;
         PluginsPanel.Visibility = tab == NotchTab.Plugins ? Visibility.Visible : Visibility.Collapsed;
+        PagePanel.Visibility = tab == NotchTab.Page ? Visibility.Visible : Visibility.Collapsed;
 
         if (tab != NotchTab.Home)
         {
@@ -94,6 +96,12 @@ public partial class NotchWindow
         Refresh();
         UpdateKeyboardInteraction();
         UpdateStatsTimer();
+        if (tab == NotchTab.Page)
+        {
+            ShowPage();
+            FocusPageInput();
+        }
+
         if (tab == NotchTab.Terminal)
         {
             FocusTerminal();
@@ -110,7 +118,7 @@ public partial class NotchWindow
         bool terminal = _expanded && _tab == NotchTab.Terminal;
         if (_hwnd != 0)
         {
-            OverlayWindow.SetNoActivate(_hwnd, !(terminal || (_expanded && _timerEntryOpen)));
+            OverlayWindow.SetNoActivate(_hwnd, !(terminal || (_expanded && (_timerEntryOpen || PageTakesInput))));
         }
 
         _terminal.IsViewing = terminal;

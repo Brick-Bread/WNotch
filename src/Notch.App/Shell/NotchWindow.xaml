@@ -73,7 +73,7 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <StackPanel Orientation="Horizontal">
+                <StackPanel x:Name="TabStrip" Orientation="Horizontal">
                     <RadioButton x:Name="TabHome" Style="{StaticResource TabButton}" Content="Home" IsChecked="True" />
                     <RadioButton x:Name="TabTerminal" Style="{StaticResource TabButton}" Content="Terminal" />
                     <RadioButton x:Name="TabStats" Style="{StaticResource TabButton}" Content="Stats" />
@@ -338,6 +338,61 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </ScrollViewer>
+
+                <!-- A plugin's page: figures on top, a console below. Its tab button is added in code. -->
+                <Grid x:Name="PagePanel" Grid.Row="1" Margin="0,10,0,0" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <ItemsControl x:Name="PageStats" Margin="-4,0,-4,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="1" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource Card}" Margin="4" Height="84" Padding="12,8">
+                                    <DockPanel>
+                                        <TextBlock DockPanel.Dock="Top" Text="{Binding Label}"
+                                                   Style="{StaticResource CardLabel}" TextTrimming="CharacterEllipsis" />
+                                        <ProgressBar DockPanel.Dock="Bottom" Height="4" Maximum="1" BorderThickness="0"
+                                                     Foreground="{Binding AccentBrush}" Background="{DynamicResource TrackBrush}"
+                                                     Value="{Binding Progress, Mode=OneTime}"
+                                                     Visibility="{Binding ProgressVisibility}" />
+                                        <TextBlock DockPanel.Dock="Top" Text="{Binding Value}" Foreground="{Binding ValueBrush}"
+                                                   FontSize="17" FontWeight="SemiBold" Margin="0,2,0,0"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding Detail}" FontSize="11" Opacity="0.55"
+                                                   TextWrapping="Wrap" TextTrimming="CharacterEllipsis" />
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,6,0,0" Padding="12,8">
+                        <TextBox x:Name="PageConsole" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True"
+                                 FontFamily="Cascadia Mono, Consolas" FontSize="12" BorderThickness="0"
+                                 Background="Transparent" Foreground="{DynamicResource TextBrush}"
+                                 SelectionBrush="{DynamicResource AccentBrush}"
+                                 VerticalScrollBarVisibility="Hidden" />
+                    </Border>
+
+                    <DockPanel x:Name="PageInputRow" Grid.Row="2" Margin="0,8,0,0">
+                        <Button x:Name="PageSend" DockPanel.Dock="Right" Style="{StaticResource PillButton}"
+                                Content="Send" Background="{DynamicResource AccentHoverBrush}" />
+                        <Grid>
+                            <TextBox x:Name="PageInput" Style="{StaticResource PillTextBox}" Padding="10,5" FontSize="13"
+                                     FontFamily="Cascadia Mono, Consolas" />
+                            <TextBlock x:Name="PageInputHint" IsHitTestVisible="False" Opacity="0.4" Margin="12,0,0,0"
+                                       VerticalAlignment="Center" FontSize="13" />
+                        </Grid>
+                    </DockPanel>
+                </Grid>
             </Grid>
         </Grid>
     </Grid>

@@ -117,7 +117,7 @@ public partial class App : Application
 
         // Before any window exists, so nothing is ever drawn without its colours.
         ThemeManager.Apply(settings);
-        var window = new NotchWindow(_activities, media, _terminal, pluginCards, settingsStore, settings);
+        var window = new NotchWindow(_activities, media, _terminal, pluginCards, _plugins.Pages, settingsStore, settings);
 
         // --display=2 uses the display the settings window lists as "Display 2", for this run only.
         if (int.TryParse(Option(e, "--display="), out int display))

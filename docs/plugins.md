@@ -4,6 +4,7 @@ A plugin is a small .NET library that Notch loads at start. It can:
 
 - show **activities** in the pill, with a glyph or image, text, a progress bar and a glow;
 - show **cards** on a Plugins tab in the expanded notch, which can react to clicks;
+- show **pages**: tabs of their own with a row of figures and an interactive console;
 - keep **settings** and files between runs, and write to a log.
 
 This guide walks through a first plugin, then documents every part of the API. A complete working example is in [`samples/BreakReminder`](../samples/BreakReminder).
@@ -15,6 +16,7 @@ This guide walks through a first plugin, then documents every part of the API. A
 - [Lifecycle](#lifecycle)
 - [Activities: the pill](#activities-the-pill)
 - [Cards: the Plugins tab](#cards-the-plugins-tab)
+- [Pages: tabs with a console](#pages-tabs-with-a-console)
 - [Settings and files](#settings-and-files)
 - [Logging](#logging)
 - [Threading and errors](#threading-and-errors)
@@ -171,7 +173,7 @@ Notch reads the manifest to list a plugin in Settings before running any of its 
 | `id` | yes | Unique, permanent identifier. Lowercase letters and digits in groups separated by `.` or `-`, at most 64 characters, e.g. `yourname.build-status`. Prefix it with your name to avoid clashes. It names the plugin's data folder, so changing it loses the plugin's settings. |
 | `name` | yes | Shown in Settings. |
 | `assembly` | yes | File name of the plugin's `.dll`, in the same folder. No paths. |
-| `apiVersion` | yes | The plugin API version the plugin was written for. Currently `1`. See [Compatibility](#compatibility). |
+| `apiVersion` | yes | The plugin API version the plugin was written for. Currently `3`. See [Compatibility](#compatibility). |
 | `version` | no | The plugin's own version, shown in Settings. |
 | `author` | no | Shown in the plugin's tooltip in Settings. |
 | `description` | no | Shown in the plugin's tooltip in Settings. |
@@ -491,6 +493,7 @@ The plugin API is `Notch.Core.Plugins` plus the types in `Notch.Core.Activities`
 |---|---|
 | 1 | First version: activities, cards, settings, log. |
 | 2 | `PluginCard.Color`. |
+| 3 | `IPluginHost.Pages`: tabs with figures and a console. |
 
 ## Troubleshooting
 
