@@ -7,6 +7,8 @@
     <TreatWarningsAsErrors Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</TreatWarningsAsErrors>
     <Version>0.1.0</Version>
     <Authors>Notch contributors</Authors>
+    <!-- The app is English-only; skip the framework's translated resource folders. -->
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
 
 </Project>

@@ -1,0 +1,66 @@
+name: release
+
+# Pushing a tag like v0.1.0 builds the installer and publishes a GitHub release.
+# Running it by hand builds the installer only and keeps it as a workflow artifact.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Work out the version
+        id: version
+        shell: pwsh
+        run: |
+          $version = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME.TrimStart('v') } else { "0.0.0-dev.$env:GITHUB_RUN_NUMBER" }
+          "version=$version" >> $env:GITHUB_OUTPUT
+          # The installer's file properties need four plain numbers.
+          "file_version=$(($version -split '-')[0]).0" >> $env:GITHUB_OUTPUT
+
+      - name: Test
+        run: dotnet test Notch.slnx -c Release
+
+      # Both executables are published self-contained into one folder so they share a
+      # single copy of the .NET runtime and users need nothing preinstalled.
+      - name: Publish
+        shell: pwsh
+        run: |
+          dotnet publish src/Notch.App -c Release -r win-x64 --self-contained true -o artifacts/publish -p:Version=${{ steps.version.outputs.version }}
+          dotnet publish src/Notch.Hook -c Release -r win-x64 --self-contained true -o artifacts/publish -p:Version=${{ steps.version.outputs.version }}
+
+      - name: Build the installer
+        shell: pwsh
+        run: |
+          if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) {
+            choco install nsis -y --no-progress
+            $env:PATH += ';C:\Program Files (x86)\NSIS'
+          }
+          makensis /V2 /DVERSION=${{ steps.version.outputs.version }} /DFILE_VERSION=${{ steps.version.outputs.file_version }} installer\Notch.nsi
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Notch-Setup-${{ steps.version.outputs.version }}
+          path: artifacts/Notch-Setup-*.exe
+          if-no-files-found: error
+
+      - name: Publish the GitHub release
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $installer = Get-Item artifacts/Notch-Setup-*.exe
+          gh release create $env:GITHUB_REF_NAME $installer.FullName --title "Notch ${{ steps.version.outputs.version }}" --generate-notes
