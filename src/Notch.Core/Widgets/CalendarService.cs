@@ -22,13 +22,15 @@ public sealed class CalendarService(HttpClient http, TimeProvider? time = null)
         DateTimeOffset now = _time.GetLocalNow();
         var entries = new List<CalendarEntry>();
         int failed = 0;
+        int feed = 0;
 
         foreach (string url in feedUrls.Where(u => !string.IsNullOrWhiteSpace(u)))
         {
+            int index = feed++;
             try
             {
                 string text = await http.GetStringAsync(NormalizeUrl(url), cancellation);
-                entries.AddRange(CalendarFeed.ReadEntries(text, now, now + Horizon));
+                entries.AddRange(CalendarFeed.ReadEntries(text, now, now + Horizon).Select(e => e with { Feed = index }));
             }
             catch (Exception e) when (e is HttpRequestException or FormatException or UriFormatException or InvalidOperationException or TaskCanceledException)
             {

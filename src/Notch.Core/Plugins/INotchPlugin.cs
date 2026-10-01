@@ -13,7 +13,7 @@ public static class PluginApi
     /// its manifest (<c>apiVersion</c>); Notch runs plugins written for this version or an older
     /// one, and refuses those that need a newer one.
     /// </summary>
-    public const int Version = 1;
+    public const int Version = 2;
 }
 
 /// <summary>
@@ -126,6 +126,9 @@ public sealed record PluginCard
 
     /// <summary>0..1 draws a bar along the bottom of the card; null for none.</summary>
     public double? Progress { get; init; }
+
+    /// <summary>Colour of the value and the bar; null for the notch's own colours. API version 2.</summary>
+    public GlowColor? Color { get; init; }
 
     /// <summary>
     /// Run when the user clicks the card; null makes the card non-interactive. Called on a

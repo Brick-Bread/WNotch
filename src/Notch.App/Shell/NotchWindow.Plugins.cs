@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using Notch.Core.Plugins;
 
 namespace Notch.App.Shell;
@@ -74,6 +75,15 @@ public partial class NotchWindow
         public string? Detail => Card.Detail;
 
         public double Progress => Math.Clamp(Card.Progress ?? 0, 0, 1);
+
+        // Looked up when the row is made; the rows are rebuilt when the theme changes.
+        public Brush ValueBrush { get; } = card.Color is { } color
+            ? ThemeManager.Brush(color)
+            : (Brush)Application.Current.FindResource("TextBrush");
+
+        public Brush AccentBrush { get; } = card.Color is { } color
+            ? ThemeManager.Brush(color)
+            : (Brush)Application.Current.FindResource("AccentBrush");
 
         public Visibility ProgressVisibility => Card.Progress is null ? Visibility.Collapsed : Visibility.Visible;
 

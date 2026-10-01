@@ -1,3 +1,4 @@
+using Notch.Core.Activities;
 using Notch.Core.Settings;
 
 namespace Notch.Core.Tests;
@@ -24,6 +25,13 @@ public class SettingsTests
             Assert.Contains("\"Theme\": \"System\"", File.ReadAllText(store.FilePath));
             Assert.Equal(NotchTheme.System, store.Load().Theme);
         });
+    }
+
+    [Fact]
+    public void Accent_defaults_to_a_preset_and_none_switches_it_off()
+    {
+        Assert.NotNull(GlowColor.FromName(new AppSettings().AccentColor));
+        Assert.Null(GlowColor.FromName(AppSettings.NoAccent));
     }
 
     private static void WithStore(Action<SettingsStore> test)

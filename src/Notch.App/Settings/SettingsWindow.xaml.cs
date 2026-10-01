@@ -3,7 +3,9 @@ using System.IO;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Media;
 using Notch.App.Shell;
 using Notch.Core.Activities;
 using Notch.Core.Plugins;
@@ -36,6 +38,7 @@ public partial class SettingsWindow : Window
         ThemeManager.Changed += OnThemeChanged;
         Closed += (_, _) => ThemeManager.Changed -= OnThemeChanged;
 
+        ListAccents(settings.AccentColor);
         StartWithWindows.IsChecked = StartupRegistration.IsEnabled;
         ExpandOnHover.IsChecked = settings.ExpandOnHover;
         HideInFullscreen.IsChecked = settings.HideInFullscreen;
@@ -110,10 +113,36 @@ public partial class SettingsWindow : Window
         };
     }
 
+    /// <param name="chosen">Name of the accent to show as picked; an unknown name picks "no accent".</param>
+    private void ListAccents(string chosen)
+    {
+        var style = (Style)AccentSwatches.FindResource("Swatch");
+        bool known = GlowColor.FromName(chosen) is not null;
+
+        foreach ((string name, GlowColor color) in GlowColor.Named)
+        {
+            AccentSwatches.Children.Add(new RadioButton
+            {
+                Style = style,
+                Tag = name,
+                ToolTip = name,
+                Background = new SolidColorBrush(Color.FromRgb(color.R, color.G, color.B)),
+                IsChecked = string.Equals(name, chosen, StringComparison.OrdinalIgnoreCase),
+            });
+        }
+
+        // The last swatch switches the accent off; it is drawn in the window's own text colour.
+        var none = new RadioButton { Style = style, Tag = AppSettings.NoAccent, ToolTip = "No accent colour", IsChecked = !known };
+        none.SetBinding(BackgroundProperty, new Binding(nameof(Foreground)) { Source = this });
+        AccentSwatches.Children.Add(none);
+    }
+
     private void OnSave()
     {
         _settings.ExpandOnHover = ExpandOnHover.IsChecked == true;
         _settings.Theme = (NotchTheme)Math.Max(0, Theme.SelectedIndex);
+        _settings.AccentColor = AccentSwatches.Children.OfType<RadioButton>()
+            .FirstOrDefault(swatch => swatch.IsChecked == true)?.Tag as string ?? _settings.AccentColor;
         _settings.HideInFullscreen = HideInFullscreen.IsChecked == true;
         _settings.AutoUpdate = AutoUpdate.IsChecked == true;
         _settings.GlowEffects = GlowEffects.IsChecked == true;

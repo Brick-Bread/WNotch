@@ -281,6 +281,7 @@ host.Cards.Set(new PluginCard
     Value = "Passing",
     Detail = "main, 4 minutes ago",
     Progress = null,
+    Color = GlowColor.Green,
     Clicked = () => OpenBuildPage(),
 });
 ```
@@ -292,6 +293,7 @@ host.Cards.Set(new PluginCard
 | `Value` | The headline, large, on one line. Keep it short; long text is cut off with an ellipsis. |
 | `Detail` | Smaller text below the value. It wraps; about two lines fit. |
 | `Progress` | 0 to 1 draws a bar along the bottom. Null for no bar. |
+| `Color` | A `GlowColor` for the value and the bar. Null (the default) uses the notch's own colours. Notch deepens it in the light theme so it stays readable. Needs API version 2. |
 | `Clicked` | Called when the user clicks the card. Null makes the card non-interactive. |
 
 A card is plain data: the plugin describes it and Notch draws it in its own style, so plugins need no UI framework and keep working when the notch's look changes. To change a card, call `Set` again with the new values. `Remove(id)` and `Clear()` take cards away.
@@ -488,6 +490,7 @@ The plugin API is `Notch.Core.Plugins` plus the types in `Notch.Core.Activities`
 | API version | Changes |
 |---|---|
 | 1 | First version: activities, cards, settings, log. |
+| 2 | `PluginCard.Color`. |
 
 ## Troubleshooting
 

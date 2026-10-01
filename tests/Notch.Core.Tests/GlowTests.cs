@@ -112,4 +112,30 @@ public class GlowTests
     [Fact]
     public void Greyscale_images_have_no_accent() =>
         Assert.Null(AccentColor.FromPixels([50, 50, 50, 255, 200, 200, 200, 255]));
+
+    [Theory]
+    [InlineData("Blue", true)]
+    [InlineData("violet", true)]
+    [InlineData("None", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    public void Presets_are_found_by_name(string? name, bool found) =>
+        Assert.Equal(found, GlowColor.FromName(name) is not null);
+
+    [Fact]
+    public void Every_named_preset_resolves_to_itself()
+    {
+        foreach ((string name, GlowColor color) in GlowColor.Named)
+        {
+            Assert.Equal(color, GlowColor.FromName(name));
+        }
+    }
+
+    [Fact]
+    public void On_light_deepens_every_channel()
+    {
+        GlowColor deep = GlowColor.Yellow.OnLight();
+
+        Assert.True(deep.R < GlowColor.Yellow.R && deep.G < GlowColor.Yellow.G && deep.B < GlowColor.Yellow.B);
+    }
 }

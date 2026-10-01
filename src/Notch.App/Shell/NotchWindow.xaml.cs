@@ -79,8 +79,6 @@ public partial class NotchWindow : Window
         InitializeTerminal();
         InitializeWidgets();
         InitializePlugins();
-        ThemeManager.Changed += OnThemeChanged;
-        OnThemeChanged();
 
         Shape idle = ShapeFor(NotchMode.Idle);
         _animator = new NotchAnimator(idle.Width, idle.Height, idle.Radius);
@@ -125,7 +123,9 @@ public partial class NotchWindow : Window
         _pointerWatch.Tick += (_, _) => WatchPointer();
         _housekeepingTimer.Tick += (_, _) => Housekeeping();
 
-        Refresh();
+        // Colours everything that is coloured in code, and does the first Refresh.
+        ThemeManager.Changed += OnThemeChanged;
+        OnThemeChanged();
         UpdateMediaCard();
     }
 
@@ -187,7 +187,13 @@ public partial class NotchWindow : Window
     }
 
     /// <summary>Recolours what the theme brushes do not reach.</summary>
-    private void OnThemeChanged() => _terminal.Bridge.SetTheme(ThemeManager.IsLight);
+    private void OnThemeChanged()
+    {
+        _terminal.Bridge.SetTheme(ThemeManager.IsLight);
+        ApplyWidgetColors();
+        UpdatePluginCards();
+        Refresh();
+    }
 
     /// <summary>True while restarting the app would interrupt something: the notch is open, a terminal session exists, or a timer is counting.</summary>
     public bool IsBusy =>
@@ -405,6 +411,17 @@ public partial class NotchWindow : Window
         {
             Activity top = activities[0];
             CompactGlyph.Text = top.Glyph;
+
+            // The glyph takes the colour of the activity's glow; without one it is plain text.
+            if (top.Glow is { } glow)
+            {
+                CompactGlyph.Foreground = ThemeManager.Brush(glow.Color);
+            }
+            else
+            {
+                CompactGlyph.ClearValue(ForegroundProperty);
+            }
+
             if (!ReferenceEquals(top.Image, _compactArtBytes))
             {
                 _compactArtBytes = top.Image;

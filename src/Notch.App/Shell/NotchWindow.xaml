@@ -143,6 +143,7 @@
                                 <StackPanel x:Name="TimerPresets" DockPanel.Dock="Bottom" Orientation="Horizontal"
                                             Margin="-6,0,0,0">
                                     <Button x:Name="TimerPomodoro" Style="{StaticResource PillButton}" Content="Pomodoro"
+                                            Background="{DynamicResource AccentHoverBrush}"
                                             ToolTip="Focus and break sessions back to back; lengths are in Settings" />
                                     <Button Style="{StaticResource PillButton}" Content="5m" Tag="5" Click="OnTimerPresetClicked" />
                                     <Button Style="{StaticResource PillButton}" Content="15m" Tag="15" Click="OnTimerPresetClicked" />
@@ -169,11 +170,15 @@
                                         <DataTemplate>
                                             <Grid Margin="0,0,0,7">
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="88" />
+                                                    <ColumnDefinition Width="14" />
+                                                    <ColumnDefinition Width="84" />
                                                     <ColumnDefinition Width="*" />
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Text="{Binding When}" FontSize="12" Opacity="0.6" />
-                                                <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="12"
+                                                <!-- One colour per feed, so calendars can be told apart. -->
+                                                <Ellipse Width="6" Height="6" HorizontalAlignment="Left"
+                                                         VerticalAlignment="Center" Fill="{Binding Dot}" />
+                                                <TextBlock Grid.Column="1" Text="{Binding When}" FontSize="12" Opacity="0.6" />
+                                                <TextBlock Grid.Column="2" Text="{Binding Title}" FontSize="12"
                                                            TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}" />
                                             </Grid>
                                         </DataTemplate>
@@ -244,8 +249,7 @@
                         <DockPanel>
                             <TextBlock DockPanel.Dock="Top" Text="CPU" Style="{StaticResource CardLabel}" />
                             <TextBlock x:Name="StatsCpu" DockPanel.Dock="Top" Text="–" Style="{StaticResource CardValue}" />
-                            <shell:Sparkline x:Name="StatsCpuChart" Margin="0,6,0,0" Opacity="0.7"
-                                             Stroke="{DynamicResource TextBrush}" />
+                            <shell:Sparkline x:Name="StatsCpuChart" Margin="0,6,0,0" />
                         </DockPanel>
                     </Border>
                     <Border Style="{StaticResource Card}" Margin="6">
@@ -253,16 +257,14 @@
                             <TextBlock DockPanel.Dock="Top" Text="Memory" Style="{StaticResource CardLabel}" />
                             <TextBlock x:Name="StatsMemory" DockPanel.Dock="Top" Text="–" Style="{StaticResource CardValue}" />
                             <TextBlock x:Name="StatsMemoryDetail" DockPanel.Dock="Top" FontSize="11" Opacity="0.55" />
-                            <shell:Sparkline x:Name="StatsMemoryChart" Margin="0,6,0,0" Opacity="0.7"
-                                             Stroke="{DynamicResource TextBrush}" />
+                            <shell:Sparkline x:Name="StatsMemoryChart" Margin="0,6,0,0" />
                         </DockPanel>
                     </Border>
                     <Border Style="{StaticResource Card}" Margin="6">
                         <DockPanel>
                             <TextBlock DockPanel.Dock="Top" Text="GPU" Style="{StaticResource CardLabel}" />
                             <TextBlock x:Name="StatsGpu" DockPanel.Dock="Top" Text="–" Style="{StaticResource CardValue}" />
-                            <shell:Sparkline x:Name="StatsGpuChart" Margin="0,6,0,0" Opacity="0.7"
-                                             Stroke="{DynamicResource TextBrush}" />
+                            <shell:Sparkline x:Name="StatsGpuChart" Margin="0,6,0,0" />
                         </DockPanel>
                     </Border>
                     <Border Style="{StaticResource Card}" Margin="6">
@@ -302,10 +304,10 @@
                                         <TextBlock DockPanel.Dock="Top" Text="{Binding Label}"
                                                    Style="{StaticResource CardLabel}" TextTrimming="CharacterEllipsis" />
                                         <ProgressBar DockPanel.Dock="Bottom" Height="4" Maximum="1" BorderThickness="0"
-                                                     Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource TrackBrush}"
+                                                     Foreground="{Binding AccentBrush}" Background="{DynamicResource TrackBrush}"
                                                      Value="{Binding Progress, Mode=OneTime}"
                                                      Visibility="{Binding ProgressVisibility}" />
-                                        <TextBlock DockPanel.Dock="Top" Text="{Binding Value}"
+                                        <TextBlock DockPanel.Dock="Top" Text="{Binding Value}" Foreground="{Binding ValueBrush}"
                                                    Style="{StaticResource CardValue}" TextTrimming="CharacterEllipsis" />
                                         <TextBlock Text="{Binding Detail}" FontSize="11" Opacity="0.55"
                                                    TextWrapping="Wrap" TextTrimming="CharacterEllipsis" />

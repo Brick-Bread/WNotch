@@ -1,6 +1,8 @@
 using System.Media;
 using System.Net.Http;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Threading;
 using Notch.Core.Activities;
 using Notch.Core.Widgets;
@@ -16,6 +18,10 @@ public partial class NotchWindow
     private const string TimerGlyph = "";
     private const int MaxCalendarEntries = 4;
 
+    // Each calendar feed gets the next of these for its dot, starting over after the last.
+    private static readonly GlowColor[] FeedColors =
+        [GlowColor.Blue, GlowColor.Violet, GlowColor.Green, GlowColor.Orange, GlowColor.Cyan, GlowColor.Red, GlowColor.Yellow];
+
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
 
     private readonly CountdownTimer _countdown = new();
@@ -30,6 +36,7 @@ public partial class NotchWindow
     private string? _lastTimerDisplay;
     private bool _timerAnnounced;
     private bool _statsSampling;
+    private int? _batteryPercent;
 
     /// <summary>Reloads the calendar feeds, e.g. after they were edited in settings.</summary>
     public void RefreshCalendar() => _ = RefreshCalendarAsync();
@@ -70,6 +77,50 @@ public partial class NotchWindow
 
         _statsTimer.Tick += (_, _) => SampleStats();
     }
+
+    /// <summary>Colours the widgets whose colour is set in code. Runs again whenever the theme changes.</summary>
+    private void ApplyWidgetColors()
+    {
+        Tint(StatsCpu, StatsCpuChart, GlowColor.Blue);
+        Tint(StatsMemory, StatsMemoryChart, GlowColor.Violet);
+        Tint(StatsGpu, StatsGpuChart, GlowColor.Green);
+        Tint(StatsDownload, null, GlowColor.Cyan);
+        Tint(StatsUpload, null, GlowColor.Orange);
+        UpdateBatteryColor();
+
+        // Forget what was last shown so the timer repaints in the new theme's shade.
+        _lastTimerDisplay = null;
+        UpdateTimer();
+        UpdateCalendar();
+
+        static void Tint(TextBlock value, Sparkline? chart, GlowColor color)
+        {
+            Brush brush = ThemeManager.Brush(color);
+            value.Foreground = brush;
+            chart?.Stroke = brush;
+        }
+    }
+
+    /// <summary>Green with plenty of charge, amber below half, red when low; plain when there is no battery.</summary>
+    private void UpdateBatteryColor()
+    {
+        if (_batteryPercent is { } percent)
+        {
+            StatsBattery.Foreground = ThemeManager.Brush(percent <= 20 ? GlowColor.Red : percent <= 50 ? GlowColor.Amber : GlowColor.Green);
+        }
+        else
+        {
+            StatsBattery.ClearValue(TextBlock.ForegroundProperty);
+        }
+    }
+
+    /// <summary>What the timer is counting: red for Pomodoro focus (the tomato), green for breaks, orange for a plain timer.</summary>
+    private GlowColor TimerColor => _pomodoro?.Phase switch
+    {
+        PomodoroPhase.Focus => GlowColor.Red,
+        PomodoroPhase.ShortBreak or PomodoroPhase.LongBreak => GlowColor.Green,
+        _ => GlowColor.Orange,
+    };
 
     private void OnTimerPresetClicked(object sender, RoutedEventArgs e)
     {
@@ -133,6 +184,15 @@ public partial class NotchWindow
         _lastTimerDisplay = signature;
 
         TimerText.Text = display;
+        if (state == CountdownState.Idle)
+        {
+            TimerText.ClearValue(TextBlock.ForegroundProperty);
+        }
+        else
+        {
+            TimerText.Foreground = ThemeManager.Brush(TimerColor);
+        }
+
         TimerPresets.Visibility = state == CountdownState.Idle ? Visibility.Visible : Visibility.Collapsed;
         TimerControls.Visibility = state == CountdownState.Idle ? Visibility.Collapsed : Visibility.Visible;
         TimerPauseResume.Visibility = state == CountdownState.Finished ? Visibility.Collapsed : Visibility.Visible;
@@ -153,21 +213,16 @@ public partial class NotchWindow
                     SystemSounds.Asterisk.Play();
                 }
 
-                PublishTimer(ActivityTier.Attention, "Timer", "Done", new Glow(GlowColor.Orange, GlowPattern.Pulse));
+                PublishTimer(ActivityTier.Attention, "Timer", "Done", new Glow(TimerColor, GlowPattern.Pulse));
                 break;
 
             case CountdownState.Paused:
                 PublishTimer(ActivityTier.Ongoing, $"{_pomodoro?.Label ?? "Timer"} paused", display, glow: null);
                 break;
 
-            // Pomodoro focus breathes red (the tomato), breaks green; a plain timer orange.
+            // The glow breathes in the same colour as the digits; focus a touch stronger.
             default:
-                Glow running = _pomodoro?.Phase switch
-                {
-                    PomodoroPhase.Focus => new Glow(GlowColor.Red, GlowPattern.Breathe, 0.55),
-                    PomodoroPhase.ShortBreak or PomodoroPhase.LongBreak => new Glow(GlowColor.Green, GlowPattern.Breathe, 0.5),
-                    _ => new Glow(GlowColor.Orange, GlowPattern.Breathe, 0.5),
-                };
+                var running = new Glow(TimerColor, GlowPattern.Breathe, _pomodoro is { Phase: PomodoroPhase.Focus } ? 0.55 : 0.5);
                 PublishTimer(ActivityTier.Ongoing, _pomodoro?.Label ?? "Timer", display, running);
                 break;
         }
@@ -203,7 +258,7 @@ public partial class NotchWindow
         CalendarRow[] rows = [.. _calendar.Upcoming
             .Where(e => e.End > now)
             .Take(MaxCalendarEntries)
-            .Select(e => new CalendarRow(DescribeTime(e, now), e.Title))];
+            .Select(e => new CalendarRow(DescribeTime(e, now), e.Title, ThemeManager.Brush(FeedColors[e.Feed % FeedColors.Length])))];
         CalendarList.ItemsSource = rows;
 
         CalendarEmpty.Visibility = rows.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -263,6 +318,11 @@ public partial class NotchWindow
             StatsDownload.Text = StatsFormat.Rate(stats.DownloadBytesPerSecond);
             StatsUpload.Text = StatsFormat.Rate(stats.UploadBytesPerSecond);
             StatsBattery.Text = stats.BatteryPercent is { } battery ? $"{battery}%" : "None";
+            if (_batteryPercent != stats.BatteryPercent)
+            {
+                _batteryPercent = stats.BatteryPercent;
+                UpdateBatteryColor();
+            }
         }
         catch (Exception)
         {
@@ -274,5 +334,5 @@ public partial class NotchWindow
         }
     }
 
-    private sealed record CalendarRow(string When, string Title);
+    private sealed record CalendarRow(string When, string Title, Brush Dot);
 }

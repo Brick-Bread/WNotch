@@ -12,6 +12,39 @@ public readonly record struct GlowColor(byte R, byte G, byte B)
     public static GlowColor Yellow { get; } = new(0xFF, 0xD8, 0x4A);
     public static GlowColor Violet { get; } = new(0xA8, 0x6B, 0xFF);
 
+    /// <summary>The presets by name, in the order a colour picker shows them.</summary>
+    public static IReadOnlyList<KeyValuePair<string, GlowColor>> Named { get; } =
+    [
+        new(nameof(Blue), Blue),
+        new(nameof(Cyan), Cyan),
+        new(nameof(Green), Green),
+        new(nameof(Yellow), Yellow),
+        new(nameof(Amber), Amber),
+        new(nameof(Orange), Orange),
+        new(nameof(Red), Red),
+        new(nameof(Violet), Violet),
+    ];
+
+    /// <summary>The preset called <paramref name="name"/> (case does not matter), or null when there is none.</summary>
+    public static GlowColor? FromName(string? name)
+    {
+        foreach ((string key, GlowColor color) in Named)
+        {
+            if (string.Equals(key, name, StringComparison.OrdinalIgnoreCase))
+            {
+                return color;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// The presets are picked to shine on black. This is the same colour deepened enough to
+    /// read as text or a thin line on a light background.
+    /// </summary>
+    public GlowColor OnLight() => Lerp(new GlowColor(0, 0, 0), 0.3);
+
     /// <summary>Linear blend: 0 gives this colour, 1 gives <paramref name="other"/>.</summary>
     public GlowColor Lerp(GlowColor other, double amount)
     {

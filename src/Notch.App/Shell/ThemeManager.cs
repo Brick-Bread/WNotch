@@ -1,4 +1,6 @@
 using System.Windows;
+using System.Windows.Media;
+using Notch.Core.Activities;
 using Notch.Core.Settings;
 using Notch.Platform.Display;
 
@@ -47,6 +49,38 @@ internal static class ThemeManager
             IsLight = light;
         }
 
+        ApplyAccent(GlowColor.FromName(settings.AccentColor));
         Changed?.Invoke();
+    }
+
+    /// <summary>A brush in <paramref name="color"/>, deepened in the light theme so it reads on the light island.</summary>
+    public static SolidColorBrush Brush(GlowColor color, byte alpha = 0xFF)
+    {
+        if (IsLight)
+        {
+            color = color.OnLight();
+        }
+
+        var brush = new SolidColorBrush(Color.FromArgb(alpha, color.R, color.G, color.B));
+        brush.Freeze();
+        return brush;
+    }
+
+    // Set on the application itself, where they win over the theme dictionary's uncoloured ones.
+    private static void ApplyAccent(GlowColor? accent)
+    {
+        ResourceDictionary resources = Application.Current.Resources;
+        if (accent is { } color)
+        {
+            resources["AccentBrush"] = Brush(color);
+            resources["AccentHoverBrush"] = Brush(color, 0x59);
+            resources["AccentPressedBrush"] = Brush(color, 0x80);
+        }
+        else
+        {
+            resources.Remove("AccentBrush");
+            resources.Remove("AccentHoverBrush");
+            resources.Remove("AccentPressedBrush");
+        }
     }
 }

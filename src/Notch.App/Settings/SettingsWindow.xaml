@@ -13,6 +13,31 @@
                 <Setter Property="FontWeight" Value="SemiBold" />
                 <Setter Property="Margin" Value="0,0,0,8" />
             </Style>
+
+            <!-- A round colour swatch; the ring shows which one is chosen. Background is the colour. -->
+            <Style x:Key="Swatch" TargetType="RadioButton">
+                <Setter Property="GroupName" Value="Accent" />
+                <Setter Property="Width" Value="26" />
+                <Setter Property="Height" Value="26" />
+                <Setter Property="Margin" Value="0,0,6,0" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RadioButton">
+                            <Grid Background="Transparent">
+                                <Ellipse x:Name="Ring" StrokeThickness="2" Stroke="{TemplateBinding Background}"
+                                         Visibility="Hidden" />
+                                <Ellipse Margin="5" Fill="{TemplateBinding Background}" />
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="Ring" Property="Visibility" Value="Visible" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </StackPanel.Resources>
 
         <TextBlock Text="General" Style="{StaticResource Heading}" />
@@ -32,6 +57,11 @@
                 <ComboBoxItem Content="Light" />
                 <ComboBoxItem Content="Follow Windows" />
             </ComboBox>
+        </DockPanel>
+        <DockPanel Margin="0,10,0,0">
+            <TextBlock Text="Accent" VerticalAlignment="Center" Width="64" />
+            <!-- One swatch per colour, added in code. -->
+            <StackPanel x:Name="AccentSwatches" Orientation="Horizontal" />
         </DockPanel>
 
         <TextBlock Text="Show in the pill" Style="{StaticResource Heading}" Margin="0,22,0,8" />

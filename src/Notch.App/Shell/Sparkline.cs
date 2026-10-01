@@ -14,12 +14,13 @@ internal sealed class Sparkline : FrameworkElement
         nameof(Stroke),
         typeof(Brush),
         typeof(Sparkline),
-        new FrameworkPropertyMetadata(Brushes.White, FrameworkPropertyMetadataOptions.AffectsRender, (d, _) => ((Sparkline)d)._pen = null));
+        new FrameworkPropertyMetadata(Brushes.White, FrameworkPropertyMetadataOptions.AffectsRender, (d, _) => ((Sparkline)d).ResetBrushes()));
 
     private readonly Queue<double> _values = new(Capacity);
     private Pen? _pen;
+    private Brush? _fill;
 
-    /// <summary>Colour of the line.</summary>
+    /// <summary>Colour of the line; the area under it is washed with the same colour.</summary>
     public Brush Stroke
     {
         get => (Brush)GetValue(StrokeProperty);
@@ -50,29 +51,62 @@ internal sealed class Sparkline : FrameworkElement
         double step = ActualWidth / (Capacity - 1);
         double x = ActualWidth - ((_values.Count - 1) * step);
 
-        var geometry = new StreamGeometry();
-        using (StreamGeometryContext context = geometry.Open())
+        // The same points twice: closed down to the baseline for the wash, open for the line.
+        double left = x;
+        var line = new StreamGeometry();
+        var area = new StreamGeometry();
+        using (StreamGeometryContext lineContext = line.Open())
+        using (StreamGeometryContext areaContext = area.Open())
         {
+            areaContext.BeginFigure(new Point(left, ActualHeight), isFilled: true, isClosed: true);
             bool first = true;
             foreach (double value in _values)
             {
                 var point = new Point(x, top + ((1 - value) * height));
+                areaContext.LineTo(point, isStroked: false, isSmoothJoin: true);
                 if (first)
                 {
-                    context.BeginFigure(point, isFilled: false, isClosed: false);
+                    lineContext.BeginFigure(point, isFilled: false, isClosed: false);
                     first = false;
                 }
                 else
                 {
-                    context.LineTo(point, isStroked: true, isSmoothJoin: true);
+                    lineContext.LineTo(point, isStroked: true, isSmoothJoin: true);
                 }
 
                 x += step;
             }
+
+            areaContext.LineTo(new Point(x - step, ActualHeight), isStroked: false, isSmoothJoin: false);
         }
 
-        geometry.Freeze();
+        line.Freeze();
+        area.Freeze();
         _pen ??= new Pen(Stroke, Thickness) { LineJoin = PenLineJoin.Round };
-        drawingContext.DrawGeometry(null, _pen, geometry);
+        _fill ??= CreateFill(Stroke);
+        drawingContext.DrawGeometry(_fill, null, area);
+        drawingContext.DrawGeometry(null, _pen, line);
+    }
+
+    private void ResetBrushes()
+    {
+        _pen = null;
+        _fill = null;
+    }
+
+    /// <summary>The line's colour fading out towards the bottom; nothing for a stroke that is not one flat colour.</summary>
+    private static Brush CreateFill(Brush stroke)
+    {
+        if (stroke is not SolidColorBrush { Color: var color })
+        {
+            return Brushes.Transparent;
+        }
+
+        var fill = new LinearGradientBrush(
+            Color.FromArgb(0x55, color.R, color.G, color.B),
+            Color.FromArgb(0x00, color.R, color.G, color.B),
+            angle: 90);
+        fill.Freeze();
+        return fill;
     }
 }

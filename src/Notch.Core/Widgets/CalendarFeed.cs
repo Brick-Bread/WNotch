@@ -5,7 +5,8 @@ using Ical.Net.DataTypes;
 namespace Notch.Core.Widgets;
 
 /// <param name="Start">In local time. For all-day events, midnight at the start of the day.</param>
-public sealed record CalendarEntry(string Title, DateTimeOffset Start, DateTimeOffset End, bool IsAllDay, string? Location);
+/// <param name="Feed">Position of the feed the event came from in the list of feeds, to tell calendars apart.</param>
+public sealed record CalendarEntry(string Title, DateTimeOffset Start, DateTimeOffset End, bool IsAllDay, string? Location, int Feed = 0);
 
 /// <summary>Reads iCalendar (.ics) text, as published by Google Calendar, Outlook and most other calendars.</summary>
 public static class CalendarFeed

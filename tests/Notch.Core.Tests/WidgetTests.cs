@@ -158,6 +158,7 @@ public class WidgetTests
 
         Assert.Equal(1, service.FailedFeeds);
         Assert.Contains(service.Upcoming, e => e.Title == "Holiday");
+        Assert.All(service.Upcoming, e => Assert.Equal(0, e.Feed));
         Assert.Equal(service.Upcoming.OrderBy(e => e.Start), service.Upcoming);
     }
 

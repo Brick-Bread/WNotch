@@ -3,15 +3,17 @@
     <!-- Light.xaml defines the same keys. Fills are translucent so they sit on any island colour. -->
     <SolidColorBrush x:Key="IslandBrush" Color="#000000" />
     <SolidColorBrush x:Key="TextBrush" Color="#FFFFFF" />
+
+    <!-- Used when no accent colour is chosen; ThemeManager overrides these three when one is. -->
     <SolidColorBrush x:Key="AccentBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#33FFFFFF" />
+    <SolidColorBrush x:Key="AccentPressedBrush" Color="#4DFFFFFF" />
 
     <!-- Panels and the resting, hovered and pressed states of controls, faintest first. -->
     <SolidColorBrush x:Key="CardBrush" Color="#14FFFFFF" />
     <SolidColorBrush x:Key="ControlBrush" Color="#1AFFFFFF" />
     <SolidColorBrush x:Key="HoverBrush" Color="#26FFFFFF" />
-    <SolidColorBrush x:Key="ControlHoverBrush" Color="#33FFFFFF" />
     <SolidColorBrush x:Key="PressedBrush" Color="#40FFFFFF" />
-    <SolidColorBrush x:Key="ControlPressedBrush" Color="#4DFFFFFF" />
 
     <!-- The unfilled part of a progress bar. -->
     <SolidColorBrush x:Key="TrackBrush" Color="#40FFFFFF" />

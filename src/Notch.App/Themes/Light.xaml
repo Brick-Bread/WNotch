@@ -3,14 +3,16 @@
     <!-- Same keys as Dark.xaml. -->
     <SolidColorBrush x:Key="IslandBrush" Color="#F3F3F5" />
     <SolidColorBrush x:Key="TextBrush" Color="#1B1B1F" />
+
+    <!-- Used when no accent colour is chosen; ThemeManager overrides these three when one is. -->
     <SolidColorBrush x:Key="AccentBrush" Color="#1B1B1F" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#29000000" />
+    <SolidColorBrush x:Key="AccentPressedBrush" Color="#3D000000" />
 
     <SolidColorBrush x:Key="CardBrush" Color="#0F000000" />
     <SolidColorBrush x:Key="ControlBrush" Color="#14000000" />
     <SolidColorBrush x:Key="HoverBrush" Color="#1F000000" />
-    <SolidColorBrush x:Key="ControlHoverBrush" Color="#29000000" />
     <SolidColorBrush x:Key="PressedBrush" Color="#33000000" />
-    <SolidColorBrush x:Key="ControlPressedBrush" Color="#3D000000" />
 
     <SolidColorBrush x:Key="TrackBrush" Color="#29000000" />
 </ResourceDictionary>

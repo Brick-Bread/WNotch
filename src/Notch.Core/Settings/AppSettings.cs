@@ -22,6 +22,14 @@ public sealed class AppSettings
     [JsonConverter(typeof(JsonStringEnumConverter<NotchTheme>))]
     public NotchTheme Theme { get; set; } = NotchTheme.Dark;
 
+    /// <summary>
+    /// Name of the <see cref="GlowColor"/> preset that tints buttons, bars and the selected tab.
+    /// Anything that is not a preset, such as <see cref="NoAccent"/>, leaves them uncoloured.
+    /// </summary>
+    public string AccentColor { get; set; } = nameof(GlowColor.Blue);
+
+    public const string NoAccent = "None";
+
     /// <summary>Light up the pill in a colour and rhythm that matches what is happening.</summary>
     public bool GlowEffects { get; set; } = true;
 
