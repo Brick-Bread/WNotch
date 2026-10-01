@@ -31,6 +31,7 @@ public partial class NotchWindow
         PageInput.TextChanged += (_, _) =>
             PageInputHint.Visibility = PageInput.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
         PageSend.Click += (_, _) => SubmitPageInput();
+        PageBack.Click += (_, _) => CurrentPage?.Page.Back?.Invoke();
         SyncPageTabs();
     }
 
@@ -134,6 +135,15 @@ public partial class NotchWindow
 
         PageStats.ItemsSource = page.Stats.Select(s => new PageStatRow(s)).ToList();
         PageInputRow.Visibility = page.Input is null ? Visibility.Collapsed : Visibility.Visible;
+
+        PageBack.Visibility = page.Back is null ? Visibility.Collapsed : Visibility.Visible;
+        PageBack.Content = "‹  " + (page.BackLabel ?? "Back");
+
+        bool listed = page.Choices.Count > 0;
+        PageChoices.ItemsSource = page.Choices.Select(c => new PageChoiceRow(c)).ToList();
+        PageChoicesScroll.Visibility = listed ? Visibility.Visible : Visibility.Collapsed;
+        PageConsoleCard.Visibility = listed ? Visibility.Collapsed : Visibility.Visible;
+        PageStats.Visibility = page.Stats.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
         PageInputHint.Text = page.InputHint ?? "";
         UpdateKeyboardInteraction();
     }
@@ -215,6 +225,24 @@ public partial class NotchWindow
 
         Activate();
         PageInput.Focus();
+    }
+
+    private void OnPageChoiceClick(object sender, RoutedEventArgs e) =>
+        ((sender as FrameworkElement)?.Tag as PageChoiceRow)?.Choice.Clicked?.Invoke();
+
+    private sealed class PageChoiceRow(PluginChoice choice)
+    {
+        public PluginChoice Choice => choice;
+
+        public string Label => choice.Label;
+
+        public string? Value => choice.Value;
+
+        public string? Detail => choice.Detail;
+
+        public Brush ValueBrush { get; } = choice.Color is { } color
+            ? ThemeManager.Brush(color)
+            : (Brush)Application.Current.FindResource("TextBrush");
     }
 
     private sealed class PageStatRow(PluginStat stat)

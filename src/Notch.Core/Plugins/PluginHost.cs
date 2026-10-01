@@ -191,7 +191,14 @@ internal sealed class PluginHost : IPluginHost
             {
                 if (!_closed)
                 {
-                    board.Set(pluginId, page with { Input = Guard(page) });
+                    board.Set(
+                        pluginId,
+                        page with
+                        {
+                            Input = Guard(page),
+                            Back = page.Back is { } back ? () => Run(page.Id, back) : null,
+                            Choices = [.. page.Choices.Select(c => c with { Clicked = c.Clicked is { } clicked ? () => Run(page.Id, clicked) : null })],
+                        });
                 }
             }
         }
@@ -241,6 +248,18 @@ internal sealed class PluginHost : IPluginHost
                 Clear();
             }
         }
+
+        private void Run(string pageId, Action action) => Task.Run(() =>
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception e)
+            {
+                log.Error($"A click handler of page '{pageId}' failed.", e);
+            }
+        });
 
         /// <summary>The shell calls this on the UI thread; plugin code runs elsewhere and cannot throw into it.</summary>
         private Action<string>? Guard(PluginPage page)

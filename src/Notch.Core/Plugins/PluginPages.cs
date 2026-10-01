@@ -54,6 +54,37 @@ public sealed record PluginPage
 
     /// <summary>Greyed text in the empty input line, e.g. "Send a command".</summary>
     public string? InputHint { get; init; }
+
+    /// <summary>
+    /// Shows a back button in the top left of the page that calls this. Null for none.
+    /// Called on a background thread. API version 4.
+    /// </summary>
+    public Action? Back { get; init; }
+
+    /// <summary>The back button's text, e.g. "Servers". Defaults to "Back".</summary>
+    public string? BackLabel { get; init; }
+
+    /// <summary>
+    /// A list of rows the user can click, shown in place of the console while it is not empty.
+    /// API version 4.
+    /// </summary>
+    public IReadOnlyList<PluginChoice> Choices { get; init; } = [];
+}
+
+/// <summary>One clickable row of a page's list: a name, a headline value and a line of detail.</summary>
+public sealed record PluginChoice
+{
+    public required string Label { get; init; }
+
+    public string? Value { get; init; }
+
+    public string? Detail { get; init; }
+
+    /// <summary>Colour of the value; null for the notch's own colours.</summary>
+    public GlowColor? Color { get; init; }
+
+    /// <summary>Called on a background thread when the row is clicked.</summary>
+    public Action? Clicked { get; init; }
 }
 
 /// <summary>One figure on a page: a caption, a headline value and a line of detail.</summary>
