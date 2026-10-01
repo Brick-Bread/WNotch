@@ -3,8 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Notch settings"
         Width="460" SizeToContent="Height" ResizeMode="NoResize"
-        WindowStartupLocation="CenterScreen"
-        ThemeMode="System">
+        WindowStartupLocation="CenterScreen">
     <!-- Scrolls on screens too short for the whole window; see the MaxHeight set in code. -->
     <ScrollViewer VerticalScrollBarVisibility="Auto">
     <StackPanel Margin="24,20,24,20">
@@ -23,8 +22,16 @@
         <CheckBox x:Name="AutoUpdate" Content="Install updates automatically"
                   ToolTip="Checks GitHub for new releases, installs them in the background and restarts Notch when it is not in use." />
         <DockPanel Margin="0,10,0,0">
-            <TextBlock Text="Display" VerticalAlignment="Center" Margin="0,0,12,0" />
+            <TextBlock Text="Display" VerticalAlignment="Center" Width="64" />
             <ComboBox x:Name="Display" />
+        </DockPanel>
+        <DockPanel Margin="0,8,0,0">
+            <TextBlock Text="Theme" VerticalAlignment="Center" Width="64" />
+            <ComboBox x:Name="Theme">
+                <ComboBoxItem Content="Dark" />
+                <ComboBoxItem Content="Light" />
+                <ComboBoxItem Content="Follow Windows" />
+            </ComboBox>
         </DockPanel>
 
         <TextBlock Text="Show in the pill" Style="{StaticResource Heading}" Margin="0,22,0,8" />

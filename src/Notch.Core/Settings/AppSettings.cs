@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Notch.Core.Activities;
 using Notch.Core.Hud;
 using Notch.Core.Media;
@@ -16,6 +17,10 @@ public sealed class AppSettings
     public bool ExpandOnHover { get; set; } = true;
 
     public bool HideInFullscreen { get; set; } = true;
+
+    /// <summary>Dark or light colours, or whichever Windows is set to for apps.</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<NotchTheme>))]
+    public NotchTheme Theme { get; set; } = NotchTheme.Dark;
 
     /// <summary>Light up the pill in a colour and rhythm that matches what is happening.</summary>
     public bool GlowEffects { get; set; } = true;

@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using Notch.App.Shell;
 using Notch.Core.Activities;
 using Notch.Core.Plugins;
 using Notch.Core.Settings;
@@ -19,6 +20,7 @@ public partial class SettingsWindow : Window
     private readonly SettingsStore _store;
     private readonly PluginManager _plugins;
     private readonly PluginInstaller _installer;
+    private NotchTheme _shownTheme;
 
     public SettingsWindow(AppSettings settings, SettingsStore store, PluginManager plugins, PluginInstaller installer)
     {
@@ -28,6 +30,11 @@ public partial class SettingsWindow : Window
         _plugins = plugins;
         _installer = installer;
         MaxHeight = SystemParameters.WorkArea.Height;
+
+        // The theme can also change from the tray menu while this window is open.
+        ShowTheme();
+        ThemeManager.Changed += OnThemeChanged;
+        Closed += (_, _) => ThemeManager.Changed -= OnThemeChanged;
 
         StartWithWindows.IsChecked = StartupRegistration.IsEnabled;
         ExpandOnHover.IsChecked = settings.ExpandOnHover;
@@ -82,9 +89,31 @@ public partial class SettingsWindow : Window
     /// <summary>Raised after the settings object was updated and written to disk.</summary>
     public event EventHandler? Saved;
 
+    private void OnThemeChanged()
+    {
+        if (_settings.Theme != _shownTheme)
+        {
+            ShowTheme();
+        }
+    }
+
+    /// <summary>Shows the saved theme in the list and puts this window in it.</summary>
+    private void ShowTheme()
+    {
+        _shownTheme = _settings.Theme;
+        Theme.SelectedIndex = (int)_shownTheme;
+        ThemeMode = _shownTheme switch
+        {
+            NotchTheme.Light => ThemeMode.Light,
+            NotchTheme.System => ThemeMode.System,
+            _ => ThemeMode.Dark,
+        };
+    }
+
     private void OnSave()
     {
         _settings.ExpandOnHover = ExpandOnHover.IsChecked == true;
+        _settings.Theme = (NotchTheme)Math.Max(0, Theme.SelectedIndex);
         _settings.HideInFullscreen = HideInFullscreen.IsChecked == true;
         _settings.AutoUpdate = AutoUpdate.IsChecked == true;
         _settings.GlowEffects = GlowEffects.IsChecked == true;

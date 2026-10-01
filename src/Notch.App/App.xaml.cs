@@ -109,6 +109,14 @@ public partial class App : Application
         // --plugin=<folder> runs a plugin straight from its build output, enabled or not.
         _plugins.Discover(Options(e, "--plugin="));
 
+        // --theme=dark|light|system shows that theme for this run only.
+        if (Enum.TryParse(Option(e, "--theme="), ignoreCase: true, out NotchTheme theme))
+        {
+            ThemeManager.Override = theme;
+        }
+
+        // Before any window exists, so nothing is ever drawn without its colours.
+        ThemeManager.Apply(settings);
         var window = new NotchWindow(_activities, media, _terminal, pluginCards, settingsStore, settings);
 
         // --display=2 uses the display the settings window lists as "Display 2", for this run only.
@@ -141,7 +149,16 @@ public partial class App : Application
         }
 
         _activities.SetSuppressed(settings.SuppressedActivityIds());
-        _tray = TrayIcon.Create(() => OpenSettings(window, settings, settingsStore), Shutdown);
+        _tray = TrayIcon.Create(
+            () => OpenSettings(window, settings, settingsStore),
+            () => settings.Theme,
+            chosen =>
+            {
+                settings.Theme = chosen;
+                settingsStore.Save(settings);
+                ThemeManager.Apply(settings);
+            },
+            Shutdown);
 
         ActivityManager activities = _activities;
         Task.Run(() => _huds = SystemHudSources.Start(activities));

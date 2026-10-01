@@ -6,13 +6,13 @@
         Width="980" Height="96"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False" Topmost="True"
-        Foreground="White"
+        Foreground="{DynamicResource TextBrush}"
         FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="13">
 
     <Window.Resources>
         <!-- A rounded panel on the Home and Stats tabs. -->
         <Style x:Key="Card" TargetType="Border">
-            <Setter Property="Background" Value="#14FFFFFF" />
+            <Setter Property="Background" Value="{DynamicResource CardBrush}" />
             <Setter Property="CornerRadius" Value="14" />
             <Setter Property="Padding" Value="14,10" />
         </Style>
@@ -37,7 +37,7 @@
                 IsHitTestVisible="False" />
 
         <Grid x:Name="Island" Width="180" Height="32"
-              HorizontalAlignment="Center" VerticalAlignment="Top" Background="Black">
+              HorizontalAlignment="Center" VerticalAlignment="Top" Background="{DynamicResource IslandBrush}">
 
             <Grid x:Name="CompactLayer" Margin="16,0" Opacity="0" IsHitTestVisible="False">
                 <Grid.ColumnDefinitions>
@@ -55,7 +55,7 @@
                            MaxWidth="130" TextTrimming="CharacterEllipsis" />
                 <ProgressBar x:Name="CompactProgress" Grid.Column="2" Width="110" Height="4" Maximum="1"
                              VerticalAlignment="Center" BorderThickness="0"
-                             Foreground="White" Background="#40FFFFFF" />
+                             Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource TrackBrush}" />
             </Grid>
 
             <!-- Fixed size per tab, so the content is revealed by the growing island instead of reflowing. -->
@@ -84,7 +84,7 @@
                         </Grid.ColumnDefinitions>
 
                         <Grid Width="112" Height="112">
-                            <Border CornerRadius="14" Background="#1AFFFFFF">
+                            <Border CornerRadius="14" Background="{DynamicResource ControlBrush}">
                                 <TextBlock Text="&#xE8D6;" FontFamily="{StaticResource IconFont}" FontSize="34"
                                            Opacity="0.5" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
@@ -115,7 +115,7 @@
                                 <Border x:Name="MediaSeekArea" Grid.Column="1" Height="18" Background="Transparent">
                                     <ProgressBar x:Name="MediaProgress" Height="4" Maximum="1" BorderThickness="0"
                                                  VerticalAlignment="Center" IsHitTestVisible="False"
-                                                 Foreground="White" Background="#40FFFFFF" />
+                                                 Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource TrackBrush}" />
                                 </Border>
                                 <TextBlock x:Name="MediaRemaining" Grid.Column="2" FontSize="11" Opacity="0.65"
                                            VerticalAlignment="Center" HorizontalAlignment="Right" />
@@ -222,7 +222,7 @@
                                     </Border>
                                     <DataTemplate.Triggers>
                                         <DataTrigger Binding="{Binding IsActive}" Value="True">
-                                            <Setter TargetName="Tab" Property="Background" Value="#26FFFFFF" />
+                                            <Setter TargetName="Tab" Property="Background" Value="{DynamicResource HoverBrush}" />
                                         </DataTrigger>
                                     </DataTemplate.Triggers>
                                 </DataTemplate>
@@ -231,7 +231,7 @@
                     </DockPanel>
 
                     <!-- The WebView2 that renders the sessions is added here in code. -->
-                    <Border x:Name="TerminalHost" Grid.Row="1" Margin="0,10,0,0" Background="Black" />
+                    <Border x:Name="TerminalHost" Grid.Row="1" Margin="0,10,0,0" Background="{DynamicResource IslandBrush}" />
                     <TextBlock x:Name="TerminalEmpty" Grid.Row="1" Opacity="0.45"
                                Text="Start a session with the buttons above"
                                HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -244,7 +244,8 @@
                         <DockPanel>
                             <TextBlock DockPanel.Dock="Top" Text="CPU" Style="{StaticResource CardLabel}" />
                             <TextBlock x:Name="StatsCpu" DockPanel.Dock="Top" Text="–" Style="{StaticResource CardValue}" />
-                            <shell:Sparkline x:Name="StatsCpuChart" Margin="0,6,0,0" />
+                            <shell:Sparkline x:Name="StatsCpuChart" Margin="0,6,0,0" Opacity="0.7"
+                                             Stroke="{DynamicResource TextBrush}" />
                         </DockPanel>
                     </Border>
                     <Border Style="{StaticResource Card}" Margin="6">
@@ -252,14 +253,16 @@
                             <TextBlock DockPanel.Dock="Top" Text="Memory" Style="{StaticResource CardLabel}" />
                             <TextBlock x:Name="StatsMemory" DockPanel.Dock="Top" Text="–" Style="{StaticResource CardValue}" />
                             <TextBlock x:Name="StatsMemoryDetail" DockPanel.Dock="Top" FontSize="11" Opacity="0.55" />
-                            <shell:Sparkline x:Name="StatsMemoryChart" Margin="0,6,0,0" />
+                            <shell:Sparkline x:Name="StatsMemoryChart" Margin="0,6,0,0" Opacity="0.7"
+                                             Stroke="{DynamicResource TextBrush}" />
                         </DockPanel>
                     </Border>
                     <Border Style="{StaticResource Card}" Margin="6">
                         <DockPanel>
                             <TextBlock DockPanel.Dock="Top" Text="GPU" Style="{StaticResource CardLabel}" />
                             <TextBlock x:Name="StatsGpu" DockPanel.Dock="Top" Text="–" Style="{StaticResource CardValue}" />
-                            <shell:Sparkline x:Name="StatsGpuChart" Margin="0,6,0,0" />
+                            <shell:Sparkline x:Name="StatsGpuChart" Margin="0,6,0,0" Opacity="0.7"
+                                             Stroke="{DynamicResource TextBrush}" />
                         </DockPanel>
                     </Border>
                     <Border Style="{StaticResource Card}" Margin="6">
@@ -299,7 +302,7 @@
                                         <TextBlock DockPanel.Dock="Top" Text="{Binding Label}"
                                                    Style="{StaticResource CardLabel}" TextTrimming="CharacterEllipsis" />
                                         <ProgressBar DockPanel.Dock="Bottom" Height="4" Maximum="1" BorderThickness="0"
-                                                     Foreground="White" Background="#40FFFFFF"
+                                                     Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource TrackBrush}"
                                                      Value="{Binding Progress, Mode=OneTime}"
                                                      Visibility="{Binding ProgressVisibility}" />
                                         <TextBlock DockPanel.Dock="Top" Text="{Binding Value}"

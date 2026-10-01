@@ -1,15 +1,38 @@
 using System.Windows.Controls;
 using H.NotifyIcon;
+using Notch.Core.Settings;
 using Drawing = System.Drawing;
 
 namespace Notch.App.Shell;
 
 internal static class TrayIcon
 {
-    public static TaskbarIcon Create(Action openSettings, Action quit)
+    public static TaskbarIcon Create(Action openSettings, Func<NotchTheme> getTheme, Action<NotchTheme> setTheme, Action quit)
     {
         var settingsItem = new MenuItem { Header = "Settings…" };
         settingsItem.Click += (_, _) => openSettings();
+
+        var themeItem = new MenuItem { Header = "Theme" };
+        foreach ((NotchTheme theme, string name) in new[]
+        {
+            (NotchTheme.Dark, "Dark"),
+            (NotchTheme.Light, "Light"),
+            (NotchTheme.System, "Follow Windows"),
+        })
+        {
+            var item = new MenuItem { Header = name, Tag = theme };
+            item.Click += (_, _) => setTheme(theme);
+            themeItem.Items.Add(item);
+        }
+
+        // The tick is set each time the menu opens, as settings can change the theme too.
+        themeItem.SubmenuOpened += (_, _) =>
+        {
+            foreach (MenuItem item in themeItem.Items)
+            {
+                item.IsChecked = (NotchTheme)item.Tag == getTheme();
+            }
+        };
 
         var quitItem = new MenuItem { Header = "Quit Notch" };
         quitItem.Click += (_, _) => quit();
@@ -18,7 +41,7 @@ internal static class TrayIcon
         {
             ToolTipText = "Notch",
             Icon = DrawIcon(),
-            ContextMenu = new ContextMenu { Items = { settingsItem, new Separator(), quitItem } },
+            ContextMenu = new ContextMenu { Items = { settingsItem, themeItem, new Separator(), quitItem } },
         };
         icon.TrayLeftMouseUp += (_, _) => openSettings();
 

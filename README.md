@@ -61,6 +61,7 @@ Development flags for `Notch.exe`:
 | `--tab=home\|terminal\|stats\|plugins` | Start on that tab |
 | `--open=claude\|codex\|shell` | Start a terminal session at launch |
 | `--settings` | Open the settings window at launch |
+| `--theme=dark\|light\|system` | Show that theme for this run without changing the saved setting |
 | `--display=<n>` | Use display *n* (as numbered in settings) for this run, e.g. to keep a debug build off the screen an installed copy is on |
 | `--plugin=<folder>` | Load a plugin from its build output and run it whether or not it is enabled; can be repeated |
 | `--trace-hover` | Log pointer enter/leave, opening, closing and window resizes to `%LocalAppData%\Notch\hover.log`, to diagnose hover problems |

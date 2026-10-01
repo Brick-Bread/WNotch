@@ -17,6 +17,7 @@ namespace Notch.App.Shell;
 
 public partial class NotchWindow : Window
 {
+    private const int WM_SETTINGCHANGE = 0x001A;
     private const int WM_DISPLAYCHANGE = 0x007E;
     private const int WM_DPICHANGED = 0x02E0;
 
@@ -78,6 +79,8 @@ public partial class NotchWindow : Window
         InitializeTerminal();
         InitializeWidgets();
         InitializePlugins();
+        ThemeManager.Changed += OnThemeChanged;
+        OnThemeChanged();
 
         Shape idle = ShapeFor(NotchMode.Idle);
         _animator = new NotchAnimator(idle.Width, idle.Height, idle.Radius);
@@ -158,6 +161,7 @@ public partial class NotchWindow : Window
         _activities.Changed -= OnActivitiesChanged;
         _media.Changed -= OnMediaChanged;
         _pluginCards.Changed -= OnPluginCardsChanged;
+        ThemeManager.Changed -= OnThemeChanged;
         _mediaTimer.Stop();
         _glow.Dispose();
         _hoverTimer.Stop();
@@ -173,9 +177,17 @@ public partial class NotchWindow : Window
             // Let WPF finish its own DPI handling before measuring against the new layout.
             Dispatcher.BeginInvoke(Reposition, DispatcherPriority.Background);
         }
+        else if (msg == WM_SETTINGCHANGE && _settings.Theme == NotchTheme.System)
+        {
+            // Windows sends this for many settings, the app theme among them.
+            Dispatcher.BeginInvoke(() => ThemeManager.Apply(_settings), DispatcherPriority.Background);
+        }
 
         return 0;
     }
+
+    /// <summary>Recolours what the theme brushes do not reach.</summary>
+    private void OnThemeChanged() => _terminal.Bridge.SetTheme(ThemeManager.IsLight);
 
     /// <summary>True while restarting the app would interrupt something: the notch is open, a terminal session exists, or a timer is counting.</summary>
     public bool IsBusy =>
@@ -186,6 +198,7 @@ public partial class NotchWindow : Window
     /// <summary>Re-reads the settings object after the user saved changes.</summary>
     public void ApplySettings()
     {
+        ThemeManager.Apply(_settings);
         Reposition();
         Housekeeping();
         RefreshCalendar();

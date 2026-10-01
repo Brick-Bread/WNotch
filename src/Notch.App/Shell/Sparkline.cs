@@ -8,8 +8,23 @@ internal sealed class Sparkline : FrameworkElement
 {
     private const int Capacity = 60;
 
-    private static readonly Pen Line = CreatePen();
+    private const double Thickness = 1.5;
+
+    public static readonly DependencyProperty StrokeProperty = DependencyProperty.Register(
+        nameof(Stroke),
+        typeof(Brush),
+        typeof(Sparkline),
+        new FrameworkPropertyMetadata(Brushes.White, FrameworkPropertyMetadataOptions.AffectsRender, (d, _) => ((Sparkline)d)._pen = null));
+
     private readonly Queue<double> _values = new(Capacity);
+    private Pen? _pen;
+
+    /// <summary>Colour of the line.</summary>
+    public Brush Stroke
+    {
+        get => (Brush)GetValue(StrokeProperty);
+        set => SetValue(StrokeProperty, value);
+    }
 
     public void Push(double value)
     {
@@ -30,8 +45,8 @@ internal sealed class Sparkline : FrameworkElement
         }
 
         // Leave room for the stroke so a flat line at 0 or 1 is not clipped.
-        double top = Line.Thickness;
-        double height = ActualHeight - (2 * Line.Thickness);
+        double top = Thickness;
+        double height = ActualHeight - (2 * Thickness);
         double step = ActualWidth / (Capacity - 1);
         double x = ActualWidth - ((_values.Count - 1) * step);
 
@@ -57,16 +72,7 @@ internal sealed class Sparkline : FrameworkElement
         }
 
         geometry.Freeze();
-        drawingContext.DrawGeometry(null, Line, geometry);
-    }
-
-    private static Pen CreatePen()
-    {
-        var pen = new Pen(new SolidColorBrush(Color.FromArgb(0xB0, 0xFF, 0xFF, 0xFF)), 1.5)
-        {
-            LineJoin = PenLineJoin.Round,
-        };
-        pen.Freeze();
-        return pen;
+        _pen ??= new Pen(Stroke, Thickness) { LineJoin = PenLineJoin.Round };
+        drawingContext.DrawGeometry(null, _pen, geometry);
     }
 }

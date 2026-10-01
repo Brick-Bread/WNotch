@@ -18,6 +18,7 @@ internal sealed class TerminalBridge
 
     private readonly TaskCompletionSource _pageLoaded = new();
     private Task? _initialization;
+    private bool _light;
 
     public WebView2CompositionControl Control { get; } = new()
     {
@@ -46,6 +47,18 @@ internal sealed class TerminalBridge
 
     public void Write(string id, ReadOnlySpan<byte> data) =>
         Post(new JsonObject { ["type"] = "output", ["id"] = id, ["data"] = Convert.ToBase64String(data) });
+
+    /// <summary>Switches every terminal, and the ones opened later, between the dark and light colours.</summary>
+    public void SetTheme(bool light)
+    {
+        _light = light;
+
+        // Shows around the page and before it has loaded; matches the island (Themes/*.xaml).
+        Control.DefaultBackgroundColor = light
+            ? System.Drawing.Color.FromArgb(0xF3, 0xF3, 0xF5)
+            : System.Drawing.Color.Black;
+        Post(new JsonObject { ["type"] = "theme", ["light"] = light });
+    }
 
     public void Focus()
     {
@@ -83,6 +96,7 @@ internal sealed class TerminalBridge
         webView.Navigate($"https://{HostName}/index.html");
 
         await _pageLoaded.Task;
+        SetTheme(_light);
     }
 
     private void Post(JsonObject message)
