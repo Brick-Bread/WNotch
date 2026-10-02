@@ -102,31 +102,76 @@ internal static class Machine
         command.SetValue("", "\"" + exePath + "\" \"%1\"");
     }
 
+    private const string EnvironmentKey = "Environment";
+
     /// <summary>Whether <c>notchctl.exe</c>'s folder is on the user's PATH.</summary>
     public static bool IsOnPath(string dir)
     {
-        string? path = Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.User);
-        return path != null && SplitPath(path).Any(p => string.Equals(p.TrimEnd('\\'), dir.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase));
+        using (RegistryKey key = Registry.CurrentUser.OpenSubKey(EnvironmentKey))
+        {
+            string raw = ReadPath(key);
+            return raw.Split(';').Any(segment => SamePath(segment, dir));
+        }
     }
 
-    /// <summary>Adds or removes the install folder on the user's PATH, so <c>notchctl</c> works in any terminal.</summary>
+    /// <summary>
+    /// Adds or removes the install folder on the user's PATH, so <c>notchctl</c> works in any terminal.
+    /// Does nothing when the PATH already is as wanted, and otherwise changes only that one entry:
+    /// the rest of the value, its empty entries and its registry type (a PATH that uses %VARIABLES%
+    /// is stored as an expandable string) are left exactly as they were.
+    /// </summary>
     public static void SetOnPath(string dir, bool enabled)
     {
-        string current = Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.User) ?? "";
-        var parts = SplitPath(current).Where(p => !string.Equals(p.TrimEnd('\\'), dir.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase)).ToList();
-        if (enabled)
+        using (RegistryKey key = Registry.CurrentUser.CreateSubKey(EnvironmentKey))
         {
-            parts.Add(dir);
+            string raw = ReadPath(key);
+            string[] segments = raw.Split(';');
+            bool present = segments.Any(segment => SamePath(segment, dir));
+            if (present == enabled)
+            {
+                return;
+            }
+
+            string next = enabled
+                ? (raw.Length == 0 ? dir : raw.TrimEnd(';') + ";" + dir)
+                : string.Join(";", segments.Where(segment => !SamePath(segment, dir)));
+
+            RegistryValueKind kind = key.GetValueNames().Contains("Path", StringComparer.OrdinalIgnoreCase)
+                ? key.GetValueKind("Path")
+                : RegistryValueKind.ExpandString;
+            key.SetValue("Path", next, kind == RegistryValueKind.ExpandString || next.Contains("%") ? RegistryValueKind.ExpandString : RegistryValueKind.String);
         }
 
-        string next = string.Join(";", parts);
-        if (next != current)
-        {
-            Environment.SetEnvironmentVariable("Path", next, EnvironmentVariableTarget.User);
-        }
+        BroadcastEnvironmentChange();
     }
 
-    private static string[] SplitPath(string path) => path.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+    private static string ReadPath(RegistryKey key) =>
+        key?.GetValue("Path", "", RegistryValueOptions.DoNotExpandEnvironmentNames) as string ?? "";
+
+    private static bool SamePath(string segment, string dir)
+    {
+        string a = Environment.ExpandEnvironmentVariables(segment.Trim().Trim('"')).TrimEnd('\\');
+        return a.Length > 0 && string.Equals(a, dir.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase);
+    }
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern IntPtr SendMessageTimeout(IntPtr window, uint message, UIntPtr wParam, string lParam, uint flags, uint timeout, out UIntPtr result);
+
+    /// <summary>
+    /// Tells running programs the environment changed, so new terminals see the new PATH. Bounded: a
+    /// window that does not answer must not hold the installer up.
+    /// </summary>
+    private static void BroadcastEnvironmentChange()
+    {
+        var thread = new Thread(() =>
+        {
+            const uint WM_SETTINGCHANGE = 0x001A;
+            const uint SMTO_ABORTIFHUNG = 0x0002;
+            SendMessageTimeout((IntPtr)0xFFFF, WM_SETTINGCHANGE, UIntPtr.Zero, "Environment", SMTO_ABORTIFHUNG, 500, out _);
+        }) { IsBackground = true };
+        thread.Start();
+        thread.Join(3000);
+    }
 
     public static void Unregister()
     {
@@ -206,8 +251,12 @@ internal static class Machine
         }
     }
 
-    /// <summary>A running copy keeps its files locked, so stop the ones that live in <paramref name="dir"/>.</summary>
-    public static void StopApp(string dir)
+    /// <summary>
+    /// A running copy keeps its files locked, so stop the programs that live in <paramref name="dir"/>.
+    /// With <paramref name="graceful"/> (an update, where the app is already shutting itself down) they
+    /// get a few seconds to exit on their own before they are ended.
+    /// </summary>
+    public static void StopApp(string dir, bool graceful = false)
     {
         string prefix = Path.GetFullPath(dir).TrimEnd('\\') + "\\";
         foreach (string name in new[] { "Notch", "Notch.Hook", "notchctl" })
@@ -219,11 +268,16 @@ internal static class Machine
                     string? path = process.MainModule?.FileName;
                     if (path != null && path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                     {
+                        if (graceful && process.WaitForExit(4000))
+                        {
+                            continue;
+                        }
+
                         process.Kill();
                         process.WaitForExit(5000);
                     }
                 }
-                catch (Exception e) when (e is InvalidOperationException or System.ComponentModel.Win32Exception)
+                catch (Exception e) when (e is InvalidOperationException || e is System.ComponentModel.Win32Exception)
                 {
                     // Already gone, or not ours to inspect.
                 }
@@ -234,6 +288,63 @@ internal static class Machine
             }
         }
     }
+
+    // ---- A record of what setup did, and what the app should tell the user afterwards ----
+
+    private static string DataFolder =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), AppName);
+
+    public static string LogFile => Path.Combine(DataFolder, "setup.log");
+
+    /// <summary>Set when an update failed; the app shows it the next time it starts, then deletes it.</summary>
+    public static string UpdateErrorFile => Path.Combine(DataFolder, "update-error.txt");
+
+    /// <summary>Appends a line to setup.log. Never fails: a log must not be the reason an install does not finish.</summary>
+    public static void Log(string line)
+    {
+        try
+        {
+            Directory.CreateDirectory(DataFolder);
+            FileInfo existing = new FileInfo(LogFile);
+            if (existing.Exists && existing.Length > 256 * 1024)
+            {
+                File.Copy(LogFile, LogFile + ".old", true);
+                File.Delete(LogFile);
+            }
+
+            File.AppendAllText(LogFile, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "  " + line + Environment.NewLine);
+        }
+        catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+        {
+        }
+    }
+
+    /// <summary>Runs one optional part of an install; if it fails, logs it and carries on.</summary>
+    public static void Attempt(string what, Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (Exception e)
+        {
+            Log("Could not set up " + what + ": " + e.Message);
+        }
+    }
+
+    public static void WriteUpdateError(string message)
+    {
+        try
+        {
+            Directory.CreateDirectory(DataFolder);
+            File.WriteAllText(UpdateErrorFile, message);
+        }
+        catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+        {
+        }
+    }
+
+    public static void ClearUpdateError() => TryDelete(UpdateErrorFile);
 
     /// <summary>Deletes a folder, retrying briefly because a process that just exited can still hold files.</summary>
     public static void DeleteFolder(string dir)

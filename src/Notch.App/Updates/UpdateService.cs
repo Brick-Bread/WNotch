@@ -88,6 +88,41 @@ internal sealed class UpdateService : IDisposable
         Lifetime = TimeSpan.FromSeconds(6),
     });
 
+    /// <summary>
+    /// After a failed update the installer puts the previous version back on screen and leaves a note
+    /// (<c>update-error.txt</c>) saying what went wrong. Shows it once and deletes it.
+    /// </summary>
+    public static void AnnounceFailedUpdateIfAny(ActivityManager activities)
+    {
+        string file = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Notch", "update-error.txt");
+        try
+        {
+            if (!File.Exists(file))
+            {
+                return;
+            }
+
+            string reason = File.ReadAllText(file).Trim();
+            File.Delete(file);
+            activities.Publish(new Activity
+            {
+                Id = ActivityId + ".failed",
+                Tier = ActivityTier.Attention,
+                Title = "The update did not install",
+                Detail = reason.Length == 0 ? "Notch is unchanged. See setup.log in %LocalAppData%\\Notch" :"Notch is unchanged. " + reason,
+                Glyph = UpdateGlyph,
+                Glow = new Glow(GlowColor.Red, GlowPattern.Pulse),
+            });
+
+            // An Attention notice stays until removed; this one only needs to be seen.
+            _ = Task.Delay(TimeSpan.FromSeconds(15)).ContinueWith(_ => activities.Remove(ActivityId + ".failed"));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+        }
+    }
+
     /// <summary>Brings the next check forward, e.g. right after update notices were switched on.</summary>
     public void CheckSoon()
     {

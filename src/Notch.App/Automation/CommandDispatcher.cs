@@ -28,6 +28,12 @@ internal sealed class CommandDispatcher(
     {
         if (arguments.Length == 0 || arguments[0].StartsWith("--", StringComparison.Ordinal))
         {
+            // A copy the installer or a restart started is not the user asking to see Notch.
+            if (!ForwardedLaunch.ShouldReveal(arguments))
+            {
+                return Task.FromResult(new CommandResult(true));
+            }
+
             return ui.InvokeAsync(() =>
             {
                 if (arguments.Contains("--settings", StringComparer.OrdinalIgnoreCase))

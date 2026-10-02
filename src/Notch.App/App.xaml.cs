@@ -269,6 +269,10 @@ public partial class App : Application
         {
             UpdateService.AnnounceUpdated(_activities);
         }
+        else
+        {
+            UpdateService.AnnounceFailedUpdateIfAny(_activities);
+        }
 
         if (demo)
         {

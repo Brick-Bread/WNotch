@@ -24,10 +24,9 @@ public partial class App : Application
 
         if (!Installer.HasPayload)
         {
-            // Uninstall.exe started without /uninstall: it has nothing to install.
-            MessageBox.Show("This is the Notch uninstaller. Run Notch-Setup to install Notch.", "Notch Setup",
-                MessageBoxButton.OK, MessageBoxImage.Information);
-            Shutdown(1);
+            // Uninstall.exe, started the way an older installer's uninstall entry starts it (no switches):
+            // a copy of setup with no app inside has nothing to install, so uninstalling is what it is for.
+            Uninstall(options);
             return;
         }
 
@@ -44,13 +43,14 @@ public partial class App : Application
     private static int InstallSilently(Options options)
     {
         string? existing = Machine.InstalledDir();
+        string dir = options.InstallDir ?? existing ?? Machine.DefaultInstallDir;
         var choices = new InstallChoices
         {
-            Dir = options.InstallDir ?? existing ?? Machine.DefaultInstallDir,
+            Dir = dir,
             IsUpdate = options.Update,
             StartWithWindows = true,
-            // An update keeps whatever the user chose; a silent install adds it only when asked with /PATH.
-            AddToPath = options.AddToPath || (options.Update && existing != null && Machine.IsOnPath(existing)),
+            // Keeps whatever is there: the PATH is only added to when asked for with /PATH.
+            AddToPath = options.AddToPath || Machine.IsOnPath(dir),
         };
 
         try
@@ -64,8 +64,25 @@ public partial class App : Application
 
             return 0;
         }
-        catch (Exception)
+        catch (Exception e)
         {
+            // Silent, so nobody is looking at a window: write down what happened and, for an update, put
+            // the version that was there back on screen. The installer only replaces the old version once
+            // the new one is unpacked, so the old one is still intact when this happens.
+            Machine.Log("Install failed: " + e);
+            Machine.WriteUpdateError(e.Message);
+            if (options.Update)
+            {
+                try
+                {
+                    Installer.Launch(choices.Dir, false);
+                }
+                catch (Exception launch)
+                {
+                    Machine.Log("Could not restart the previous version: " + launch.Message);
+                }
+            }
+
             return 1;
         }
     }

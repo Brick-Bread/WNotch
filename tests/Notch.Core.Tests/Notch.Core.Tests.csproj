@@ -23,4 +23,9 @@
     <ProjectReference Include="..\..\src\Notch.Core\Notch.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The installer targets .NET Framework and cannot be referenced; its folder swap is plain System.IO, so the same file is compiled in here to be tested. -->
+    <Compile Include="..\..\src\Notch.Setup\FolderSwap.cs" Link="Setup\FolderSwap.cs" />
+  </ItemGroup>
+
 </Project>

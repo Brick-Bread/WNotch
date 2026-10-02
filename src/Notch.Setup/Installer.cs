@@ -40,40 +40,73 @@ internal static class Installer
             throw new InvalidOperationException("This setup file is incomplete. Download it again.");
         }
 
-        string dir = Path.GetFullPath(choices.Dir);
+        string dir = Path.GetFullPath(choices.Dir).TrimEnd('\\');
+        string id = Guid.NewGuid().ToString("N").Substring(0, 8);
+        string staging = FolderSwap.StagingName(dir, id);
+        string backup = FolderSwap.BackupName(dir, id);
+        Machine.Log("Installing " + Version + " into " + dir + (choices.IsUpdate ? " (update)" : ""));
 
-        progress.Report((0, "Closing Notch…"));
-        Machine.StopApp(dir);
+        // Left by a run that was interrupted.
+        FolderSwap.CleanLeftovers(dir);
 
-        // Start from a clean folder so files a newer version no longer ships do not linger.
-        if (File.Exists(Path.Combine(dir, Machine.AppExe)))
+        // 1. Unpack next to the installed copy. Nothing that is installed is touched yet, so if this
+        //    fails (disk full, a damaged download) the user still has the version they had.
+        progress.Report((0, "Unpacking…"));
+        try
         {
-            progress.Report((0.02, "Removing the previous version…"));
-            Machine.DeleteFolder(dir);
+            using (FileStream self = Payload.OpenSelf())
+            using (var slice = new Payload.Slice(self, programLength, zipLength))
+            using (var zip = new ZipArchive(slice, ZipArchiveMode.Read))
+            {
+                Extract(zip, staging, progress);
+            }
+
+            if (!File.Exists(Path.Combine(staging, Machine.AppExe)))
+            {
+                throw new InvalidDataException("This setup file does not contain " + Machine.AppExe + ". Download it again.");
+            }
+        }
+        catch (Exception)
+        {
+            FolderSwap.TryDeleteFolder(staging);
+            throw;
         }
 
-        Directory.CreateDirectory(dir);
+        // 2. Close Notch and swap the folders. If a file cannot be replaced the old version is put
+        //    back as it was and the error says which file.
+        progress.Report((0.9, "Closing Notch…"));
+        Machine.StopApp(dir, graceful: choices.IsUpdate);
 
-        using (FileStream self = Payload.OpenSelf())
-        using (var slice = new Payload.Slice(self, programLength, zipLength))
-        using (var zip = new ZipArchive(slice, ZipArchiveMode.Read))
+        progress.Report((0.93, "Replacing the previous version…"));
+        try
         {
-            Extract(zip, dir, progress);
+            // Something that holds a file may be a program that has just been started (an agent's hook);
+            // close it again before each retry.
+            FolderSwap.Replace(dir, staging, backup, _ => Machine.StopApp(dir, graceful: false));
+        }
+        catch (Exception e)
+        {
+            Machine.Log("Replacing failed: " + e);
+            FolderSwap.TryDeleteFolder(staging);
+            throw;
         }
 
-        progress.Report((0.95, "Finishing up…"));
-        WriteUninstaller(dir, programLength);
-
+        // 3. The new version is in place. What is left is bookkeeping: if one part fails the others
+        //    still run, and the problem is logged, since the app itself works.
+        progress.Report((0.97, "Finishing up…"));
         string exe = Path.Combine(dir, Machine.AppExe);
-        Machine.CreateShortcuts(exe, choices.DesktopShortcut);
+        Machine.Attempt("the uninstaller", () => WriteUninstaller(dir, programLength));
+        Machine.Attempt("the shortcuts", () => Machine.CreateShortcuts(exe, choices.DesktopShortcut));
         if (!choices.IsUpdate)
         {
             // An update must not override whether the user wants Notch to start with Windows.
-            Machine.SetStartWithWindows(choices.StartWithWindows, exe);
+            Machine.Attempt("start with Windows", () => Machine.SetStartWithWindows(choices.StartWithWindows, exe));
         }
 
-        Machine.SetOnPath(dir, choices.AddToPath);
-        Machine.RegisterInstall(dir, Version, FolderSize(dir));
+        Machine.Attempt("the PATH entry", () => Machine.SetOnPath(dir, choices.AddToPath));
+        Machine.Attempt("the registration", () => Machine.RegisterInstall(dir, Version, FolderSize(dir)));
+        Machine.ClearUpdateError();
+        Machine.Log("Installed " + Version);
         progress.Report((1, "Done"));
     }
 
@@ -106,7 +139,7 @@ internal static class Installer
             {
                 output.Write(buffer, 0, read);
                 done += read;
-                progress.Report((0.05 + 0.9 * done / total, "Copying files…"));
+                progress.Report((0.02 + 0.86 * done / total, "Copying files…"));
             }
         }
     }
@@ -148,17 +181,20 @@ internal static class Installer
         progress.Report((0, "Closing Notch…"));
         Machine.StopApp(dir);
 
-        progress.Report((0.3, "Removing shortcuts…"));
-        Machine.RemoveShortcuts(dir);
-        Machine.SetOnPath(dir, false);
-        Machine.Unregister();
-
-        progress.Report((0.5, "Removing files…"));
+        // The files first: if something still holds them this fails with the uninstall entry intact,
+        // so the user can try again, instead of leaving a folder that nothing lists any more.
+        progress.Report((0.3, "Removing files…"));
+        FolderSwap.CleanLeftovers(dir);
         // Only remove the folder if it really is a Notch install.
         if (File.Exists(Path.Combine(dir, Machine.AppExe)))
         {
             Machine.DeleteFolder(dir);
         }
+
+        progress.Report((0.6, "Removing shortcuts and registry entries…"));
+        Machine.RemoveShortcuts(dir);
+        Machine.Attempt("the PATH entry", () => Machine.SetOnPath(dir, false));
+        Machine.Unregister();
 
         if (removeSettings)
         {
