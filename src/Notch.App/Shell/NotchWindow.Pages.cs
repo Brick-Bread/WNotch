@@ -15,6 +15,11 @@ public partial class NotchWindow
     private readonly List<string> _inputHistory = [];
     private int _historyIndex;
     private (string PluginId, string PageId)? _pageKey;
+    private PageBlocks _pageBlocks = null!;
+    private readonly System.Windows.Threading.DispatcherTimer _armTimer = new() { Interval = TimeSpan.FromSeconds(3.5) };
+
+    /// <summary>The label of the action that asked to be clicked again, or null.</summary>
+    private string? _armedAction;
 
     /// <summary>The page the tab is showing, or null when another tab is.</summary>
     private PluginPageEntry? CurrentPage => _pageKey is { } key
@@ -22,12 +27,14 @@ public partial class NotchWindow
         : null;
 
     /// <summary>The page is showing and has an input line, so keystrokes must reach the window.</summary>
-    private bool PageTakesInput => _tab == NotchTab.Page && CurrentPage?.Page.Input is not null;
+    private bool PageTakesInput => _tab == NotchTab.Page && CurrentPage?.Page is { } p && (p.Input is not null || (p.Choices.Count == 0 && p.Blocks.Any(b => b is PluginTextField)));
 
     private void InitializePages()
     {
         _pluginPages.Changed += OnPluginPagesChanged;
+        _pageBlocks = new PageBlocks(PageBlockStack);
         PageInput.KeyDown += OnPageInputKeyDown;
+        _armTimer.Tick += (_, _) => DisarmAction();
         PageInput.TextChanged += (_, _) =>
             PageInputHint.Visibility = PageInput.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
         PageSend.Click += (_, _) => SubmitPageInput();
@@ -140,12 +147,76 @@ public partial class NotchWindow
         PageBack.Content = "‹  " + (page.BackLabel ?? "Back");
 
         bool listed = page.Choices.Count > 0;
+        bool blocks = !listed && page.Blocks.Count > 0;
         PageChoices.ItemsSource = page.Choices.Select(c => new PageChoiceRow(c)).ToList();
         PageChoicesScroll.Visibility = listed ? Visibility.Visible : Visibility.Collapsed;
-        PageConsoleCard.Visibility = listed ? Visibility.Collapsed : Visibility.Visible;
+        PageBlocksScroll.Visibility = blocks ? Visibility.Visible : Visibility.Collapsed;
+        PageConsoleCard.Visibility = listed || blocks ? Visibility.Collapsed : Visibility.Visible;
+        if (blocks)
+        {
+            _pageBlocks.Render(page.Blocks);
+        }
         PageStats.Visibility = page.Stats.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
         PageInputHint.Text = page.InputHint ?? "";
+        ShowActions(page.Actions);
         UpdateKeyboardInteraction();
+    }
+
+    /// <summary>Rebuilds the page's button row. Called on every update of the page, so the armed state is kept across it.</summary>
+    private void ShowActions(IReadOnlyList<PluginAction> actions)
+    {
+        PageActions.Children.Clear();
+        foreach (PluginAction action in actions)
+        {
+            bool armed = _armedAction == action.Label;
+            var button = new Button
+            {
+                Style = (Style)FindResource("PillButton"),
+                Content = armed ? "Click again" : action.Label,
+                IsEnabled = action.Enabled,
+                Opacity = action.Enabled ? 1 : 0.4,
+                ToolTip = action.Hint,
+            };
+
+            if (action.Color is { } color)
+            {
+                button.Foreground = ThemeManager.Brush(color);
+            }
+
+            button.Click += (_, _) => OnPageActionClicked(action);
+            PageActions.Children.Add(button);
+        }
+    }
+
+    private void OnPageActionClicked(PluginAction action)
+    {
+        if (!action.Enabled)
+        {
+            return;
+        }
+
+        if (action.Confirm && _armedAction != action.Label)
+        {
+            // First click only arms it; the label says so for a few seconds.
+            _armedAction = action.Label;
+            _armTimer.Stop();
+            _armTimer.Start();
+            ShowActions(CurrentPage?.Page.Actions ?? []);
+            return;
+        }
+
+        DisarmAction();
+        action.Clicked?.Invoke();
+    }
+
+    private void DisarmAction()
+    {
+        _armTimer.Stop();
+        if (_armedAction is not null)
+        {
+            _armedAction = null;
+            ShowActions(CurrentPage?.Page.Actions ?? []);
+        }
     }
 
     private void AppendConsole(string line)

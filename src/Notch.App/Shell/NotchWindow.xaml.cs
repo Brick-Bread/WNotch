@@ -42,6 +42,7 @@ public partial class NotchWindow : Window
     private readonly TerminalController _terminal;
     private readonly PluginCardBoard _pluginCards;
     private readonly PluginPageBoard _pluginPages;
+    private readonly PluginShellState _shellState;
     private readonly SettingsStore _settingsStore;
     private readonly AppSettings _settings;
     private readonly NotchAnimator _animator;
@@ -73,6 +74,7 @@ public partial class NotchWindow : Window
         TerminalController terminal,
         PluginCardBoard pluginCards,
         PluginPageBoard pluginPages,
+        PluginShellState shellState,
         SettingsStore settingsStore,
         AppSettings settings)
     {
@@ -84,6 +86,7 @@ public partial class NotchWindow : Window
         _terminal = terminal;
         _pluginCards = pluginCards;
         _pluginPages = pluginPages;
+        _shellState = shellState;
         _settingsStore = settingsStore;
         _settings = settings;
         _glow = new GlowController(GlowLayer, GlowCore) { Gain = GlowOutput.Gain(settings.GlowIntensity) };
@@ -544,8 +547,17 @@ public partial class NotchWindow : Window
         }
     }
 
+    /// <summary>Tells plugins what the notch is showing, which they read through IPluginShell.</summary>
+    private void PublishShellState() => _shellState.Update(
+        _expanded,
+        _tab == NotchTab.Page ? _pageKey : null,
+        _tab == NotchTab.Plugins,
+        !ThemeManager.IsLight,
+        GlowColor.FromName(_settings.AccentColor));
+
     private void Refresh()
     {
+        PublishShellState();
         IReadOnlyList<Activity> activities = _activities.Snapshot();
         NotchMode mode = NotchModeResolver.Resolve(_expanded, activities);
 

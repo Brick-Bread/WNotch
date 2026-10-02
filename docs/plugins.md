@@ -4,7 +4,8 @@ A plugin is a small .NET library that Notch loads at start. It can:
 
 - show **activities** in the pill, with a glyph or image, text, a progress bar and a glow;
 - show **cards** on a Plugins tab in the expanded notch, which can react to clicks;
-- show **pages**: tabs of their own with a row of figures and an interactive console;
+- show **pages**: tabs of their own with figures, buttons, an interactive console or free-form content (text, tables, charts, switches, sliders, text boxes);
+- add **options** that users change in Notch's Settings, react to what the notch is doing, and talk to other plugins;
 - keep **settings** and files between runs, and write to a log.
 
 This guide walks through a first plugin, then documents every part of the API. A complete working example is in [`samples/BreakReminder`](../samples/BreakReminder).
@@ -17,6 +18,7 @@ This guide walks through a first plugin, then documents every part of the API. A
 - [Activities: the pill](#activities-the-pill)
 - [Cards: the Plugins tab](#cards-the-plugins-tab)
 - [Pages: tabs with a console](#pages-tabs-with-a-console)
+- [The notch's state, notices and messages between plugins](#the-notchs-state-notices-and-messages-between-plugins)
 - [Settings and files](#settings-and-files)
 - [Logging](#logging)
 - [Threading and errors](#threading-and-errors)
@@ -173,11 +175,12 @@ Notch reads the manifest to list a plugin in Settings before running any of its 
 | `id` | yes | Unique, permanent identifier. Lowercase letters and digits in groups separated by `.` or `-`, at most 64 characters, e.g. `yourname.build-status`. Prefix it with your name to avoid clashes. It names the plugin's data folder, so changing it loses the plugin's settings. |
 | `name` | yes | Shown in Settings. |
 | `assembly` | yes | File name of the plugin's `.dll`, in the same folder. No paths. |
-| `apiVersion` | yes | The plugin API version the plugin was written for. Currently `4`. See [Compatibility](#compatibility). |
+| `apiVersion` | yes | The plugin API version the plugin was written for. Currently `5`. See [Compatibility](#compatibility). |
 | `version` | no | The plugin's own version, shown in Settings. |
 | `author` | no | Shown in the plugin's tooltip in Settings. |
 | `description` | no | Shown in the plugin's tooltip in Settings. |
 | `repository` | no | Where the plugin is published, as `owner/name`. Lets Notch look for updates to a copy that was not installed from GitHub. A plugin installed from GitHub is checked without it. |
+| `settings` | no | Options the user can change in Notch's Settings window; see [Settings and files](#settings-and-files). |
 
 Property names are not case-sensitive. Comments and trailing commas are accepted. Unknown properties are ignored.
 
@@ -341,6 +344,69 @@ host.Pages.Open("server");
 - The input line takes keyboard focus while the page is showing, like the Terminal tab. Notch does not echo what the user types: append it yourself if you want it in the console.
 - `Remove(id)` and `Clear()` take pages away; the tab disappears with them.
 
+### Back button, list, actions and blocks
+
+A page can do more than show figures and a console:
+
+| `PluginPage` property | Meaning |
+|---|---|
+| `Back`, `BackLabel` | A back button in the top left; `Back` is called when it is clicked. API 4. |
+| `Choices` | A list of clickable rows (`Label`, `Value`, `Detail`, `Color`, `Clicked`) shown in place of the console. API 4. |
+| `Actions` | Up to six buttons in the top right, e.g. Start, Stop, Restart. Each has a `Label`, `Color`, `Enabled`, `Hint` (tooltip) and `Clicked`. Set `Confirm = true` on one that cannot be undone: the first click changes its label to "Click again" for a few seconds, and only a second click runs it. API 5. |
+| `Blocks` | Free-form content in a scrolling column, shown in place of the console (a page with `Choices` shows those instead). Up to 100 blocks. API 5. |
+
+The body of a page is one of: the list (`Choices`), the blocks (`Blocks`), or the console, in that order of precedence.
+
+**Blocks** are plain records; Notch draws them in its own style:
+
+| Block | Shows |
+|---|---|
+| `PluginText` | A paragraph. `Style` is `Body`, `Heading`, `Muted` or `Code`. |
+| `PluginValueRow` | A caption on the left and a value on the right. |
+| `PluginProgress` | A caption, a value and a bar (`Progress` 0 to 1). |
+| `PluginTable` | A header row and rows of text, up to 8 columns and 200 rows. |
+| `PluginChart` | A line chart of `Values`, oldest on the left, up to 240 points. `Max` sets the top. |
+| `PluginButtons` | A row of `PluginAction` buttons. |
+| `PluginToggle` | A switch. `Changed(bool)` is called when the user flips it. |
+| `PluginSlider` | A slider with `Min`, `Max`, `Step` and `Unit`. `Changed(double)` is called when the user lets go. |
+| `PluginSelect` | A row of choices; `Changed(string)` is called with the one picked. |
+| `PluginTextField` | A text box with a button (and Enter) that calls `Submitted(string)`. `Secret = true` hides the text. |
+| `PluginImage` | A picture from bytes (PNG, JPEG, ...). |
+| `PluginSeparator` | A thin line. |
+
+You describe the state and send the page again with `Set` whenever it changes; Notch updates the controls that are already there. Text the user is typing in a `PluginTextField` is left alone until they leave the box. The callbacks of blocks, actions and rows run on a background thread, and exceptions they throw are logged.
+
+```csharp
+host.Pages.Set(new PluginPage
+{
+    Id = "home",
+    Title = "Lights",
+    Actions = [new PluginAction { Label = "All off", Color = GlowColor.Red, Confirm = true, Clicked = AllOff }],
+    Blocks =
+    [
+        new PluginToggle { Label = "Living room", Value = _livingRoom, Changed = on => Switch("living", on) },
+        new PluginSlider { Label = "Brightness", Value = _brightness, Unit = "%", Step = 5, Changed = SetBrightness },
+        new PluginChart { Label = "Power", Values = _watts, Height = 64 },
+    ],
+});
+```
+
+## The notch's state, notices and messages between plugins
+
+`host.Shell` (API 5) tells a plugin what the notch is doing, so it can poll quickly only while someone is looking:
+
+| Member | Meaning |
+|---|---|
+| `IsExpanded` | The notch is expanded. |
+| `IsPageVisible(pageId)` | The notch is expanded on one of your pages. |
+| `AreCardsVisible` | The notch is expanded on the Plugins tab. |
+| `IsDark`, `Accent` | The theme and the accent colour the user chose (null when switched off). Colours you give Notch adapt by themselves; this is for plugins that draw their own, such as images. |
+| `Changed` | Raised, on a background thread, when any of the above changed. |
+| `Notify(title, detail, glyph, color, lifetime)` | A short notice in the pill, without the bookkeeping of publishing a transient activity. |
+| `OpenSettings()` | Opens Notch's Settings window, where your options are. |
+
+`host.Bus` (API 5) lets plugins talk to each other. `Publish(topic, payload)` delivers a message to every plugin subscribed to the topic; `Subscribe(topic, handler)` returns something to dispose when you want to stop (Notch stops it when your plugin stops). Topics are plain strings; prefix yours with your plugin's id. Handlers run on a background thread, and one that throws does not affect the others. Payloads are strings, usually JSON.
+
 ## Settings and files
 
 `host.Settings` stores small values as JSON in `settings.json` inside the plugin's data folder:
@@ -353,11 +419,28 @@ host.Settings.Remove("obsoleteKey");
 
 - `Get<T>(key, fallback)` returns the fallback when the key is missing or holds a value of the wrong type. It never throws for bad data.
 - `Set<T>(key, value)` accepts anything `System.Text.Json` can serialize and saves immediately.
-- There is no settings UI for plugins yet. Users change a plugin's options by editing `%AppData%\Notch\plugin-data\<plugin id>\settings.json` and restarting the plugin. To make options discoverable, write the defaults back on start, as shown above, so the file lists them. Validate what you read: clamp numbers, check strings.
+- Options that are not listed in the manifest (see below) have no settings UI: users change a plugin's options by editing `%AppData%\Notch\plugin-data\<plugin id>\settings.json` and restarting the plugin. To make options discoverable, write the defaults back on start, as shown above, so the file lists them. Validate what you read: clamp numbers, check strings.
 
 For anything bigger (caches, downloaded files, databases) use `host.DataDirectory`, which is `%AppData%\Notch\plugin-data\<plugin id>\`. It survives plugin updates and Notch updates and is not removed when Notch is uninstalled.
 
 Do not write into `host.PluginDirectory`; replacing the plugin with a new version discards it.
+
+**Options in Notch's Settings window (API 5).** List them in `plugin.json` under `"settings"` and users get proper controls under the plugin in Settings, without editing JSON:
+
+```json
+"settings": [
+  { "key": "url",    "label": "Server address", "type": "text", "hint": "https://example.com" },
+  { "key": "token",  "label": "API token",      "type": "secret" },
+  { "key": "poll",   "label": "Check every (seconds)", "type": "number", "min": 5, "max": 300 },
+  { "key": "quiet",  "label": "Quiet mode",     "type": "bool" },
+  { "key": "mode",   "label": "Mode",           "type": "choice", "options": ["fast", "slow"] },
+  { "key": "hosts",  "label": "Hosts",          "type": "list", "description": "One per line." }
+]
+```
+
+Types are `text`, `number` (`min`, `max`, `step`), `bool`, `secret`, `choice` (needs `options`) and `list` (stored as an array of strings). Every field may have a `description` under it. The values are stored in the plugin's `settings.json` under `key`, so `host.Settings.Get` reads them as before. A `secret` is typed into a hidden box, never shown again, and left unchanged when the box is empty; Notch stores it as typed, so encrypt it yourself if you want it protected (the Calagopus plugin does).
+
+When the user presses Save and an option changed, Notch restarts the plugin so it starts from the new values. A plugin that would rather apply changes without restarting subscribes to `host.Settings.Changed`, which is raised with the key of each changed option; Notch then does not restart it.
 
 ## Logging
 
@@ -533,6 +616,8 @@ The plugin API is `Notch.Core.Plugins` plus the types in `Notch.Core.Activities`
 | 1 | First version: activities, cards, settings, log. |
 | 2 | `PluginCard.Color`. |
 | 3 | `IPluginHost.Pages`: tabs with figures and a console. |
+| 4 | Pages: `Back` and `Choices`. |
+| 5 | Pages: `Actions` and `Blocks`. `IPluginHost.Shell` (notch state, `Notify`), `IPluginBus` (messages between plugins), options listed in the manifest with `IPluginSettings.Changed`, and `repository` in the manifest. |
 
 ## Troubleshooting
 

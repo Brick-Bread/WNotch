@@ -13,6 +13,8 @@ internal sealed class PluginHost : IPluginHost
     private readonly ScopedActivities _activities;
     private readonly ScopedCards _cards;
     private readonly ScopedPages _pages;
+    private readonly ScopedShell _shell;
+    private readonly ScopedBus _bus;
 
     public PluginHost(
         PluginManifest manifest,
@@ -21,6 +23,8 @@ internal sealed class PluginHost : IPluginHost
         ActivityManager activities,
         PluginCardBoard cards,
         PluginPageBoard pages,
+        PluginShellState shell,
+        PluginBus bus,
         PluginLog log)
     {
         Manifest = manifest;
@@ -32,7 +36,9 @@ internal sealed class PluginHost : IPluginHost
         Activities = _activities = new ScopedActivities(manifest.Id, activities);
         Cards = _cards = new ScopedCards(manifest.Id, cards, scopedLog);
         Pages = _pages = new ScopedPages(manifest.Id, pages, scopedLog);
-        Settings = new PluginSettingsStore(Path.Combine(dataDirectory, "settings.json"));
+        Shell = _shell = new ScopedShell(manifest.Id, shell, Activities);
+        Bus = _bus = new ScopedBus(manifest.Id, bus, scopedLog);
+        Settings = SettingsStore = new PluginSettingsStore(Path.Combine(dataDirectory, "settings.json"));
     }
 
     public PluginManifest Manifest { get; }
@@ -54,7 +60,14 @@ internal sealed class PluginHost : IPluginHost
 
     public IPluginPages Pages { get; }
 
+    public IPluginShell Shell { get; }
+
+    public IPluginBus Bus { get; }
+
     public IPluginSettings Settings { get; }
+
+    /// <summary>The same object as <see cref="Settings"/>, with the parts only Notch itself uses.</summary>
+    internal PluginSettingsStore SettingsStore { get; }
 
     public IPluginLog Log { get; }
 
@@ -64,6 +77,8 @@ internal sealed class PluginHost : IPluginHost
         _activities.Close();
         _cards.Close();
         _pages.Close();
+        _bus.Close();
+        _shell.Close();
     }
 
     private sealed class ScopedActivities(string pluginId, ActivityManager manager) : IPluginActivities
@@ -198,6 +213,8 @@ internal sealed class PluginHost : IPluginHost
                             Input = Guard(page),
                             Back = page.Back is { } back ? () => Run(page.Id, back) : null,
                             Choices = [.. page.Choices.Select(c => c with { Clicked = c.Clicked is { } clicked ? () => Run(page.Id, clicked) : null })],
+                            Actions = GuardActions(page.Id, page.Actions),
+                            Blocks = [.. page.Blocks.Take(PluginPageBoard.MaxBlocks).Select(b => GuardBlock(page.Id, b))],
                         });
                 }
             }
@@ -249,6 +266,20 @@ internal sealed class PluginHost : IPluginHost
             }
         }
 
+        private PluginAction[] GuardActions(string pageId, IReadOnlyList<PluginAction> actions) =>
+            [.. actions.Select(a => a with { Clicked = a.Clicked is { } clicked ? () => Run(pageId, clicked) : null })];
+
+        /// <summary>Wraps the callbacks of a block, the same way as the page's own.</summary>
+        private PluginBlock GuardBlock(string pageId, PluginBlock block) => block switch
+        {
+            PluginButtons b => b with { Actions = GuardActions(pageId, b.Actions) },
+            PluginToggle b => b with { Changed = b.Changed is { } changed ? value => Run(pageId, () => changed(value)) : null },
+            PluginSlider b => b with { Changed = b.Changed is { } changed ? value => Run(pageId, () => changed(value)) : null },
+            PluginSelect b => b with { Changed = b.Changed is { } changed ? value => Run(pageId, () => changed(value)) : null },
+            PluginTextField b => b with { Submitted = b.Submitted is { } submitted ? value => Run(pageId, () => submitted(value)) : null },
+            _ => block,
+        };
+
         private void Run(string pageId, Action action) => Task.Run(() =>
         {
             try
@@ -283,6 +314,150 @@ internal sealed class PluginHost : IPluginHost
         }
     }
 
+    private sealed class ScopedShell : IPluginShell
+    {
+        private readonly string _pluginId;
+        private readonly PluginShellState _state;
+        private readonly IPluginActivities _activities;
+
+        public ScopedShell(string pluginId, PluginShellState state, IPluginActivities activities)
+        {
+            _pluginId = pluginId;
+            _state = state;
+            _activities = activities;
+            _state.Changed += OnChanged;
+        }
+
+        public void OpenSettings()
+        {
+            Action? open = _state.OpenSettings;
+            if (open is not null)
+            {
+                _ = Task.Run(() =>
+                {
+                    try
+                    {
+                        open();
+                    }
+                    catch (Exception)
+                    {
+                        // The window could not be shown; there is nothing more to tell the plugin.
+                    }
+                });
+            }
+        }
+
+        public bool IsExpanded => _state.IsExpanded;
+
+        public bool IsPageVisible(string pageId) => _state.IsPageVisible(_pluginId, pageId);
+
+        public bool AreCardsVisible => _state.CardsVisible;
+
+        public bool IsDark => _state.IsDark;
+
+        public GlowColor? Accent => _state.Accent;
+
+        public event EventHandler? Changed;
+
+        public void Notify(string title, string? detail = null, string? glyph = null, GlowColor? color = null, TimeSpan? lifetime = null)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(title);
+
+            // Removed first so a notice right after another counts as new and gets its full time.
+            _activities.Remove("notice");
+            _activities.Publish(new Activity
+            {
+                Id = "notice",
+                Tier = ActivityTier.Transient,
+                Title = title,
+                Detail = detail,
+                Glyph = glyph ?? "",
+                Glow = color is { } c ? new Glow(c, GlowPattern.Flash) : null,
+                Lifetime = lifetime ?? TimeSpan.FromSeconds(4),
+            });
+        }
+
+        public void Close() => _state.Changed -= OnChanged;
+
+        private void OnChanged(object? sender, EventArgs e)
+        {
+            EventHandler? handler = Changed;
+            if (handler is null)
+            {
+                return;
+            }
+
+            // Off the shell's thread, and a handler that throws must not reach it.
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    handler(this, EventArgs.Empty);
+                }
+                catch (Exception)
+                {
+                    // The plugin's own bug; nothing here can report it usefully.
+                }
+            });
+        }
+    }
+
+    private sealed class ScopedBus(string pluginId, PluginBus bus, ScopedLog log) : IPluginBus
+    {
+        private readonly Lock _gate = new();
+        private readonly List<IDisposable> _subscriptions = [];
+        private bool _closed;
+
+        public void Publish(string topic, string? payload = null)
+        {
+            lock (_gate)
+            {
+                if (_closed)
+                {
+                    return;
+                }
+            }
+
+            bus.Publish(pluginId, topic, payload, (owner, e) => log.Error($"A subscriber of '{topic}' failed.", e));
+        }
+
+        public IDisposable Subscribe(string topic, Action<PluginMessage> handler)
+        {
+            lock (_gate)
+            {
+                if (_closed)
+                {
+                    return new Noop();
+                }
+
+                IDisposable subscription = bus.Subscribe(pluginId, topic, handler);
+                _subscriptions.Add(subscription);
+                return subscription;
+            }
+        }
+
+        public void Close()
+        {
+            lock (_gate)
+            {
+                _closed = true;
+                foreach (IDisposable subscription in _subscriptions)
+                {
+                    subscription.Dispose();
+                }
+
+                _subscriptions.Clear();
+            }
+        }
+
+        private sealed class Noop : IDisposable
+        {
+            public void Dispose()
+            {
+            }
+        }
+    }
+
     private sealed class ScopedLog(string pluginId, PluginLog log) : IPluginLog
     {
         public void Info(string message) => log.Write(pluginId, "info", message);
@@ -300,6 +475,41 @@ internal sealed class PluginSettingsStore(string filePath) : IPluginSettings
 
     private readonly Lock _gate = new();
     private Dictionary<string, JsonElement>? _values;
+
+    public event EventHandler<string>? Changed;
+
+    /// <summary>True when the plugin listens for <see cref="Changed"/>, so Notch does not need to restart it.</summary>
+    public bool HandlesChanges => Changed is not null;
+
+    /// <summary>The stored value as JSON, or null when the key is not set.</summary>
+    public JsonElement? Raw(string key)
+    {
+        lock (_gate)
+        {
+            return Load().TryGetValue(key, out JsonElement element) ? element : null;
+        }
+    }
+
+    /// <summary>Stores a value the user changed in Notch's Settings window and tells the plugin.</summary>
+    public void SetFromUser<T>(string key, T value)
+    {
+        Set(key, value);
+        EventHandler<string>? handler = Changed;
+        if (handler is not null)
+        {
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    handler(this, key);
+                }
+                catch (Exception)
+                {
+                    // The plugin's own bug; it must not reach the Settings window.
+                }
+            });
+        }
+    }
 
     public T Get<T>(string key, T fallback)
     {

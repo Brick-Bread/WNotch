@@ -122,7 +122,7 @@ public partial class App : Application
 
         // Before any window exists, so nothing is ever drawn without its colours.
         ThemeManager.Apply(settings);
-        var window = new NotchWindow(_activities, media, _terminal, pluginCards, _plugins.Pages, settingsStore, settings);
+        var window = new NotchWindow(_activities, media, _terminal, pluginCards, _plugins.Pages, _plugins.ShellState, settingsStore, settings);
 
         // --display=2 uses the display the settings window lists as "Display 2", for this run only.
         if (int.TryParse(Option(e, "--display="), out int display))
@@ -177,6 +177,8 @@ public partial class App : Application
         PluginManager plugins = _plugins;
         string[] enabledPlugins = [.. settings.EnabledPlugins];
         Task.Run(() => plugins.SetEnabled(enabledPlugins));
+
+        _plugins.ShellState.OpenSettings = () => Dispatcher.Invoke(() => OpenSettings(window, settings, settingsStore));
 
         _updates = new UpdateService(settings, settingsStore, _activities, () => window.IsBusy, Shutdown);
         _updates.CleanUpDownloads();

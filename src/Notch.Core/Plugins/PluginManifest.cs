@@ -46,6 +46,9 @@ public sealed partial record PluginManifest
     /// <summary>Where the plugin is published, as "owner/repo", so Notch can look for updates to a copy that was not installed from GitHub. Optional.</summary>
     public string? Repository { get; init; }
 
+    /// <summary>Options the user can change in Notch's Settings window. Optional.</summary>
+    public IReadOnlyList<PluginSettingField> Settings { get; init; } = [];
+
     /// <summary>Reads and validates a manifest.</summary>
     /// <exception cref="PluginLoadException">The text is not a usable manifest; the message says why.</exception>
     public static PluginManifest Parse(string json)
@@ -100,6 +103,7 @@ public sealed partial record PluginManifest
             Author = Optional(raw.Author),
             Description = Optional(raw.Description),
             Repository = Optional(raw.Repository),
+            Settings = PluginSettingField.ParseAll(raw.Settings),
         };
     }
 
@@ -128,5 +132,7 @@ public sealed partial record PluginManifest
         public string? Description { get; set; }
 
         public string? Repository { get; set; }
+
+        public JsonElement? Settings { get; set; }
     }
 }

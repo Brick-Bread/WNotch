@@ -124,7 +124,7 @@
         </DockPanel>
         <TextBlock TextWrapping="Wrap" Opacity="0.7" Margin="0,0,0,8"
                    Text="Plugins can do anything Notch itself can do on this PC. Only switch on plugins you trust." />
-        <ScrollViewer MaxHeight="190" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer MaxHeight="340" VerticalScrollBarVisibility="Auto">
             <!-- One check box per installed plugin, added in code. -->
             <StackPanel x:Name="PluginList" />
         </ScrollViewer>

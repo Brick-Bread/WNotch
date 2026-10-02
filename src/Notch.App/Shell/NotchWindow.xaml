@@ -348,8 +348,11 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <Button x:Name="PageBack" Grid.Row="0" HorizontalAlignment="Left" Margin="0,0,0,6"
-                            Style="{StaticResource PillButton}" Visibility="Collapsed" />
+                    <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,6">
+                        <Button x:Name="PageBack" DockPanel.Dock="Left" Margin="0"
+                                Style="{StaticResource PillButton}" Visibility="Collapsed" />
+                        <StackPanel x:Name="PageActions" DockPanel.Dock="Right" Orientation="Horizontal" />
+                    </DockPanel>
 
                     <ItemsControl x:Name="PageStats" Grid.Row="1" Margin="-4,0,-4,0">
                         <ItemsControl.ItemsPanel>
@@ -397,6 +400,11 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                    </ScrollViewer>
+
+                    <ScrollViewer x:Name="PageBlocksScroll" Grid.Row="2" Margin="0,6,0,0" Visibility="Collapsed"
+                                  VerticalScrollBarVisibility="Hidden" Focusable="False">
+                        <StackPanel x:Name="PageBlockStack" Margin="2,4,2,0" />
                     </ScrollViewer>
 
                     <Border x:Name="PageConsoleCard" Grid.Row="2" Style="{StaticResource Card}" Margin="0,6,0,0" Padding="12,8">

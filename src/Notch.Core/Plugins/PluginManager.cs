@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Reflection;
 using Notch.Core.Activities;
 
@@ -32,7 +33,8 @@ public sealed record PluginInfo(
     string? Error,
     bool AlwaysEnabled,
     string? Repository = null,
-    string? InstalledTag = null);
+    string? InstalledTag = null,
+    IReadOnlyList<PluginSettingField>? Settings = null);
 
 /// <summary>
 /// Finds plugins on disk and starts and stops them. A plugin is a folder holding a
@@ -79,6 +81,12 @@ public sealed class PluginManager : IDisposable
 
     /// <summary>The pages plugins show as tabs, and their consoles.</summary>
     public PluginPageBoard Pages { get; } = new();
+
+    /// <summary>The shell writes the notch's state here for plugins to read.</summary>
+    public PluginShellState ShellState { get; } = new();
+
+    /// <summary>Messages between plugins.</summary>
+    public PluginBus Bus { get; } = new();
 
     public IReadOnlyList<PluginInfo> Plugins
     {
@@ -178,6 +186,80 @@ public sealed class PluginManager : IDisposable
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// The current value of each of a plugin's declared options, as JSON, for the Settings window.
+    /// Secret options are never returned. Values that are not set are missing from the result.
+    /// </summary>
+    public IReadOnlyDictionary<string, JsonElement> SettingValues(string pluginId)
+    {
+        PluginSettingsStore store = StoreOf(pluginId, out PluginManifest? manifest);
+        Dictionary<string, JsonElement> values = [];
+        foreach (PluginSettingField field in manifest?.Settings ?? [])
+        {
+            if (field.Type != PluginSettingType.Secret && store.Raw(field.Key) is { } value)
+            {
+                values[field.Key] = value;
+            }
+        }
+
+        return values;
+    }
+
+    /// <summary>
+    /// Saves options the user changed in the Settings window. A running plugin is told (when it
+    /// listens for <see cref="IPluginSettings.Changed"/>) or restarted so it starts from the new values.
+    /// </summary>
+    /// <param name="values">Key to new value, as JSON. Keys the manifest does not list are ignored.</param>
+    public void ApplySettings(string pluginId, IReadOnlyDictionary<string, JsonElement> values)
+    {
+        if (values.Count == 0)
+        {
+            return;
+        }
+
+        PluginSettingsStore store = StoreOf(pluginId, out PluginManifest? manifest);
+        string[] known = [.. (manifest?.Settings ?? []).Select(f => f.Key)];
+        bool restart = false;
+        foreach ((string key, JsonElement value) in values.Where(v => known.Contains(v.Key)))
+        {
+            store.SetFromUser(key, value);
+            restart |= !store.HandlesChanges;
+        }
+
+        if (restart)
+        {
+            Restart(pluginId);
+        }
+    }
+
+    /// <summary>Stops a running plugin and starts a fresh instance of it. Does nothing for one that is not running.</summary>
+    public void Restart(string pluginId)
+    {
+        lock (_gate)
+        {
+            if (_disposed || _slots.FirstOrDefault(s => s.Manifest?.Id == pluginId && s.Status == PluginStatus.Running) is not { } slot)
+            {
+                return;
+            }
+
+            Stop(slot);
+            Start(slot, slot.Manifest!);
+        }
+
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>The store a running plugin is using, so two copies of the file do not disagree; a new one for a plugin that is not running.</summary>
+    private PluginSettingsStore StoreOf(string pluginId, out PluginManifest? manifest)
+    {
+        lock (_gate)
+        {
+            Slot? slot = _slots.FirstOrDefault(s => s.Manifest?.Id == pluginId);
+            manifest = slot?.Manifest;
+            return slot?.Host?.SettingsStore ?? new PluginSettingsStore(Path.Combine(_dataDirectory, pluginId, "settings.json"));
+        }
+    }
+
     public void Dispose()
     {
         lock (_gate)
@@ -258,7 +340,7 @@ public sealed class PluginManager : IDisposable
         {
             slot.Factory ??= _loader(manifest, slot.Directory);
             slot.Host = new PluginHost(
-                manifest, slot.Directory, Path.Combine(_dataDirectory, manifest.Id), _activities, _cards, Pages, _log);
+                manifest, slot.Directory, Path.Combine(_dataDirectory, manifest.Id), _activities, _cards, Pages, ShellState, Bus, _log);
             slot.Instance = slot.Factory();
             slot.Instance.Start(slot.Host);
 
@@ -330,6 +412,7 @@ public sealed class PluginManager : IDisposable
             Error,
             Pinned,
             PluginOrigin.SourceOf(Directory, Manifest)?.ToString(),
-            PluginOrigin.Read(Directory)?.Tag);
+            PluginOrigin.Read(Directory)?.Tag,
+            Manifest?.Settings);
     }
 }

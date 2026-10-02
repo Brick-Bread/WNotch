@@ -69,6 +69,43 @@ public sealed record PluginPage
     /// API version 4.
     /// </summary>
     public IReadOnlyList<PluginChoice> Choices { get; init; } = [];
+
+    /// <summary>
+    /// A row of buttons in the top right of the page, e.g. Start, Stop, Restart. Up to six.
+    /// API version 5.
+    /// </summary>
+    public IReadOnlyList<PluginAction> Actions { get; init; } = [];
+
+    /// <summary>
+    /// Free-form content: text, tables, charts, switches, sliders, text boxes and more, in a
+    /// scrolling column. Shown in place of the console while it is not empty (and while there are
+    /// no <see cref="Choices"/>, which win). Up to 100 blocks. API version 5.
+    /// </summary>
+    public IReadOnlyList<PluginBlock> Blocks { get; init; } = [];
+}
+
+/// <summary>A button on a page.</summary>
+public sealed record PluginAction
+{
+    public required string Label { get; init; }
+
+    /// <summary>Colour of the label; null for the notch's own colours.</summary>
+    public GlowColor? Color { get; init; }
+
+    /// <summary>False greys the button out and ignores clicks, e.g. Start while the server is running.</summary>
+    public bool Enabled { get; init; } = true;
+
+    /// <summary>
+    /// For actions that cannot be undone: the first click changes the label to "Click again" for
+    /// a few seconds, and only a second click inside that time calls <see cref="Clicked"/>.
+    /// </summary>
+    public bool Confirm { get; init; }
+
+    /// <summary>Shown as a tooltip.</summary>
+    public string? Hint { get; init; }
+
+    /// <summary>Called on a background thread when the button is clicked (and confirmed, if asked to).</summary>
+    public Action? Clicked { get; init; }
 }
 
 /// <summary>One clickable row of a page's list: a name, a headline value and a line of detail.</summary>
@@ -131,6 +168,9 @@ public sealed class PluginPageBoard
     /// <summary>Console lines kept per page; older ones are dropped.</summary>
     public const int MaxConsoleLines = 500;
 
+    /// <summary>Blocks drawn per page; the rest are ignored.</summary>
+    public const int MaxBlocks = 100;
+
     private readonly Lock _gate = new();
     private readonly Dictionary<(string PluginId, string PageId), Entry> _entries = [];
     private long _sequence;
@@ -148,7 +188,7 @@ public sealed class PluginPageBoard
         {
             var key = (pluginId, page.Id);
             Entry entry = _entries.TryGetValue(key, out Entry? previous) ? previous : new Entry(++_sequence);
-            entry.Page = new PluginPageEntry(pluginId, page with { Stats = [.. page.Stats.Take(8)] });
+            entry.Page = new PluginPageEntry(pluginId, page with { Stats = [.. page.Stats.Take(8)], Actions = [.. page.Actions.Take(6)] });
             _entries[key] = entry;
         }
 

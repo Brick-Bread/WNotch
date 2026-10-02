@@ -27,6 +27,7 @@ public partial class SettingsWindow : Window
     private readonly Func<bool> _hasOpenTerminals;
     private readonly Action _restart;
     private readonly Dictionary<string, PluginUpdate> _pluginUpdates = [];
+    private readonly Dictionary<string, OptionEditors> _options = [];
     private bool _checkingUpdates;
     private NotchTheme _shownTheme;
 
@@ -196,6 +197,7 @@ public partial class SettingsWindow : Window
             .Distinct(StringComparer.OrdinalIgnoreCase)];
         _settings.EnabledPlugins = [.. TickedPlugins()];
         _store.Save(_settings);
+// Plugin options go to each plugin's own settings file. A running plugin is told, or restarted,        // which runs its code, so not on this thread.        var optionChanges = _options.ToDictionary(o => o.Key, o => o.Value.Changes()).Where(o => o.Value.Count > 0).ToList();        if (optionChanges.Count > 0)        {            PluginManager plugins = _plugins;            _ = Task.Run(() =>            {                foreach ((string pluginId, Dictionary<string, System.Text.Json.JsonElement> changes) in optionChanges)                {                    plugins.ApplySettings(pluginId, changes);                }            });        }
 
         try
         {
@@ -291,6 +293,17 @@ public partial class SettingsWindow : Window
                     Opacity = 0.7,
                     Margin = new Thickness(28, 0, 0, 6),
                 });
+            }
+
+            if (plugin is { Id: { } optionsId, Settings.Count: > 0 })
+            {
+                // Made once, so what the user typed survives the list being drawn again.
+                if (!_options.TryGetValue(optionsId, out OptionEditors? editors))
+                {
+                    _options[optionsId] = editors = new OptionEditors(plugin, _plugins.SettingValues(optionsId));
+                }
+
+                PluginList.Children.Add(editors.Element);
             }
 
             if (plugin.Id is { } id && _pluginUpdates.TryGetValue(id, out PluginUpdate? update))

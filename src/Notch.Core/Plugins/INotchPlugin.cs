@@ -13,7 +13,7 @@ public static class PluginApi
     /// its manifest (<c>apiVersion</c>); Notch runs plugins written for this version or an older
     /// one, and refuses those that need a newer one.
     /// </summary>
-    public const int Version = 4;
+    public const int Version = 5;
 }
 
 /// <summary>
@@ -66,6 +66,12 @@ public interface IPluginHost
 
     /// <summary>Shows tabs of their own, with figures and a console. API version 3.</summary>
     IPluginPages Pages { get; }
+
+    /// <summary>The notch's state (expanded, which page is showing, theme) and short notices. API version 5.</summary>
+    IPluginShell Shell { get; }
+
+    /// <summary>Messages between plugins. API version 5.</summary>
+    IPluginBus Bus { get; }
 
     /// <summary>Small values the plugin wants to keep between runs, such as its options.</summary>
     IPluginSettings Settings { get; }
@@ -155,6 +161,13 @@ public interface IPluginSettings
 
     /// <summary>Stores a JSON-serializable value and saves the file.</summary>
     void Set<T>(string key, T value);
+
+    /// <summary>
+    /// Raised, on a background thread, with the key, after the user changed an option listed in the
+    /// manifest's "settings" from Notch's Settings window. A plugin that does not subscribe is
+    /// restarted instead, so it reads the new values from a fresh start. API version 5.
+    /// </summary>
+    event EventHandler<string>? Changed;
 
     /// <summary>Deletes a key. False when it was not set.</summary>
     bool Remove(string key);
