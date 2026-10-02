@@ -23,6 +23,9 @@ public partial class NotchWindow
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Notch", "clipboard-pins.json");
 
     private bool _clipboardRegistered;
+
+    /// <summary>Set only while the website's pictures are made, so the tab can be shown with made-up content.</summary>
+    private bool _clipboardDemo;
     private uint _ownClipboardChange;
 
     private void InitializeClipboard()

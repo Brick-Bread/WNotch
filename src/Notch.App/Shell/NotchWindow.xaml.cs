@@ -110,6 +110,7 @@ public partial class NotchWindow : Window
         InitializeKeyboard();
         InitializeAgents();
         InitializeClipboard();
+        InitializePalette();
 
         Shape idle = ShapeFor(NotchMode.Idle);
         _animator = new NotchAnimator(idle.Width, idle.Height, idle.Radius);
@@ -167,6 +168,7 @@ public partial class NotchWindow : Window
         NotchMode.Expanded when _tab == NotchTab.Shelf => new Shape(640, ShelfTabHeight, 30),
         NotchMode.Expanded when _tab == NotchTab.Plugins => new Shape(640, PluginsTabHeight, 30),
         NotchMode.Expanded when _tab == NotchTab.Clipboard => new Shape(640, ClipboardTabHeight, 30),
+        NotchMode.Expanded when _tab == NotchTab.Palette => new Shape(640, PaletteTabHeight, 30),
         NotchMode.Expanded when _tab == NotchTab.Page => new Shape(920, 540, 30),
 
         // Home is taller while the media card or the agents card is showing.
@@ -185,6 +187,7 @@ public partial class NotchWindow : Window
 
         Reposition();
         RegisterOpenHotkey();
+        RegisterPaletteHotkey();
         _housekeepingTimer.Start();
 
         // The periodic check alone would leave the notch over a game for up to a second after it starts.
@@ -218,6 +221,11 @@ public partial class NotchWindow : Window
             Keyboard.UnregisterHotkey(_hwnd, OpenHotkeyId);
         }
 
+        if (_paletteHotkeyRegistered)
+        {
+            Keyboard.UnregisterHotkey(_hwnd, PaletteHotkeyId);
+        }
+
         if (_clipboardRegistered)
         {
             ClipboardListener.Unregister(_hwnd);
@@ -232,6 +240,11 @@ public partial class NotchWindow : Window
         if (msg == Keyboard.HotkeyMessage && wParam == OpenHotkeyId)
         {
             OnOpenHotkey();
+            handled = true;
+        }
+        else if (msg == Keyboard.HotkeyMessage && wParam == PaletteHotkeyId)
+        {
+            TogglePalette();
             handled = true;
         }
         else if (msg == ClipboardListener.UpdateMessage)
@@ -287,6 +300,7 @@ public partial class NotchWindow : Window
         ThemeManager.Apply(_settings);
         Reposition();
         RegisterOpenHotkey();
+        RegisterPaletteHotkey();
         ApplyClipboardSetting();
         Housekeeping();
         RefreshCalendar();

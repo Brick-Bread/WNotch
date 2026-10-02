@@ -8,6 +8,7 @@ using System.Windows.Threading;
 using H.NotifyIcon;
 using Notch.App.Agents;
 using Notch.App.Automation;
+using Notch.App.Notifications;
 using Notch.App.Plugins;
 using Notch.App.Settings;
 using Notch.App.Shell;
@@ -59,6 +60,7 @@ public partial class App : Application
     private AgentBoard? _agentBoard;
     private AgentPublisher? _agentPublisher;
     private AgentTracker? _agentTracker;
+    private NotificationService? _notifications;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -196,6 +198,8 @@ public partial class App : Application
         if (!demo)
         {
             _agentTracker = new AgentTracker(Dispatcher, _agentBoard, settings, _terminal.HookServer);
+            _notifications = new NotificationService(settings, _activities);
+            _ = ApplyNotificationsAsync(showProblem: false);
             if (settings.GlobalAgentHooks)
             {
                 // The hooks must name this copy of the hook program, wherever Notch is installed now.
@@ -284,7 +288,8 @@ public partial class App : Application
             _plugins!,
             _installFlow!,
             () => OpenSettings(window, settings, settingsStore),
-            () => { });
+            window.TogglePalette);
+        window.PaletteExtras = () => PluginPaletteEntries(settings);
         _commandPipe = new CommandPipe(_commands.HandleArgumentsAsync);
 
         _webhook = new WebhookService(settings, settingsStore, _activities!, _commands);
@@ -299,6 +304,36 @@ public partial class App : Application
         if (link is not null)
         {
             Dispatcher.BeginInvoke(() => _ = _commands.HandleArgumentsAsync([link]), DispatcherPriority.ApplicationIdle);
+        }
+    }
+
+    /// <summary>Starts or stops showing Windows notifications; says why when Windows will not allow it and the user just asked.</summary>
+    private async Task ApplyNotificationsAsync(bool showProblem)
+    {
+        if (_notifications is null)
+        {
+            return;
+        }
+
+        string? problem = await _notifications.ApplyAsync();
+        if (problem is not null && showProblem)
+        {
+            MessageBox.Show(problem, "Notch", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+    }
+
+    /// <summary>The palette's entries for plugins: switch each installed one on or off.</summary>
+    private IEnumerable<PaletteEntry> PluginPaletteEntries(AppSettings settings)
+    {
+        foreach (PluginInfo plugin in _plugins!.Plugins.Where(p => p is { Id: not null, AlwaysEnabled: false }))
+        {
+            string id = plugin.Id!;
+            bool on = settings.EnabledPlugins.Contains(id);
+            yield return new PaletteEntry(
+                (on ? "Switch off " : "Switch on ") + plugin.Name,
+                "Plugin",
+                "plugins enable disable",
+                () => _ = _commands!.RunAsync(new SetPluginEnabledCommand(id, !on)));
         }
     }
 
@@ -323,6 +358,7 @@ public partial class App : Application
         _demo?.Dispose();
         _webhook?.Dispose();
         _agentTracker?.Dispose();
+        _notifications?.Dispose();
         _agentPublisher?.Dispose();
         _commandPipe?.Dispose();
         _plugins?.Dispose();
@@ -363,13 +399,14 @@ public partial class App : Application
 
             _webhook?.Apply();
             _agentTracker?.ScanSoon();
+            _ = ApplyNotificationsAsync(showProblem: true);
             if (_webhook?.Problem is { } webhookProblem)
             {
                 MessageBox.Show(webhookProblem, "Notch", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
 
-            // Only now is it known whether Windows lets Notch have the hotkey.
-            if (notch.HotkeyProblem is { } problem)
+            // Only now is it known whether Windows lets Notch have the hotkeys.
+            if ((notch.HotkeyProblem ?? notch.PaletteHotkeyProblem) is { } problem)
             {
                 MessageBox.Show(problem + " Choose another one in Settings.", "Notch", MessageBoxButton.OK, MessageBoxImage.Warning);
             }

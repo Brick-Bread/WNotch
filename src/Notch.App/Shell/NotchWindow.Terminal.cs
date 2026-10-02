@@ -28,17 +28,18 @@ public partial class NotchWindow
         Clipboard,
         Plugins,
         Page,
+        Palette,
     }
 
     /// <summary>Something in the notch is taking keyboard input, so it must not close under the user while it has focus.</summary>
-    private bool KeyboardInUse => _expanded && IsActive && (_tab is NotchTab.Terminal or NotchTab.Clipboard || PageTakesInput || _timerEntryOpen);
+    private bool KeyboardInUse => _expanded && IsActive && (_tab is NotchTab.Terminal or NotchTab.Clipboard or NotchTab.Palette || PageTakesInput || _timerEntryOpen);
 
     /// <summary>Selects a tab by name ("home", "terminal", "stats", "shelf", "plugins"); unknown names are ignored.</summary>
     public void ShowTab(string name)
     {
         if (Enum.TryParse(name, ignoreCase: true, out NotchTab tab))
         {
-            if (tab == NotchTab.Clipboard && !_settings.ClipboardHistory)
+            if (tab == NotchTab.Clipboard && !_settings.ClipboardHistory && !_clipboardDemo)
             {
                 _activities.Publish(new Notch.Core.Activities.Activity
                 {
@@ -131,6 +132,7 @@ public partial class NotchWindow
         ShelfPanel.Visibility = tab == NotchTab.Shelf ? Visibility.Visible : Visibility.Collapsed;
         PluginsPanel.Visibility = tab == NotchTab.Plugins ? Visibility.Visible : Visibility.Collapsed;
         ClipboardPanel.Visibility = tab == NotchTab.Clipboard ? Visibility.Visible : Visibility.Collapsed;
+        PalettePanel.Visibility = tab == NotchTab.Palette ? Visibility.Visible : Visibility.Collapsed;
         PagePanel.Visibility = tab == NotchTab.Page ? Visibility.Visible : Visibility.Collapsed;
 
         if (tab != NotchTab.Home)
@@ -170,7 +172,7 @@ public partial class NotchWindow
         bool terminal = _expanded && _tab == NotchTab.Terminal;
         if (_hwnd != 0)
         {
-            OverlayWindow.SetNoActivate(_hwnd, !(terminal || (_expanded && (_timerEntryOpen || PageTakesInput || _tab == NotchTab.Clipboard))));
+            OverlayWindow.SetNoActivate(_hwnd, !(terminal || (_expanded && (_timerEntryOpen || PageTakesInput || _tab is NotchTab.Clipboard or NotchTab.Palette))));
         }
 
         _terminal.IsViewing = terminal;

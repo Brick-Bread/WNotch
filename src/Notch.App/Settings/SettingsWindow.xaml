@@ -85,6 +85,11 @@
             <TextBox x:Name="OpenHotkey"
                      ToolTip="Opens and closes the notch from any app. Ctrl, Alt, Shift and Win with a letter, a digit, F1 to F24 or Space, such as Alt+Shift+N or Ctrl+Alt+F12. Leave empty for none." />
         </DockPanel>
+        <DockPanel Margin="0,8,0,0">
+            <TextBlock Text="Palette" VerticalAlignment="Center" Width="64" />
+            <TextBox x:Name="PaletteHotkey"
+                     ToolTip="Opens the command palette from any app: a box to type what you want, such as a timer or a tab. Same format as the hotkey above. Leave empty for none." />
+        </DockPanel>
         <DockPanel Margin="0,10,0,0">
             <TextBlock Text="Accent" VerticalAlignment="Center" Width="64" />
             <!-- One swatch per colour, added in code. -->
@@ -117,6 +122,14 @@
                   ToolTip="Adds Notch's hooks to Claude Code's settings.json and Codex's config.toml. Notch keeps a backup of each file and takes its lines out again when you untick this." />
         <TextBlock TextWrapping="Wrap" Opacity="0.7" Margin="28,2,0,0" FontSize="12"
                    Text="Edits ~\.claude\settings.json and ~\.codex\config.toml after asking, with a backup next to each. Codex runs only one notify command, so an existing one is never replaced." />
+
+        <TextBlock Text="Notifications" Style="{StaticResource Heading}" Margin="0,22,0,4" />
+        <CheckBox x:Name="MirrorNotifications" Content="Show Windows notifications in the pill" />
+        <TextBlock TextWrapping="Wrap" Opacity="0.7" Margin="28,2,0,6" FontSize="12"
+                   Text="Shows who it is from (or its subject) and which app, briefly. The message itself is never shown. Windows has to allow it under Settings, Privacy and security, Notifications." />
+        <TextBlock Text="Only these apps, one per line (empty means all):" Opacity="0.7" Margin="28,0,0,4" FontSize="12" />
+        <TextBox x:Name="MirroredApps" AcceptsReturn="True" Height="56" Margin="28,0,0,0" TextWrapping="NoWrap"
+                 VerticalScrollBarVisibility="Auto" IsEnabled="{Binding IsChecked, ElementName=MirrorNotifications}" />
 
         <TextBlock Text="Clipboard" Style="{StaticResource Heading}" Margin="0,22,0,4" />
         <CheckBox x:Name="ClipboardHistory" Content="Keep a history of what I copy (adds a Clipboard tab)" />

@@ -50,5 +50,25 @@ internal static class ScreenshotRunner
         window.ShowTab("shelf");
         await window.WaitUntilSettledAsync();
         window.SavePicture(File("shelf"));
+
+        // Made-up agents, so the picture never shows what the machine running it has open.
+        window.ShowTab("home");
+        window.SeedDemoAgents();
+        await window.WaitUntilSettledAsync();
+        window.SavePicture(File("home-agents"));
+        window.ClearDemoAgents();
+
+        window.SeedDemoClipboard();
+        window.ShowTab("clipboard");
+        await window.WaitUntilSettledAsync();
+        window.SavePicture(File("clipboard"));
+
+        window.ShowDemoPalette("");
+        await window.WaitUntilSettledAsync();
+        window.SavePicture(File("palette"));
+        window.ShowDemoPalette("tim");
+        await window.WaitUntilSettledAsync();
+        window.SavePicture(File("palette-search"));
+        window.ShowDemoPalette(null);
     }
 }

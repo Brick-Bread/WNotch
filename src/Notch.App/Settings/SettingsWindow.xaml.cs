@@ -86,6 +86,7 @@ public partial class SettingsWindow : Window
         ExpandOnHover.IsChecked = settings.ExpandOnHover;
         ShelfOpensOnDrag.IsChecked = settings.ShelfOpensOnDrag;
         OpenHotkey.Text = settings.OpenHotkey;
+        PaletteHotkey.Text = settings.PaletteHotkey;
         HideInFullscreen.IsChecked = settings.HideInFullscreen;
         NotifyOfUpdates.IsChecked = settings.NotifyOfUpdates;
         GlowEffects.IsChecked = settings.GlowEffects;
@@ -136,6 +137,8 @@ public partial class SettingsWindow : Window
         UpdateNotch.Click += (_, _) => OnUpdateNotch();
         BrowsePlugins.Click += (_, _) => OnBrowsePlugins();
 
+        MirrorNotifications.IsChecked = settings.MirrorNotifications;
+        MirroredApps.Text = string.Join(Environment.NewLine, settings.MirroredApps);
         ClipboardHistory.IsChecked = settings.ClipboardHistory;
         ClearClipboard.Click += (_, _) =>
         {
@@ -324,7 +327,7 @@ public partial class SettingsWindow : Window
 
     private void OnSave()
     {
-        if (!TryReadTerminalPresets(out List<string> terminalPresets) || !TryReadTimerPresets(out List<TimerPreset> presets) || !TryReadHotkey(out string hotkey))
+        if (!TryReadTerminalPresets(out List<string> terminalPresets) || !TryReadTimerPresets(out List<TimerPreset> presets) || !TryReadHotkey(OpenHotkey, out string hotkey) || !TryReadHotkey(PaletteHotkey, out string paletteHotkey))
         {
             return;
         }
@@ -338,6 +341,10 @@ public partial class SettingsWindow : Window
 
         _settings.DetectAgents = DetectAgents.IsChecked == true;
         _settings.ClipboardHistory = ClipboardHistory.IsChecked == true;
+        _settings.MirrorNotifications = MirrorNotifications.IsChecked == true;
+        _settings.MirroredApps = [.. MirroredApps.Text
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Distinct(StringComparer.OrdinalIgnoreCase)];
         _settings.HiddenAgents = [.. AgentToggles.Children.OfType<CheckBox>().Where(c => c.IsChecked != true).Select(c => (string)c.Tag)];
         if (!TryApplyAgentHooks())
         {
@@ -350,6 +357,7 @@ public partial class SettingsWindow : Window
         _settings.TerminalPresets = terminalPresets;
         _settings.TimerPresets = presets;
         _settings.OpenHotkey = hotkey;
+        _settings.PaletteHotkey = paletteHotkey;
         _settings.ExpandOnHover = ExpandOnHover.IsChecked == true;
         _settings.ShelfOpensOnDrag = ShelfOpensOnDrag.IsChecked == true;
         _settings.Theme = (NotchTheme)Math.Max(0, Theme.SelectedIndex);
@@ -518,9 +526,9 @@ public partial class SettingsWindow : Window
     }
 
     /// <summary>Reads the hotkey box, tidied; empty means none. Says what is wrong, and returns false, when it cannot be read.</summary>
-    private bool TryReadHotkey(out string hotkey)
+    private bool TryReadHotkey(TextBox box, out string hotkey)
     {
-        hotkey = OpenHotkey.Text.Trim();
+        hotkey = box.Text.Trim();
         if (hotkey.Length == 0)
         {
             return true;
@@ -538,7 +546,7 @@ public partial class SettingsWindow : Window
             "Notch",
             MessageBoxButton.OK,
             MessageBoxImage.Warning);
-        OpenHotkey.Focus();
+        box.Focus();
         return false;
     }
 
