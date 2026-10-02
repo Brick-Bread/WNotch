@@ -9,36 +9,37 @@
 <meta property="og:description" content="Add activities, cards and themes to the notch. Install opens Notch and asks first.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="plugins.css">
 </head>
 <body>
 <div class="wrap">
 <nav><b><a href="./" style="color:inherit">Notch</a></b><div><a href="./#features">Features</a><a href="./#install">Install</a><a href="plugins.html">Plugins</a><a href="https://github.com/Brick-Bread/WNotch">GitHub</a></div></nav>
 
-<header style="padding:30px 0 10px">
-<h1 style="margin:10px 0 12px;font-size:clamp(30px,5vw,48px)">Plugins</h1>
-<p class="lead" style="margin-bottom:20px">Plugins add activities to the pill, cards and pages to the notch, and whole themes. Press Install and Notch opens, tells you what the plugin is, and installs it only if you say yes.</p>
-<p class="warn"><b>Only install plugins you trust.</b> A plugin is a program that runs as you, with the same access to your files and accounts. The permissions shown here are what the author says the plugin uses; they are a statement, not a limit.</p>
+<header class="mk-hero">
+<h1>Plugins</h1>
+<p class="lead">Add activities to the pill, cards and pages to the notch, or restyle the whole thing with a theme. Press Install and Notch opens, tells you what the plugin is, and installs it only if you say yes.</p>
+<div class="mk-trust"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 1.5 1.8 16.5h16.4L10 1.5Zm-.9 5.5h1.8v5H9.1V7Zm0 6.4h1.8v1.8H9.1v-1.8Z"/></svg><div><b>Only install plugins you trust.</b> A plugin is a program that runs as you, with the same access to your files and accounts. The permissions shown are what the author says the plugin uses; they are a statement, not a limit.</div></div>
 </header>
 
 <main>
-<div class="pl-tools">
-<input id="q" type="search" placeholder="Search plugins" aria-label="Search plugins">
+<div class="mk-bar">
+<label class="mk-search"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 4 4"/></svg><input id="q" type="search" placeholder="Search plugins" aria-label="Search plugins"></label>
 <div class="chips" id="chips" role="group" aria-label="Filter by tag"></div>
+<span class="mk-count" id="count"></span>
 </div>
-<div class="grid" id="list" aria-live="polite"><p class="empty">Loading the plugin list…</p></div>
+<div class="mk-grid" id="list" aria-live="polite"><p class="empty">Loading the plugin list…</p></div>
 
-<section>
-<h2>Make your own</h2>
-<p class="lead">A plugin is a small .NET library with a <code>plugin.json</code>, published as one .zip on a GitHub release. To be listed here, open a pull request that adds it to <a href="https://github.com/Brick-Bread/WNotch/blob/main/site/plugins/registry.json"><code>site/plugins/registry.json</code></a>.</p>
-<p><a href="https://github.com/Brick-Bread/WNotch/blob/main/docs/plugins.md">Plugin guide</a> · <a href="https://github.com/Brick-Bread/WNotch/blob/main/docs/publishing.md">Getting listed</a> · <a href="https://github.com/Brick-Bread/WNotch/tree/main/samples">Samples</a></p>
-</section>
+<div class="mk-make">
+<div><h2>Make your own</h2><p>A plugin is a small .NET library with a <code>plugin.json</code>, published as one .zip on a GitHub release. To be listed here, open a pull request that adds it to <a href="https://github.com/Brick-Bread/WNotch/blob/main/site/plugins/registry.json"><code>site/plugins/registry.json</code></a>.</p></div>
+<div class="links"><a class="mk-src" href="https://github.com/Brick-Bread/WNotch/blob/main/docs/plugins.md">Plugin guide</a><a class="mk-src" href="https://github.com/Brick-Bread/WNotch/blob/main/docs/publishing.md">Getting listed</a><a class="mk-src" href="https://github.com/Brick-Bread/WNotch/tree/main/samples">Samples</a></div>
+</div>
 </main>
 </div>
 <footer>Notch is open source. <a href="https://github.com/Brick-Bread/WNotch/blob/main/LICENSE">Licence</a> · <a href="https://github.com/Brick-Bread/WNotch">GitHub</a></footer>
 
 <script>
 (() => {
-  const list = document.getElementById('list'), q = document.getElementById('q'), chipBox = document.getElementById('chips');
+  const list = document.getElementById('list'), q = document.getElementById('q'), chipBox = document.getElementById('chips'), count = document.getElementById('count');
   const PERM = {network:'Connects to the internet', filesystem:'Reads or writes your files', terminal:'Starts or reads terminal sessions', shell:'Runs other programs', notifications:'Reads your notifications', clipboard:'Reads or writes the clipboard'};
   let plugins = [], tag = '';
 
@@ -67,27 +68,47 @@
     }, 1600);
   }
 
+  // The first Notch release that offered each plugin API version (see "Compatibility" in docs/plugins.md).
+  const API_SINCE = {1: '0.4.0', 2: '0.5.0', 3: '0.6.0', 4: '0.6.1', 5: '0.7.0', 6: '0.9.0'};
+
+  const ICON = {
+    check: '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0 1.5 2.5v5c0 4 2.7 6.7 6.5 8.5 3.8-1.8 6.5-4.5 6.5-8.5v-5L8 0Zm-1 11L4 8l1.2-1.2L7 8.6l3.8-3.8L12 6l-5 5Z"/></svg>',
+    code: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 4-4 4 4 4M11 4l4 4-4 4"/></svg>',
+  };
+  const hue = id => { let h = 0; for (const c of id) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
+  const html = (name, markup, props = {}) => Object.assign(el(name, props), {innerHTML: markup});
+
   function render() {
     const needle = q.value.trim().toLowerCase();
     const shown = plugins.filter(p =>
       (!tag || p.tags.includes(tag)) &&
       (!needle || [p.name, p.author, p.description, ...p.tags].some(t => (t || '').toLowerCase().includes(needle))));
+    count.textContent = plugins.length ? shown.length + (shown.length === 1 ? ' plugin' : ' plugins') : '';
     list.replaceChildren();
     if (!shown.length) { list.append(el('p', {className: 'empty', textContent: plugins.length ? 'No plugin matches.' : 'No plugins are listed yet.'})); return; }
     for (const p of shown) {
-      const card = el('div', {className: 'card pl-card'});
-      card.append(el('h3', {textContent: p.name}));
-      card.append(el('p', {className: 'by', textContent: (p.author ? p.author + ' · ' : '') + p.repository}));
-      if (p.verified) card.append(el('div', {className: 'ok', textContent: '✔ Checked: the Notch maintainers have read this plugin’s code'}));
-      if (p.description) card.append(el('p', {textContent: p.description}));
-      card.append(el('p', {className: 'perm', textContent: p.permissions.length
-        ? 'Says it uses: ' + p.permissions.map(x => PERM[x] || x).join(' · ')
-        : 'Does not say what it uses. Treat it as able to do anything.'}));
-      if (p.tags.length) card.append(el('div', {className: 'tags'}, ...p.tags.map(t => el('span', {className: 'tag', textContent: t}))));
+      const card = el('article', {className: 'mk-card'});
+      const icon = el('div', {className: 'mk-icon', textContent: (p.name.match(/[A-Za-z0-9]/) || ['?'])[0].toUpperCase()});
+      icon.setAttribute('aria-hidden', 'true');
+      icon.style.setProperty('--h', hue(p.id));
+      const title = el('h3', {textContent: p.name});
+      if (p.verified) title.append(html('span', ICON.check + 'Verified', {className: 'mk-badge', title: 'The Notch maintainers have read this plugin’s code'}));
+      card.append(el('div', {className: 'mk-head'}, icon,
+        el('div', {className: 'mk-title'}, title, el('p', {className: 'mk-by', textContent: p.author || p.repository}))));
+      if (p.description) card.append(el('p', {className: 'mk-desc', textContent: p.description}));
+
+      const meta = el('div', {className: 'mk-meta'});
+      if (p.apiVersion) meta.append(el('span', {className: 'pill api', title: 'Plugin API ' + p.apiVersion,
+        textContent: API_SINCE[p.apiVersion] ? 'Made for Notch ' + API_SINCE[p.apiVersion] + ' and above' : 'Plugin API ' + p.apiVersion}));
+      if (p.permissions.length) for (const x of p.permissions) meta.append(el('span', {className: 'pill perm', textContent: PERM[x] || x}));
+      else meta.append(el('span', {className: 'pill none', title: 'Treat it as able to do anything.', textContent: 'Does not say what it uses'}));
+      for (const t of p.tags) meta.append(el('span', {className: 'pill tag', textContent: t}));
+      card.append(meta);
+
       const button = el('a', {className: 'btn', href: 'notch://install?id=' + encodeURIComponent(p.id), textContent: 'Install'});
       button.addEventListener('click', () => install(p, card, button));
-      card.append(el('div', {className: 'pl-actions'}, button,
-        el('a', {className: 'src', href: 'https://github.com/' + p.repository, textContent: 'Source'})));
+      card.append(el('div', {className: 'mk-actions'}, button,
+        html('a', ICON.code + 'Source', {className: 'mk-src', href: 'https://github.com/' + p.repository})));
       list.append(card);
     }
   }
