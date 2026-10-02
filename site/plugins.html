@@ -83,7 +83,7 @@
       card.append(el('p', {className: 'by', textContent: (p.author ? p.author + ' · ' : '') + p.repository}));
       if (p.verified) card.append(el('div', {className: 'ok', textContent: '✔ Checked: the Notch maintainers have read this plugin’s code'}));
       if (p.description) card.append(el('p', {textContent: p.description}));
-      if (p.apiVersion) card.append(el('p', {className: 'api', textContent: (API_SINCE[p.apiVersion] ? 'Made for Notch ' + API_SINCE[p.apiVersion] + ' · ' : '') + 'plugin API ' + p.apiVersion}));
+      if (p.apiVersion) card.append(el('p', {className: 'api', textContent: (API_SINCE[p.apiVersion] ? 'Made for Notch ' + API_SINCE[p.apiVersion] + ' and above · ' : '') + 'plugin API ' + p.apiVersion}));
       card.append(el('p', {className: 'perm', textContent: p.permissions.length
         ? 'Says it uses: ' + p.permissions.map(x => PERM[x] || x).join(' · ')
         : 'Does not say what it uses. Treat it as able to do anything.'}));
