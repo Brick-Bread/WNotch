@@ -10,4 +10,8 @@
     <PackageReference Include="Ical.Net" Version="5.2.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Notch.Core.Tests" />
+  </ItemGroup>
+
 </Project>
