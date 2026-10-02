@@ -78,7 +78,7 @@
   const hue = id => { let h = 0; for (const c of id) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
   const html = (name, markup, props = {}) => Object.assign(el(name, props), {innerHTML: markup});
 
-  // A plugin's repository can carry its own listing: description.md and logo.png (or logo.webm) in its root.
+  // A plugin's repository can carry its own listing: description.md and logo.png (or logo.webp) in its root.
   const raw = (repo, file) => 'https://raw.githubusercontent.com/' + repo + '/HEAD/' + file;
 
   function inline(text) {
@@ -135,16 +135,18 @@
       .catch(() => {}); // No file: the description from the list stays.
   }
 
-  // logo.png, else logo.webm, else the plugin's initial on a coloured tile.
+  // logo.png, else logo.webp, else the plugin's initial on a coloured tile.
   function logo(icon, repo) {
-    const video = el('video', {src: raw(repo, 'logo.webm'), autoplay: true, muted: true, loop: true, playsInline: true});
-    video.muted = true;
-    video.onerror = () => video.remove();
-    video.onloadeddata = () => icon.classList.add('has-logo');
-    const image = el('img', {src: raw(repo, 'logo.png'), alt: '', loading: 'lazy'});
-    image.onerror = () => { image.remove(); icon.append(video); };
+    const image = el('img', {alt: '', loading: 'lazy'});
+    const files = ['logo.png', 'logo.webp'];
+    const next = () => {
+      const file = files.shift();
+      if (file) image.src = raw(repo, file); else image.remove();
+    };
+    image.onerror = next;
     image.onload = () => icon.classList.add('has-logo');
     icon.append(image);
+    next();
   }
 
   function render() {

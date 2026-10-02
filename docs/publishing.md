@@ -20,7 +20,7 @@ The website reads two optional files from the **root of your plugin's repository
 | File | Used for |
 |---|---|
 | `description.md` | The description on your card. Basic Markdown works: paragraphs, headings, lists, **bold**, *italic*, `code` and links. Long text is cut short with a "Show more" button. Up to 20 KB. |
-| `logo.png` or `logo.webm` | The picture on your card, shown square (a silent, looping video for `.webm`). `logo.png` is tried first. |
+| `logo.png` or `logo.webp` | The picture on your card, shown square. `logo.png` is tried first. |
 
 Without them the card shows the `description` from your registry entry and a coloured tile with your plugin's first letter. GitHub caches raw files for a few minutes, so changes appear shortly after you push.
 
