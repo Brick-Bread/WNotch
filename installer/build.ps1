@@ -27,10 +27,11 @@ function Invoke-Dotnet {
 
 if (-not $SkipPublish) {
     if (Test-Path $publish) { Remove-Item $publish -Recurse -Force }
-    # Both executables are published self-contained into one folder so they share a single
+    # All the executables are published self-contained into one folder so they share a single
     # copy of the .NET runtime and users need nothing preinstalled.
     Invoke-Dotnet publish (Join-Path $root 'src\Notch.App') -c Release -r win-x64 --self-contained true -o $publish "-p:Version=$Version"
     Invoke-Dotnet publish (Join-Path $root 'src\Notch.Hook') -c Release -r win-x64 --self-contained true -o $publish "-p:Version=$Version"
+    Invoke-Dotnet publish (Join-Path $root 'src\Notch.Cli') -c Release -r win-x64 --self-contained true -o $publish "-p:Version=$Version"
 }
 Get-ChildItem $publish -Filter *.pdb -Recurse | Remove-Item -Force
 

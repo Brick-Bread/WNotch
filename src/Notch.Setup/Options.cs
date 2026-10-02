@@ -13,6 +13,7 @@ internal sealed class Options
     public bool Silent { get; private set; }
     public bool Update { get; private set; }
     public bool Uninstall { get; private set; }
+    public bool AddToPath { get; private set; }
     public string? InstallDir { get; private set; }
 
     public static Options Parse(string[] args)
@@ -28,6 +29,10 @@ internal sealed class Options
             else if (Is(arg, "/UPDATE"))
             {
                 options.Update = true;
+            }
+            else if (Is(arg, "/PATH"))
+            {
+                options.AddToPath = true;
             }
             else if (Is(arg, "/uninstall") || Is(arg, "--uninstall"))
             {

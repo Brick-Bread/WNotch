@@ -91,6 +91,7 @@
                         </Border>
                         <CheckBox x:Name="StartupCheck" Margin="4,18,0,0" Content="Start Notch when I sign in to Windows" IsChecked="True" />
                         <CheckBox x:Name="DesktopCheck" Margin="4,12,0,0" Content="Add a shortcut to the desktop" />
+                        <CheckBox x:Name="PathCheck" Margin="4,12,0,0" Content="Add the notchctl command to my PATH" />
                     </StackPanel>
 
                     <!-- Uninstall options -->

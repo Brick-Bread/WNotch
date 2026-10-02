@@ -4,12 +4,16 @@ using System.Net.Http;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Threading;
 using H.NotifyIcon;
+using Notch.App.Automation;
+using Notch.App.Plugins;
 using Notch.App.Settings;
 using Notch.App.Shell;
 using Notch.App.Terminal;
 using Notch.App.Updates;
 using Notch.Core.Activities;
+using Notch.Core.Automation;
 using Notch.Core.Media;
 using Notch.Core.Plugins;
 using Notch.Core.Settings;
@@ -46,6 +50,10 @@ public partial class App : Application
     private SettingsWindow? _settingsWindow;
     private UpdateService? _updates;
     private DemoDriver? _demo;
+    private PluginInstallFlow? _installFlow;
+    private CommandDispatcher? _commands;
+    private CommandPipe? _commandPipe;
+    private WebhookService? _webhook;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -72,6 +80,10 @@ public partial class App : Application
         // A screenshot run is a separate short-lived process and works beside a running notch.
         if (!isFirstInstance && Option(e, "--screenshots=") is null)
         {
+            // Hand a notch:// link (or just "show yourself") to the copy that is running, then leave.
+            // Off the UI thread: waiting for the answer must not block this thread's own message loop.
+            string[] forwarded = [.. e.Args.Where(a => !a.StartsWith(WaitForFlag, StringComparison.OrdinalIgnoreCase))];
+            Task.Run(() => CommandPipe.SendAsync(forwarded, TimeSpan.FromSeconds(3))).GetAwaiter().GetResult();
             Shutdown();
             return;
         }
@@ -121,6 +133,9 @@ public partial class App : Application
         // Before anything is loaded, so plugin updates downloaded during the last run can replace their files.
         PluginInstaller.ApplyPendingUpdates(_plugins.PluginsDirectory);
         _pluginInstaller = new PluginInstaller(PluginHttp, _plugins.PluginsDirectory, _plugins.IsLoaded);
+        _installFlow = new PluginInstallFlow(
+            PluginHttp, _pluginInstaller, _plugins, settings, settingsStore, _activities, Path.Combine(appData, "registry.json"));
+        _installFlow.Installed += _ => _settingsWindow?.RefreshPlugins();
 
         // Only reads manifests, so it is cheap enough to do before the window shows.
         // --plugin=<folder> runs a plugin straight from its build output, enabled or not.
@@ -224,6 +239,8 @@ public partial class App : Application
             return;
         }
 
+        StartAutomation(window, settings, settingsStore, appData, e.Args);
+
         _updates = new UpdateService(settings, settingsStore, _activities, Shutdown);
         _updates.CleanUpDownloads();
         if (HasFlag(e, UpdateService.UpdatedFlag))
@@ -234,6 +251,36 @@ public partial class App : Application
         if (demo)
         {
             _demo = new DemoDriver(_activities);
+        }
+    }
+
+    /// <summary>
+    /// Starts what lets other programs talk to the notch: the pipe a second copy, a notch:// link and
+    /// notchctl use, the plugin installer they can trigger, and the webhook when it is switched on.
+    /// </summary>
+    private void StartAutomation(NotchWindow window, AppSettings settings, SettingsStore settingsStore, string appData, string[] startupArguments)
+    {
+        _commands = new CommandDispatcher(
+            Dispatcher,
+            window,
+            _plugins!,
+            _installFlow!,
+            () => OpenSettings(window, settings, settingsStore),
+            () => { });
+        _commandPipe = new CommandPipe(_commands.HandleArgumentsAsync);
+
+        _webhook = new WebhookService(settings, settingsStore, _activities!, _commands);
+        _webhook.Apply();
+        if (_webhook.Problem is { } problem)
+        {
+            LogError(new InvalidOperationException(problem));
+        }
+
+        // A notch:// link that started this copy; it is handled once the window is up.
+        string? link = startupArguments.FirstOrDefault(a => a.StartsWith(CommandParser.Scheme + ":", StringComparison.OrdinalIgnoreCase));
+        if (link is not null)
+        {
+            Dispatcher.BeginInvoke(() => _ = _commands.HandleArgumentsAsync([link]), DispatcherPriority.ApplicationIdle);
         }
     }
 
@@ -256,6 +303,8 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _demo?.Dispose();
+        _webhook?.Dispose();
+        _commandPipe?.Dispose();
         _plugins?.Dispose();
         _updates?.Dispose();
         _terminal?.Dispose();
@@ -281,6 +330,7 @@ public partial class App : Application
             store,
             _plugins!,
             _pluginInstaller!,
+            _installFlow!,
             confirm => _updates?.ForceUpdateAsync(confirm) ?? Task.FromResult("Updates are not available yet."),
             () => notch.HasTerminalSessions,
             Restart);
@@ -289,6 +339,12 @@ public partial class App : Application
             _activities?.SetSuppressed(settings.SuppressedActivityIds());
             notch.ApplySettings();
             _updates?.CheckSoon();
+
+            _webhook?.Apply();
+            if (_webhook?.Problem is { } webhookProblem)
+            {
+                MessageBox.Show(webhookProblem, "Notch", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
 
             // Only now is it known whether Windows lets Notch have the hotkey.
             if (notch.HotkeyProblem is { } problem)

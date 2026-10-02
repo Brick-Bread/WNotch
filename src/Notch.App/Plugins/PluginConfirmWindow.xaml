@@ -1,0 +1,32 @@
+<Window x:Class="Notch.App.Plugins.PluginConfirmWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Install plugin"
+        Width="460" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen" ShowInTaskbar="True" Topmost="True">
+    <StackPanel Margin="24,20,24,20">
+        <TextBlock x:Name="PluginName" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" />
+        <TextBlock x:Name="ByLine" Opacity="0.7" Margin="0,2,0,0" TextWrapping="Wrap" />
+        <TextBlock x:Name="Verified" Margin="0,6,0,0" TextWrapping="Wrap" Visibility="Collapsed"
+                   Text="Checked: the people who run the plugin list have looked at this plugin's code." />
+        <TextBlock x:Name="Description" Margin="0,12,0,0" TextWrapping="Wrap" />
+
+        <TextBlock Text="It says it uses" FontWeight="SemiBold" Margin="0,16,0,4" />
+        <StackPanel x:Name="PermissionList" />
+
+        <Border BorderThickness="1" BorderBrush="#66FFB01F" Background="#14FFB01F" CornerRadius="6"
+                Padding="10,8" Margin="0,16,0,0">
+            <TextBlock TextWrapping="Wrap"
+                       Text="A plugin is a program that runs as you, with the same access to your files and accounts as you have. What it says it uses above is its author's word, not a limit. Only install plugins you trust." />
+        </Border>
+        <TextBlock x:Name="Problem" Margin="0,10,0,0" TextWrapping="Wrap" Foreground="#FFFF5A5A" Visibility="Collapsed" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+            <Button x:Name="Cancel" Content="Cancel" MinWidth="88" IsCancel="True" />
+            <Button x:Name="InstallOnly" Content="Install" MinWidth="88" Margin="8,0,0,0"
+                    ToolTip="Downloads it. It does not run until you switch it on in settings." />
+            <Button x:Name="InstallAndEnable" Content="Install and switch on" Margin="8,0,0,0" Padding="12,0"
+                    IsDefault="False" Style="{DynamicResource AccentButtonStyle}" />
+        </StackPanel>
+    </StackPanel>
+</Window>

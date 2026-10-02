@@ -6,8 +6,10 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using Notch.App.Plugins;
 using Notch.App.Shell;
 using Notch.Core.Activities;
+using Notch.Core.Automation;
 using Notch.Core.Plugins;
 using Notch.Core.Settings;
 using Notch.Core.Shell;
@@ -24,6 +26,8 @@ public partial class SettingsWindow : Window
     private readonly SettingsStore _store;
     private readonly PluginManager _plugins;
     private readonly PluginInstaller _installer;
+    private readonly PluginInstallFlow _installFlow;
+    private string? _webhookToken;
     private readonly Func<Func<bool>, Task<string>> _forceNotchUpdate;
     private readonly Func<bool> _hasOpenTerminals;
     private readonly Action _restart;
@@ -43,6 +47,7 @@ public partial class SettingsWindow : Window
         SettingsStore store,
         PluginManager plugins,
         PluginInstaller installer,
+        PluginInstallFlow installFlow,
         Func<Func<bool>, Task<string>> forceNotchUpdate,
         Func<bool> hasOpenTerminals,
         Action restart)
@@ -52,6 +57,7 @@ public partial class SettingsWindow : Window
         _store = store;
         _plugins = plugins;
         _installer = installer;
+        _installFlow = installFlow;
         _forceNotchUpdate = forceNotchUpdate;
         _hasOpenTerminals = hasOpenTerminals;
         _restart = restart;
@@ -125,6 +131,37 @@ public partial class SettingsWindow : Window
         OpenPluginsFolder.Click += (_, _) => OnOpenPluginsFolder();
         CheckPluginUpdates.Click += (_, _) => _ = CheckPluginUpdatesAsync(userInitiated: true);
         UpdateNotch.Click += (_, _) => OnUpdateNotch();
+        BrowsePlugins.Click += (_, _) => OnBrowsePlugins();
+
+        _webhookToken = settings.WebhookToken;
+        WebhookEnabled.IsChecked = settings.WebhookEnabled;
+        WebhookPort.Text = settings.WebhookPort.ToString();
+        ShowWebhookToken();
+        WebhookPort.TextChanged += (_, _) => ShowWebhookToken();
+        CopyWebhookToken.Click += (_, _) =>
+        {
+            if (!string.IsNullOrEmpty(_webhookToken))
+            {
+                try
+                {
+                    Clipboard.SetText(_webhookToken);
+                }
+                catch (System.Runtime.InteropServices.COMException)
+                {
+                    // Another program has the clipboard open; the user can try again.
+                }
+            }
+        };
+        NewWebhookToken.Click += (_, _) =>
+        {
+            _webhookToken = WebhookRequest.NewToken();
+            ShowWebhookToken();
+        };
+        WebhookEnabled.Checked += (_, _) =>
+        {
+            _webhookToken ??= WebhookRequest.NewToken();
+            ShowWebhookToken();
+        };
 
         // Quietly, so an update shows up beside its plugin without the user asking.
         _ = CheckPluginUpdatesAsync(userInitiated: false);
@@ -135,6 +172,38 @@ public partial class SettingsWindow : Window
 
     /// <summary>Raised after the settings object was updated and written to disk.</summary>
     public event EventHandler? Saved;
+
+    /// <summary>Lists the plugins again, e.g. after one was installed from a link while this window was open. Ticks are kept.</summary>
+    public void RefreshPlugins()
+    {
+        HashSet<string> ticked = TickedPlugins();
+        ticked.UnionWith(_settings.EnabledPlugins);
+        ListPlugins(ticked);
+    }
+
+    private void ShowWebhookToken()
+    {
+        WebhookToken.Text = _webhookToken ?? "(made when you switch the webhook on)";
+        WebhookExample.Text = $"curl -H \"Authorization: Bearer <token>\" -d \"{{\\\"id\\\":\\\"build\\\",\\\"title\\\":\\\"Build done\\\"}}\" http://127.0.0.1:{WebhookPort.Text.Trim()}/v1/activity";
+    }
+
+    private async void OnBrowsePlugins()
+    {
+        BrowsePlugins.IsEnabled = false;
+        try
+        {
+            PluginRegistry registry = await _installFlow.GetRegistryAsync(forceReload: true);
+            new PluginBrowserWindow(registry, _installFlow, _plugins) { Owner = this }.ShowDialog();
+        }
+        catch (PluginLoadException e)
+        {
+            MessageBox.Show(this, e.Message, "Notch", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+        finally
+        {
+            BrowsePlugins.IsEnabled = true;
+        }
+    }
 
     private void OnThemeChanged()
     {
@@ -236,6 +305,16 @@ public partial class SettingsWindow : Window
             return;
         }
 
+        if (!int.TryParse(WebhookPort.Text.Trim(), out int webhookPort) || webhookPort is < 1024 or > 65535)
+        {
+            MessageBox.Show(this, "The webhook port is a number from 1024 to 65535.", "Notch", MessageBoxButton.OK, MessageBoxImage.Warning);
+            WebhookPort.Focus();
+            return;
+        }
+
+        _settings.WebhookEnabled = WebhookEnabled.IsChecked == true;
+        _settings.WebhookPort = webhookPort;
+        _settings.WebhookToken = _webhookToken;
         _settings.TerminalPresets = terminalPresets;
         _settings.TimerPresets = presets;
         _settings.OpenHotkey = hotkey;

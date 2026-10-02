@@ -19,6 +19,7 @@
     <ProjectReference Include="..\Notch.Platform\Notch.Platform.csproj" />
     <!-- Not used as a library: referenced so Notch.Hook.exe is built and copied next to Notch.exe. -->
     <ProjectReference Include="..\Notch.Hook\Notch.Hook.csproj" />
+    <ProjectReference Include="..\Notch.Cli\Notch.Cli.csproj" />
   </ItemGroup>
 
   <ItemGroup>

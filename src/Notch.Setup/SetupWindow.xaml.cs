@@ -42,6 +42,7 @@ public partial class SetupWindow : Window
                 : "Version " + old + " is installed. This updates it to " + version + ".";
             PrimaryButton.Content = "Update";
             StartupCheck.IsChecked = Machine.StartsWithWindows();
+            PathCheck.IsChecked = existing != null && Machine.IsOnPath(existing);
             // Updates go in place; moving an install is a reinstall.
             ChangeButton.Visibility = Visibility.Collapsed;
         }
@@ -141,6 +142,7 @@ public partial class SetupWindow : Window
         string dir = _dir;
         bool startup = StartupCheck.IsChecked == true;
         bool desktop = DesktopCheck.IsChecked == true;
+        bool addToPath = PathCheck.IsChecked == true;
         bool removeSettings = SettingsCheck.IsChecked == true;
         bool update = _isUpdate;
         bool uninstall = _uninstall;
@@ -155,7 +157,7 @@ public partial class SetupWindow : Window
                 }
                 else
                 {
-                    Installer.Install(new InstallChoices { Dir = dir, StartWithWindows = startup, DesktopShortcut = desktop, IsUpdate = update }, progress);
+                    Installer.Install(new InstallChoices { Dir = dir, StartWithWindows = startup, DesktopShortcut = desktop, AddToPath = addToPath, IsUpdate = update }, progress);
                 }
             });
         }

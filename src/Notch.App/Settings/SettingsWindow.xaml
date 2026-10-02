@@ -135,7 +135,27 @@
         <TextBox x:Name="CalendarFeeds" AcceptsReturn="True" Height="76" TextWrapping="NoWrap"
                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" />
 
+        <TextBlock Text="Automation" Style="{StaticResource Heading}" Margin="0,22,0,4" />
+        <TextBlock TextWrapping="Wrap" Opacity="0.7" Margin="0,0,0,8"
+                   Text="notchctl.exe (in the Notch folder) and notch:// links can start timers and show notices. The webhook lets scripts and other programs on this PC put activities in the pill: it listens on this computer only, and every request must carry the token." />
+        <CheckBox x:Name="WebhookEnabled" Content="Accept requests on a local webhook" />
+        <StackPanel Margin="28,6,0,0" IsEnabled="{Binding IsChecked, ElementName=WebhookEnabled}">
+            <DockPanel>
+                <TextBlock Text="Port" VerticalAlignment="Center" Width="48" />
+                <TextBox x:Name="WebhookPort" Width="80" HorizontalAlignment="Left" />
+            </DockPanel>
+            <DockPanel Margin="0,6,0,0">
+                <Button x:Name="NewWebhookToken" DockPanel.Dock="Right" Content="New token" Margin="6,0,0,0" />
+                <Button x:Name="CopyWebhookToken" DockPanel.Dock="Right" Content="Copy" Margin="6,0,0,0" />
+                <TextBlock Text="Token" VerticalAlignment="Center" Width="48" />
+                <TextBox x:Name="WebhookToken" IsReadOnly="True" />
+            </DockPanel>
+            <TextBlock x:Name="WebhookExample" TextWrapping="Wrap" Opacity="0.7" Margin="0,6,0,0" FontFamily="Consolas" FontSize="11" />
+        </StackPanel>
+
         <DockPanel Margin="0,22,0,4">
+            <Button x:Name="BrowsePlugins" DockPanel.Dock="Right" Content="Browse plugins" Margin="8,0,0,0"
+                    ToolTip="The plugins listed on the Notch website." />
             <Button x:Name="CheckPluginUpdates" DockPanel.Dock="Right" Content="Check for updates" Margin="8,0,0,0"
                     ToolTip="Asks GitHub whether the plugins installed from it have newer releases." />
             <Button x:Name="OpenPluginsFolder" DockPanel.Dock="Right" Content="Open folder"

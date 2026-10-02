@@ -12,6 +12,8 @@ internal sealed class InstallChoices
     public string Dir { get; set; } = Machine.DefaultInstallDir;
     public bool StartWithWindows { get; set; } = true;
     public bool DesktopShortcut { get; set; }
+    /// <summary>Put the install folder on the user's PATH so <c>notchctl</c> works in any terminal.</summary>
+    public bool AddToPath { get; set; }
     public bool IsUpdate { get; set; }
 }
 
@@ -70,6 +72,7 @@ internal static class Installer
             Machine.SetStartWithWindows(choices.StartWithWindows, exe);
         }
 
+        Machine.SetOnPath(dir, choices.AddToPath);
         Machine.RegisterInstall(dir, Version, FolderSize(dir));
         progress.Report((1, "Done"));
     }
@@ -147,6 +150,7 @@ internal static class Installer
 
         progress.Report((0.3, "Removing shortcuts…"));
         Machine.RemoveShortcuts(dir);
+        Machine.SetOnPath(dir, false);
         Machine.Unregister();
 
         progress.Report((0.5, "Removing files…"));

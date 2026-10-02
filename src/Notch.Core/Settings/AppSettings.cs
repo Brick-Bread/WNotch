@@ -135,6 +135,40 @@ public sealed class AppSettings
     /// <summary>Folders terminal sessions were started in, most recent first.</summary>
     public List<string> RecentFolders { get; set; } = [];
 
+    /// <summary>Accept requests on the local webhook. Off until the user turns it on.</summary>
+    public bool WebhookEnabled { get; set; }
+
+    /// <summary>The port the webhook listens on, on this computer only.</summary>
+    public int WebhookPort { get; set; } = Automation.WebhookRequest.DefaultPort;
+
+    /// <summary>The secret every webhook request must carry. Made when the webhook is first switched on.</summary>
+    public string? WebhookToken { get; set; }
+
+    /// <summary>Keys that open the command palette, read like <see cref="OpenHotkey"/>. Empty for none.</summary>
+    public string PaletteHotkey { get; set; } = "Alt+Shift+P";
+
+    /// <summary>Show agents that were not started from Notch's terminal too (found by looking at running programs).</summary>
+    public bool DetectAgents { get; set; } = true;
+
+    /// <summary>Ids of agents (see <see cref="Agents.AgentCatalog"/>) the user does not want shown.</summary>
+    public List<string> HiddenAgents { get; set; } = [];
+
+    /// <summary>
+    /// Whether Notch has put its hooks into the agents' own settings files so that agents started
+    /// anywhere report what they are doing. Switched on and off from the settings window, which
+    /// keeps a backup of every file it changes.
+    /// </summary>
+    public bool GlobalAgentHooks { get; set; }
+
+    /// <summary>Keep a history of what was copied, in the Clipboard tab. Off until the user turns it on.</summary>
+    public bool ClipboardHistory { get; set; }
+
+    /// <summary>Show Windows notifications in the pill. Off until the user turns it on.</summary>
+    public bool MirrorNotifications { get; set; }
+
+    /// <summary>Names of the apps whose notifications are shown. Empty means all of them.</summary>
+    public List<string> MirroredApps { get; set; } = [];
+
     /// <summary>The activity ids the user has switched off.</summary>
     public IEnumerable<string> SuppressedActivityIds()
     {

@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.Win32;
@@ -17,6 +18,7 @@ internal static class Machine
     private const string AppKey = @"Software\Notch";
     private const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\Notch";
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
+    private const string LinkKey = @"Software\Classes\notch";
 
     public static string DefaultInstallDir =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", AppName);
@@ -66,6 +68,8 @@ internal static class Machine
             app.SetValue("InstallDir", dir);
         }
 
+        RegisterLinkProtocol(Path.Combine(dir, AppExe));
+
         string uninstaller = Path.Combine(dir, "Uninstall.exe");
         using RegistryKey key = Registry.CurrentUser.CreateSubKey(UninstallKey);
         key.SetValue("DisplayName", AppName);
@@ -80,8 +84,54 @@ internal static class Machine
         key.SetValue("EstimatedSize", (int)Math.Min(int.MaxValue, sizeBytes / 1024), RegistryValueKind.DWord);
     }
 
+    /// <summary>
+    /// Makes notch:// links open Notch (per user, so no administrator is needed). The plugin list on
+    /// the website uses them for its Install buttons.
+    /// </summary>
+    private static void RegisterLinkProtocol(string exePath)
+    {
+        using RegistryKey scheme = Registry.CurrentUser.CreateSubKey(LinkKey);
+        scheme.SetValue("", "URL:Notch");
+        scheme.SetValue("URL Protocol", "");
+        using (RegistryKey icon = scheme.CreateSubKey("DefaultIcon"))
+        {
+            icon.SetValue("", "\"" + exePath + "\",0");
+        }
+
+        using RegistryKey command = scheme.CreateSubKey(@"shell\open\command");
+        command.SetValue("", "\"" + exePath + "\" \"%1\"");
+    }
+
+    /// <summary>Whether <c>notchctl.exe</c>'s folder is on the user's PATH.</summary>
+    public static bool IsOnPath(string dir)
+    {
+        string? path = Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.User);
+        return path != null && SplitPath(path).Any(p => string.Equals(p.TrimEnd('\\'), dir.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>Adds or removes the install folder on the user's PATH, so <c>notchctl</c> works in any terminal.</summary>
+    public static void SetOnPath(string dir, bool enabled)
+    {
+        string current = Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.User) ?? "";
+        var parts = SplitPath(current).Where(p => !string.Equals(p.TrimEnd('\\'), dir.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase)).ToList();
+        if (enabled)
+        {
+            parts.Add(dir);
+        }
+
+        string next = string.Join(";", parts);
+        if (next != current)
+        {
+            Environment.SetEnvironmentVariable("Path", next, EnvironmentVariableTarget.User);
+        }
+    }
+
+    private static string[] SplitPath(string path) => path.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+
     public static void Unregister()
     {
+        Registry.CurrentUser.DeleteSubKeyTree(LinkKey, false);
+
         using (RegistryKey? run = Registry.CurrentUser.OpenSubKey(RunKey, true))
         {
             run?.DeleteValue(AppName, false);
@@ -160,7 +210,7 @@ internal static class Machine
     public static void StopApp(string dir)
     {
         string prefix = Path.GetFullPath(dir).TrimEnd('\\') + "\\";
-        foreach (string name in new[] { "Notch", "Notch.Hook" })
+        foreach (string name in new[] { "Notch", "Notch.Hook", "notchctl" })
         {
             foreach (Process process in Process.GetProcessesByName(name))
             {

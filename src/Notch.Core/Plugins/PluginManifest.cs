@@ -49,6 +49,38 @@ public sealed partial record PluginManifest
     /// <summary>Options the user can change in Notch's Settings window. Optional.</summary>
     public IReadOnlyList<PluginSettingField> Settings { get; init; } = [];
 
+    /// <summary>
+    /// What the plugin says it uses, such as "network" or "filesystem", shown before it is installed
+    /// or switched on. This is a statement by the plugin's author, not a limit: a plugin is .NET
+    /// code running as the user and can do anything the user can.
+    /// </summary>
+    public IReadOnlyList<string> Permissions { get; init; } = [];
+
+    /// <summary>The permissions Notch knows by name, for the settings list and the install window.</summary>
+    public static IReadOnlyDictionary<string, string> KnownPermissions { get; } = new Dictionary<string, string>
+    {
+        ["network"] = "Connects to the internet",
+        ["filesystem"] = "Reads or writes files outside its own folder",
+        ["terminal"] = "Starts or reads terminal sessions",
+        ["shell"] = "Runs other programs",
+        ["notifications"] = "Reads your notifications",
+        ["clipboard"] = "Reads or writes the clipboard",
+    };
+
+    /// <summary>A short description of a permission as declared, or the word itself when it is not a known one.</summary>
+    public static string DescribePermission(string permission) =>
+        KnownPermissions.TryGetValue(permission, out string? text) ? text : permission;
+
+    /// <summary>Tidies a declared list: lowercase words, no duplicates, no empty or absurdly long entries.</summary>
+    public static IReadOnlyList<string> CleanPermissions(IEnumerable<string>? declared) =>
+        declared is null
+            ? []
+            : [.. declared
+                .Select(p => (p ?? "").Trim().ToLowerInvariant())
+                .Where(p => p.Length is > 0 and <= 32)
+                .Distinct()
+                .Take(12)];
+
     /// <summary>Reads and validates a manifest.</summary>
     /// <exception cref="PluginLoadException">The text is not a usable manifest; the message says why.</exception>
     public static PluginManifest Parse(string json)
@@ -104,6 +136,7 @@ public sealed partial record PluginManifest
             Description = Optional(raw.Description),
             Repository = Optional(raw.Repository),
             Settings = PluginSettingField.ParseAll(raw.Settings),
+            Permissions = CleanPermissions(raw.Permissions),
         };
     }
 
@@ -134,5 +167,7 @@ public sealed partial record PluginManifest
         public string? Repository { get; set; }
 
         public JsonElement? Settings { get; set; }
+
+        public string[]? Permissions { get; set; }
     }
 }

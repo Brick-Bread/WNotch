@@ -5,6 +5,7 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Notch.App/Notch.App.csproj" />
+    <Project Path="src/Notch.Cli/Notch.Cli.csproj" />
     <Project Path="src/Notch.Core/Notch.Core.csproj" />
     <Project Path="src/Notch.Hook/Notch.Hook.csproj" />
     <Project Path="src/Notch.Platform/Notch.Platform.csproj" />

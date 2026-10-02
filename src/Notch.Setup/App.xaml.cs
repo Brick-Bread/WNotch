@@ -49,6 +49,8 @@ public partial class App : Application
             Dir = options.InstallDir ?? existing ?? Machine.DefaultInstallDir,
             IsUpdate = options.Update,
             StartWithWindows = true,
+            // An update keeps whatever the user chose; a silent install adds it only when asked with /PATH.
+            AddToPath = options.AddToPath || (options.Update && existing != null && Machine.IsOnPath(existing)),
         };
 
         try
