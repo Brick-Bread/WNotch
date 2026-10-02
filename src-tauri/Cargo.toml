@@ -1,0 +1,25 @@
+[package]
+name = "notch"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "A notch for your desktop: activities, glow and a built-in terminal"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+notch-core = { path = "../crates/notch-core" }
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-single-instance = "2"
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+portable-pty = "0.9"
+interprocess = "2"
+base64 = "0.22"
+log = "0.4"
+env_logger = { version = "0.11", default-features = false, features = ["auto-color", "humantime"] }
+uuid = { version = "1", features = ["v4"] }
+dirs = "6"

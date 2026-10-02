@@ -483,3 +483,6 @@ $RECYCLE.BIN/
 
 # Rendered by CI for the website
 site/shots/
+
+# Rust build output
+target/

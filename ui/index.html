@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notch</title>
+  <link rel="stylesheet" href="xterm/xterm.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="xterm/xterm.js"></script>
+  <script src="xterm/addon-fit.js"></script>
+  <script type="module" src="main.js"></script>
+</head>
+<body>
+  <div id="island" class="island" data-state="collapsed" data-style="notch">
+    <div class="clip">
+      <div id="compact" class="compact"></div>
+      <div id="expanded" class="expanded" data-view="home">
+        <div class="strip">
+          <button class="tab active" data-tab="home" role="tab">Home</button>
+          <button class="tab" data-tab="terminal" role="tab">Terminal</button>
+          <span class="spacer"></span>
+          <button id="gear" class="icon-button" aria-label="Settings" title="Settings">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+        </div>
+        <div class="panes">
+          <section id="pane-home" class="pane"></section>
+          <section id="pane-terminal" class="pane"></section>
+          <section id="pane-settings" class="pane"></section>
+        </div>
+      </div>
+    </div>
+    <div id="glow" class="glow"></div>
+  </div>
+</body>
+</html>
