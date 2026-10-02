@@ -340,3 +340,37 @@ public sealed class LoadedFromDiskPlugin : INotchPlugin
     {
     }
 }
+
+public class PluginLoaderVersionTests
+{
+    private static PluginManifest Manifest() => new()
+    {
+        Id = "acme.test",
+        Name = "Test",
+        Assembly = "Test.dll",
+        ApiVersion = PluginApi.Version,
+    };
+
+    [Fact]
+    public void An_assembly_built_for_this_notch_is_accepted()
+    {
+        // The test assembly references the Notch.Core it runs against.
+        string path = typeof(PluginLoaderVersionTests).Assembly.Location;
+        PluginLoader.CheckBuiltForThisNotch(Manifest(), path);
+    }
+
+    [Fact]
+    public void A_file_that_is_not_an_assembly_is_left_for_the_loader_to_report()
+    {
+        string path = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(path, "not a dll");
+            PluginLoader.CheckBuiltForThisNotch(Manifest(), path);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+}
