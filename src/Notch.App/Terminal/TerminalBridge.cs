@@ -19,6 +19,8 @@ internal sealed class TerminalBridge
     private readonly TaskCompletionSource _pageLoaded = new();
     private Task? _initialization;
     private bool _light;
+    private JsonObject? _palette;
+    private System.Drawing.Color? _background;
 
     public WebView2CompositionControl Control { get; } = new()
     {
@@ -52,15 +54,19 @@ internal sealed class TerminalBridge
         Post(new JsonObject { ["type"] = "output", ["id"] = id, ["data"] = Convert.ToBase64String(data) });
 
     /// <summary>Switches every terminal, and the ones opened later, between the dark and light colours.</summary>
-    public void SetTheme(bool light)
+    /// <param name="palette">xterm theme colours and a <c>fontFamily</c> from a plugin theme, laid over the dark or light ones; null for none.</param>
+    /// <param name="background">The palette's background, for the area around the page; null when there is no palette.</param>
+    public void SetTheme(bool light, JsonObject? palette = null, System.Drawing.Color? background = null)
     {
         _light = light;
+        _palette = palette;
+        _background = background;
 
         // Shows around the page and before it has loaded; matches the island (Themes/*.xaml).
-        Control.DefaultBackgroundColor = light
+        Control.DefaultBackgroundColor = background ?? (light
             ? System.Drawing.Color.FromArgb(0xF3, 0xF3, 0xF5)
-            : System.Drawing.Color.Black;
-        Post(new JsonObject { ["type"] = "theme", ["light"] = light });
+            : System.Drawing.Color.Black);
+        Post(new JsonObject { ["type"] = "theme", ["light"] = light, ["palette"] = palette?.DeepClone() });
     }
 
     public void Focus()
@@ -99,7 +105,7 @@ internal sealed class TerminalBridge
         webView.Navigate($"https://{HostName}/index.html");
 
         await _pageLoaded.Task;
-        SetTheme(_light);
+        SetTheme(_light, _palette, _background);
     }
 
     private void Post(JsonObject message)

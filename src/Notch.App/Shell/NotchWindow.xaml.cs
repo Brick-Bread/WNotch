@@ -144,7 +144,13 @@ public partial class NotchWindow : Window
 
     private readonly record struct Shape(double Width, double Height, double Radius);
 
-    private Shape ShapeFor(NotchMode mode) => mode switch
+    private Shape ShapeFor(NotchMode mode)
+    {
+        Shape shape = BaseShapeFor(mode);
+        return shape with { Radius = shape.Radius * ThemeManager.IslandRadiusScale };
+    }
+
+    private Shape BaseShapeFor(NotchMode mode) => mode switch
     {
         NotchMode.Compact => new Shape(320, 34, 17),
         NotchMode.Peek => new Shape(360, 44, 22),
@@ -238,7 +244,8 @@ public partial class NotchWindow : Window
     /// <summary>Recolours what the theme brushes do not reach.</summary>
     private void OnThemeChanged()
     {
-        _terminal.Bridge.SetTheme(ThemeManager.IsLight);
+        (System.Text.Json.Nodes.JsonObject Palette, System.Drawing.Color? Background)? look = ThemeManager.TerminalPalette();
+        _terminal.Bridge.SetTheme(ThemeManager.IsLight, look?.Palette, look?.Background);
         ApplyWidgetColors();
         UpdatePluginCards();
         ShowPageFigures();

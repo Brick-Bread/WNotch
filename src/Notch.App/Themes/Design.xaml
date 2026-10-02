@@ -1,0 +1,21 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+    <!-- The look that is not a colour, shared by Dark.xaml and Light.xaml. A plugin theme may define
+         any of these keys again. docs/plugins.md lists them all under "Themes". -->
+
+    <!-- Fonts: the notch's text, and the terminal's and plugin code blocks' monospace, and the icon glyphs (Segoe code points, so keep a font that has them). -->
+    <FontFamily x:Key="UiFontFamily">Segoe UI Variable Text, Segoe UI</FontFamily>
+    <FontFamily x:Key="CodeFontFamily">Cascadia Mono, Consolas</FontFamily>
+    <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+    <sys:Double x:Key="UiFontSize">13</sys:Double>
+
+    <!-- Corner radii of panels, buttons and text boxes, tabs, small thumbnails and round icon buttons. -->
+    <CornerRadius x:Key="CardRadius">14</CornerRadius>
+    <CornerRadius x:Key="ControlRadius">11</CornerRadius>
+    <CornerRadius x:Key="SmallRadius">6</CornerRadius>
+    <CornerRadius x:Key="IconButtonRadius">20</CornerRadius>
+
+    <!-- Multiplies the corner radius of the island itself, in every size it takes. 0 gives square corners. -->
+    <sys:Double x:Key="IslandRadiusScale">1</sys:Double>
+</ResourceDictionary>

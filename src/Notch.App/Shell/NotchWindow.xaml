@@ -7,25 +7,7 @@
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False" Topmost="True"
         Foreground="{DynamicResource TextBrush}"
-        FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="13">
-
-    <Window.Resources>
-        <!-- A rounded panel on the Home and Stats tabs. -->
-        <Style x:Key="Card" TargetType="Border">
-            <Setter Property="Background" Value="{DynamicResource CardBrush}" />
-            <Setter Property="CornerRadius" Value="14" />
-            <Setter Property="Padding" Value="14,10" />
-        </Style>
-        <Style x:Key="CardLabel" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="11" />
-            <Setter Property="Opacity" Value="0.55" />
-        </Style>
-        <Style x:Key="CardValue" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="20" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Margin" Value="0,2,0,0" />
-        </Style>
-    </Window.Resources>
+        FontFamily="{DynamicResource UiFontFamily}" FontSize="{DynamicResource UiFontSize}">
 
     <!-- The window is as large as the notch ever gets. Everything outside the island is
          transparent, and transparent pixels of a layered window pass clicks through. -->
@@ -52,9 +34,9 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <TextBlock x:Name="CompactGlyph" FontFamily="{StaticResource IconFont}" FontSize="15"
+                <TextBlock x:Name="CompactGlyph" FontFamily="{DynamicResource IconFont}" FontSize="15"
                            VerticalAlignment="Center" />
-                <Border x:Name="CompactArt" Width="22" Height="22" CornerRadius="6"
+                <Border x:Name="CompactArt" Width="22" Height="22" CornerRadius="{DynamicResource SmallRadius}"
                         VerticalAlignment="Center" Visibility="Collapsed" />
                 <TextBlock x:Name="CompactTitle" Grid.Column="1" Margin="10,0" VerticalAlignment="Center"
                            FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
@@ -74,16 +56,16 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel x:Name="TabStrip" Orientation="Horizontal">
-                    <RadioButton x:Name="TabHome" Style="{StaticResource TabButton}" Content="Home" IsChecked="True" />
-                    <RadioButton x:Name="TabTerminal" Style="{StaticResource TabButton}" Content="Terminal" />
-                    <RadioButton x:Name="TabStats" Style="{StaticResource TabButton}" Content="Stats" />
-                    <RadioButton x:Name="TabShelf" Style="{StaticResource TabButton}" Content="Shelf" />
+                    <RadioButton x:Name="TabHome" Style="{DynamicResource TabButton}" Content="Home" IsChecked="True" />
+                    <RadioButton x:Name="TabTerminal" Style="{DynamicResource TabButton}" Content="Terminal" />
+                    <RadioButton x:Name="TabStats" Style="{DynamicResource TabButton}" Content="Stats" />
+                    <RadioButton x:Name="TabShelf" Style="{DynamicResource TabButton}" Content="Shelf" />
                     <!-- Only shown while a plugin has a card to put on it. -->
-                    <RadioButton x:Name="TabPlugins" Style="{StaticResource TabButton}" Content="Plugins"
+                    <RadioButton x:Name="TabPlugins" Style="{DynamicResource TabButton}" Content="Plugins"
                                  Visibility="Collapsed" />
                 </StackPanel>
-                <Button x:Name="OpenSettingsButton" Style="{StaticResource PillButton}" HorizontalAlignment="Right"
-                        VerticalAlignment="Center" Content="&#xE713;" FontFamily="{StaticResource IconFont}"
+                <Button x:Name="OpenSettingsButton" Style="{DynamicResource PillButton}" HorizontalAlignment="Right"
+                        VerticalAlignment="Center" Content="&#xE713;" FontFamily="{DynamicResource IconFont}"
                         ToolTip="Settings" />
 
                 <!-- Home: media, timer, calendar -->
@@ -95,11 +77,11 @@
                         </Grid.ColumnDefinitions>
 
                         <Grid Width="112" Height="112">
-                            <Border CornerRadius="14" Background="{DynamicResource ControlBrush}">
-                                <TextBlock Text="&#xE8D6;" FontFamily="{StaticResource IconFont}" FontSize="34"
+                            <Border CornerRadius="{DynamicResource CardRadius}" Background="{DynamicResource ControlBrush}">
+                                <TextBlock Text="&#xE8D6;" FontFamily="{DynamicResource IconFont}" FontSize="34"
                                            Opacity="0.5" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
-                            <Border x:Name="MediaArt" CornerRadius="14" />
+                            <Border x:Name="MediaArt" CornerRadius="{DynamicResource CardRadius}" />
                         </Grid>
 
                         <Grid Grid.Column="1" Margin="18,0,0,0">
@@ -133,10 +115,10 @@
                             </Grid>
 
                             <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center">
-                                <Button x:Name="MediaPrevious" Style="{StaticResource IconButton}" Content="&#xE892;" />
-                                <Button x:Name="MediaPlayPause" Style="{StaticResource IconButton}" Content="&#xE768;"
+                                <Button x:Name="MediaPrevious" Style="{DynamicResource IconButton}" Content="&#xE892;" />
+                                <Button x:Name="MediaPlayPause" Style="{DynamicResource IconButton}" Content="&#xE768;"
                                         FontSize="22" Margin="14,0" />
-                                <Button x:Name="MediaNext" Style="{StaticResource IconButton}" Content="&#xE893;" />
+                                <Button x:Name="MediaNext" Style="{DynamicResource IconButton}" Content="&#xE893;" />
                             </StackPanel>
                         </Grid>
                     </Grid>
@@ -148,35 +130,35 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
-                        <Border Style="{StaticResource Card}">
+                        <Border Style="{DynamicResource Card}">
                             <DockPanel>
                                 <DockPanel DockPanel.Dock="Top">
                                     <!-- Negative margins keep the label row as low as it is without the button. -->
-                                    <Button x:Name="TimerCustom" DockPanel.Dock="Right" Style="{StaticResource PillButton}"
+                                    <Button x:Name="TimerCustom" DockPanel.Dock="Right" Style="{DynamicResource PillButton}"
                                             Content="+ Custom" FontSize="11" Padding="8,2" Margin="0,-4,-4,-4"
                                             ToolTip="Set a timer of any length" />
-                                    <TextBlock x:Name="TimerLabel" Text="Timer" Style="{StaticResource CardLabel}" />
+                                    <TextBlock x:Name="TimerLabel" Text="Timer" Style="{DynamicResource CardLabel}" />
                                 </DockPanel>
                                 <!-- Wraps to a second row when the presets do not fit on one. -->
                                 <WrapPanel x:Name="TimerPresets" DockPanel.Dock="Bottom" Margin="-6,0,0,0">
-                                    <Button x:Name="TimerPomodoro" Style="{StaticResource PillButton}" Content="Pomodoro"
+                                    <Button x:Name="TimerPomodoro" Style="{DynamicResource PillButton}" Content="Pomodoro"
                                             Margin="6,6,0,0" Background="{DynamicResource AccentHoverBrush}"
                                             ToolTip="Focus and break sessions back to back; lengths are in Settings" />
                                     <!-- A button per preset from the settings follows, added in code. -->
                                 </WrapPanel>
                                 <!-- Takes the place of the presets while a length is being typed. -->
                                 <DockPanel x:Name="TimerEntry" DockPanel.Dock="Bottom" Margin="0,6,0,0" Visibility="Collapsed">
-                                    <Button x:Name="TimerEntryCancel" DockPanel.Dock="Right" Style="{StaticResource PillButton}"
+                                    <Button x:Name="TimerEntryCancel" DockPanel.Dock="Right" Style="{DynamicResource PillButton}"
                                             Content="Cancel" />
-                                    <Button x:Name="TimerEntryStart" DockPanel.Dock="Right" Style="{StaticResource PillButton}"
+                                    <Button x:Name="TimerEntryStart" DockPanel.Dock="Right" Style="{DynamicResource PillButton}"
                                             Content="Start" Background="{DynamicResource AccentHoverBrush}" />
                                     <TextBox x:Name="TimerInput" Style="{StaticResource PillTextBox}" MaxLength="24"
                                              ToolTip="A number is minutes. Also 1:30, 90s, 1h20m. Enter starts, Esc cancels." />
                                 </DockPanel>
                                 <StackPanel x:Name="TimerControls" DockPanel.Dock="Bottom" Orientation="Horizontal"
                                             Margin="-6,6,0,0" Visibility="Collapsed">
-                                    <Button x:Name="TimerPauseResume" Style="{StaticResource PillButton}" Content="Pause" />
-                                    <Button x:Name="TimerReset" Style="{StaticResource PillButton}" Content="Cancel" />
+                                    <Button x:Name="TimerPauseResume" Style="{DynamicResource PillButton}" Content="Pause" />
+                                    <Button x:Name="TimerReset" Style="{DynamicResource PillButton}" Content="Cancel" />
                                 </StackPanel>
                                 <!-- Shrinks the digits when two rows of presets leave them less room. -->
                                 <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left" VerticalAlignment="Center">
@@ -185,9 +167,9 @@
                             </DockPanel>
                         </Border>
 
-                        <Border Grid.Column="2" Style="{StaticResource Card}">
+                        <Border Grid.Column="2" Style="{DynamicResource Card}">
                             <DockPanel>
-                                <TextBlock x:Name="CalendarDate" DockPanel.Dock="Top" Style="{StaticResource CardLabel}" />
+                                <TextBlock x:Name="CalendarDate" DockPanel.Dock="Top" Style="{DynamicResource CardLabel}" />
                                 <TextBlock x:Name="CalendarEmpty" Opacity="0.45" TextWrapping="Wrap"
                                            VerticalAlignment="Center" />
                                 <ItemsControl x:Name="CalendarList" Margin="0,8,0,0">
@@ -223,7 +205,7 @@
 
                     <DockPanel>
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                            <Button x:Name="TerminalFolder" Style="{StaticResource PillButton}" />
+                            <Button x:Name="TerminalFolder" Style="{DynamicResource PillButton}" />
                             <StackPanel x:Name="TerminalLaunchers" Orientation="Horizontal" />
                         </StackPanel>
 
@@ -235,7 +217,7 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border x:Name="Tab" CornerRadius="11" Margin="0,0,6,0" Padding="10,4,4,4"
+                                    <Border x:Name="Tab" CornerRadius="{DynamicResource ControlRadius}" Margin="0,0,6,0" Padding="10,4,4,4"
                                             Background="Transparent" Cursor="Hand" Tag="{Binding}"
                                             MouseLeftButtonDown="OnSessionTabClicked">
                                         <StackPanel Orientation="Horizontal">
@@ -243,7 +225,7 @@
                                                      Fill="{Binding StatusBrush}" />
                                             <TextBlock Text="{Binding Title}" FontSize="12" VerticalAlignment="Center"
                                                        MaxWidth="150" TextTrimming="CharacterEllipsis" />
-                                            <Button Style="{StaticResource IconButton}" Content="&#xE711;" FontSize="9"
+                                            <Button Style="{DynamicResource IconButton}" Content="&#xE711;" FontSize="9"
                                                     Width="18" Height="18" Margin="6,0,0,0" Tag="{Binding}"
                                                     ToolTip="Close session" Click="OnSessionCloseClicked" />
                                         </StackPanel>
@@ -268,44 +250,44 @@
                 <!-- Stats -->
                 <UniformGrid x:Name="StatsPanel" Grid.Row="1" Margin="-6,10,-6,0" Columns="3" Rows="2"
                              Visibility="Collapsed">
-                    <Border Style="{StaticResource Card}" Margin="6">
+                    <Border Style="{DynamicResource Card}" Margin="6">
                         <DockPanel>
-                            <TextBlock DockPanel.Dock="Top" Text="CPU" Style="{StaticResource CardLabel}" />
-                            <TextBlock x:Name="StatsCpu" DockPanel.Dock="Top" Text="â€“" Style="{StaticResource CardValue}" />
+                            <TextBlock DockPanel.Dock="Top" Text="CPU" Style="{DynamicResource CardLabel}" />
+                            <TextBlock x:Name="StatsCpu" DockPanel.Dock="Top" Text="â€“" Style="{DynamicResource CardValue}" />
                             <shell:Sparkline x:Name="StatsCpuChart" Margin="0,6,0,0" />
                         </DockPanel>
                     </Border>
-                    <Border Style="{StaticResource Card}" Margin="6">
+                    <Border Style="{DynamicResource Card}" Margin="6">
                         <DockPanel>
-                            <TextBlock DockPanel.Dock="Top" Text="Memory" Style="{StaticResource CardLabel}" />
-                            <TextBlock x:Name="StatsMemory" DockPanel.Dock="Top" Text="â€“" Style="{StaticResource CardValue}" />
+                            <TextBlock DockPanel.Dock="Top" Text="Memory" Style="{DynamicResource CardLabel}" />
+                            <TextBlock x:Name="StatsMemory" DockPanel.Dock="Top" Text="â€“" Style="{DynamicResource CardValue}" />
                             <TextBlock x:Name="StatsMemoryDetail" DockPanel.Dock="Top" FontSize="11" Opacity="0.55" />
                             <shell:Sparkline x:Name="StatsMemoryChart" Margin="0,6,0,0" />
                         </DockPanel>
                     </Border>
-                    <Border Style="{StaticResource Card}" Margin="6">
+                    <Border Style="{DynamicResource Card}" Margin="6">
                         <DockPanel>
-                            <TextBlock DockPanel.Dock="Top" Text="GPU" Style="{StaticResource CardLabel}" />
-                            <TextBlock x:Name="StatsGpu" DockPanel.Dock="Top" Text="â€“" Style="{StaticResource CardValue}" />
+                            <TextBlock DockPanel.Dock="Top" Text="GPU" Style="{DynamicResource CardLabel}" />
+                            <TextBlock x:Name="StatsGpu" DockPanel.Dock="Top" Text="â€“" Style="{DynamicResource CardValue}" />
                             <shell:Sparkline x:Name="StatsGpuChart" Margin="0,6,0,0" />
                         </DockPanel>
                     </Border>
-                    <Border Style="{StaticResource Card}" Margin="6">
+                    <Border Style="{DynamicResource Card}" Margin="6">
                         <StackPanel>
-                            <TextBlock Text="Download" Style="{StaticResource CardLabel}" />
-                            <TextBlock x:Name="StatsDownload" Text="â€“" Style="{StaticResource CardValue}" />
+                            <TextBlock Text="Download" Style="{DynamicResource CardLabel}" />
+                            <TextBlock x:Name="StatsDownload" Text="â€“" Style="{DynamicResource CardValue}" />
                         </StackPanel>
                     </Border>
-                    <Border Style="{StaticResource Card}" Margin="6">
+                    <Border Style="{DynamicResource Card}" Margin="6">
                         <StackPanel>
-                            <TextBlock Text="Upload" Style="{StaticResource CardLabel}" />
-                            <TextBlock x:Name="StatsUpload" Text="â€“" Style="{StaticResource CardValue}" />
+                            <TextBlock Text="Upload" Style="{DynamicResource CardLabel}" />
+                            <TextBlock x:Name="StatsUpload" Text="â€“" Style="{DynamicResource CardValue}" />
                         </StackPanel>
                     </Border>
-                    <Border Style="{StaticResource Card}" Margin="6">
+                    <Border Style="{DynamicResource Card}" Margin="6">
                         <StackPanel>
-                            <TextBlock Text="Battery" Style="{StaticResource CardLabel}" />
-                            <TextBlock x:Name="StatsBattery" Text="â€“" Style="{StaticResource CardValue}" />
+                            <TextBlock Text="Battery" Style="{DynamicResource CardLabel}" />
+                            <TextBlock x:Name="StatsBattery" Text="â€“" Style="{DynamicResource CardValue}" />
                         </StackPanel>
                     </Border>
                 </UniformGrid>
@@ -318,9 +300,9 @@
                     </Grid.RowDefinitions>
 
                     <DockPanel LastChildFill="False">
-                        <Button x:Name="ShelfClear" DockPanel.Dock="Right" Style="{StaticResource PillButton}" Content="Clear"
+                        <Button x:Name="ShelfClear" DockPanel.Dock="Right" Style="{DynamicResource PillButton}" Content="Clear"
                                 ToolTip="Take everything off the shelf. The files themselves stay where they are." />
-                        <TextBlock x:Name="ShelfSummary" Style="{StaticResource CardLabel}" VerticalAlignment="Center" />
+                        <TextBlock x:Name="ShelfSummary" Style="{DynamicResource CardLabel}" VerticalAlignment="Center" />
                     </DockPanel>
 
                     <ScrollViewer Grid.Row="1" Margin="-6,4,-6,0" VerticalScrollBarVisibility="Hidden" Focusable="False">
@@ -332,7 +314,7 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border x:Name="Tile" Style="{StaticResource Card}" Margin="6" Height="92" Padding="6,8,6,6"
+                                    <Border x:Name="Tile" Style="{DynamicResource Card}" Margin="6" Height="92" Padding="6,8,6,6"
                                             Tag="{Binding}" ToolTip="{Binding Path}" Cursor="Hand"
                                             MouseLeftButtonDown="OnShelfTilePressed" MouseMove="OnShelfTileMoved"
                                             MouseRightButtonUp="OnShelfTileMenu">
@@ -342,13 +324,13 @@
                                                            TextAlignment="Center" TextTrimming="CharacterEllipsis" />
                                                 <Grid Margin="0,0,0,4">
                                                     <!-- Shows until the file's own picture has been fetched, and stays for a file that has none. -->
-                                                    <TextBlock Text="{Binding Glyph}" FontFamily="{StaticResource IconFont}" FontSize="30"
+                                                    <TextBlock Text="{Binding Glyph}" FontFamily="{DynamicResource IconFont}" FontSize="30"
                                                                Opacity="0.55" HorizontalAlignment="Center" VerticalAlignment="Center"
                                                                Visibility="{Binding GlyphVisibility}" />
                                                     <Image Source="{Binding Picture}" Width="44" Height="44" Stretch="Uniform" />
                                                 </Grid>
                                             </DockPanel>
-                                            <Button x:Name="Remove" Style="{StaticResource IconButton}" Content="&#xE711;" FontSize="8"
+                                            <Button x:Name="Remove" Style="{DynamicResource IconButton}" Content="&#xE711;" FontSize="8"
                                                     Width="18" Height="18" Margin="0,-6,-4,0" Tag="{Binding}"
                                                     HorizontalAlignment="Right" VerticalAlignment="Top" Visibility="Hidden"
                                                     ToolTip="Take off the shelf" Click="OnShelfRemoveClicked" />
@@ -380,17 +362,17 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Style="{StaticResource Card}" Margin="6" Height="95" Tag="{Binding}"
+                                <Border Style="{DynamicResource Card}" Margin="6" Height="95" Tag="{Binding}"
                                         Cursor="{Binding Cursor}" MouseLeftButtonUp="OnPluginCardClicked">
                                     <DockPanel>
                                         <TextBlock DockPanel.Dock="Top" Text="{Binding Label}"
-                                                   Style="{StaticResource CardLabel}" TextTrimming="CharacterEllipsis" />
+                                                   Style="{DynamicResource CardLabel}" TextTrimming="CharacterEllipsis" />
                                         <ProgressBar DockPanel.Dock="Bottom" Height="4" Maximum="1" BorderThickness="0"
                                                      Foreground="{Binding AccentBrush}" Background="{DynamicResource TrackBrush}"
                                                      Value="{Binding Progress, Mode=OneTime}"
                                                      Visibility="{Binding ProgressVisibility}" />
                                         <TextBlock DockPanel.Dock="Top" Text="{Binding Value}" Foreground="{Binding ValueBrush}"
-                                                   Style="{StaticResource CardValue}" TextTrimming="CharacterEllipsis" />
+                                                   Style="{DynamicResource CardValue}" TextTrimming="CharacterEllipsis" />
                                         <TextBlock Text="{Binding Detail}" FontSize="11" Opacity="0.55"
                                                    TextWrapping="Wrap" TextTrimming="CharacterEllipsis" />
                                     </DockPanel>
@@ -411,7 +393,7 @@
 
                     <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,6">
                         <Button x:Name="PageBack" DockPanel.Dock="Left" Margin="0"
-                                Style="{StaticResource PillButton}" Visibility="Collapsed" />
+                                Style="{DynamicResource PillButton}" Visibility="Collapsed" />
                         <StackPanel x:Name="PageActions" DockPanel.Dock="Right" Orientation="Horizontal" />
                     </DockPanel>
 
@@ -423,10 +405,10 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Style="{StaticResource Card}" Margin="4" Height="84" Padding="12,8">
+                                <Border Style="{DynamicResource Card}" Margin="4" Height="84" Padding="12,8">
                                     <DockPanel>
                                         <TextBlock DockPanel.Dock="Top" Text="{Binding Label}"
-                                                   Style="{StaticResource CardLabel}" TextTrimming="CharacterEllipsis" />
+                                                   Style="{DynamicResource CardLabel}" TextTrimming="CharacterEllipsis" />
                                         <ProgressBar DockPanel.Dock="Bottom" Height="4" Maximum="1" BorderThickness="0"
                                                      Foreground="{Binding AccentBrush}" Background="{DynamicResource TrackBrush}"
                                                      Value="{Binding Progress, Mode=OneTime}"
@@ -447,7 +429,7 @@
                         <ItemsControl x:Name="PageChoices">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Button Style="{StaticResource PillButton}" Click="OnPageChoiceClick" Tag="{Binding}"
+                                    <Button Style="{DynamicResource PillButton}" Click="OnPageChoiceClick" Tag="{Binding}"
                                             HorizontalContentAlignment="Stretch" Margin="0,0,0,4" Padding="12,8">
                                         <DockPanel LastChildFill="True">
                                             <TextBlock DockPanel.Dock="Right" Text="{Binding Value}" Foreground="{Binding ValueBrush}"
@@ -468,20 +450,20 @@
                         <StackPanel x:Name="PageBlockStack" Margin="2,4,2,0" />
                     </ScrollViewer>
 
-                    <Border x:Name="PageConsoleCard" Grid.Row="2" Style="{StaticResource Card}" Margin="0,6,0,0" Padding="12,8">
+                    <Border x:Name="PageConsoleCard" Grid.Row="2" Style="{DynamicResource Card}" Margin="0,6,0,0" Padding="12,8">
                         <TextBox x:Name="PageConsole" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True"
-                                 FontFamily="Cascadia Mono, Consolas" FontSize="12" BorderThickness="0"
+                                 FontFamily="{DynamicResource CodeFontFamily}" FontSize="12" BorderThickness="0"
                                  Background="Transparent" Foreground="{DynamicResource TextBrush}"
                                  SelectionBrush="{DynamicResource AccentBrush}"
                                  VerticalScrollBarVisibility="Hidden" />
                     </Border>
 
                     <DockPanel x:Name="PageInputRow" Grid.Row="3" Margin="0,8,0,0">
-                        <Button x:Name="PageSend" DockPanel.Dock="Right" Style="{StaticResource PillButton}"
+                        <Button x:Name="PageSend" DockPanel.Dock="Right" Style="{DynamicResource PillButton}"
                                 Content="Send" Background="{DynamicResource AccentHoverBrush}" />
                         <Grid>
                             <TextBox x:Name="PageInput" Style="{StaticResource PillTextBox}" Padding="10,5" FontSize="13"
-                                     FontFamily="Cascadia Mono, Consolas" />
+                                     FontFamily="{DynamicResource CodeFontFamily}" />
                             <TextBlock x:Name="PageInputHint" IsHitTestVisible="False" Opacity="0.4" Margin="12,0,0,0"
                                        VerticalAlignment="Center" FontSize="13" />
                         </Grid>

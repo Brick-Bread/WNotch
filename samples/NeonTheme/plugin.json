@@ -1,0 +1,9 @@
+{
+  "id": "notch.neon-theme",
+  "name": "Neon theme",
+  "version": "1.0.0",
+  "author": "Notch contributors",
+  "description": "A sample theme: purple and pink, square corners, a different font and a matching terminal.",
+  "assembly": "NeonTheme.dll",
+  "apiVersion": 6
+}

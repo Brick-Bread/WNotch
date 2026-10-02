@@ -8,7 +8,7 @@ A plugin is a small .NET library that Notch loads at start. It can:
 - add **options** that users change in Notch's Settings, react to what the notch is doing, and talk to other plugins;
 - keep **settings** and files between runs, and write to a log.
 
-This guide walks through a first plugin, then documents every part of the API. A complete working example is in [`samples/BreakReminder`](../samples/BreakReminder).
+This guide walks through a first plugin, then documents every part of the API. A complete working example is in [`samples/BreakReminder`](../samples/BreakReminder); [`samples/NeonTheme`](../samples/NeonTheme) is a theme.
 
 - [Before you start](#before-you-start)
 - [Your first plugin](#your-first-plugin)
@@ -19,6 +19,7 @@ This guide walks through a first plugin, then documents every part of the API. A
 - [Cards: the Plugins tab](#cards-the-plugins-tab)
 - [Pages: tabs with a console](#pages-tabs-with-a-console)
 - [The notch's state, notices and messages between plugins](#the-notchs-state-notices-and-messages-between-plugins)
+- [Themes: restyling the whole notch](#themes-restyling-the-whole-notch)
 - [Settings and files](#settings-and-files)
 - [Logging](#logging)
 - [Threading and errors](#threading-and-errors)
@@ -175,7 +176,7 @@ Notch reads the manifest to list a plugin in Settings before running any of its 
 | `id` | yes | Unique, permanent identifier. Lowercase letters and digits in groups separated by `.` or `-`, at most 64 characters, e.g. `yourname.build-status`. Prefix it with your name to avoid clashes. It names the plugin's data folder, so changing it loses the plugin's settings. |
 | `name` | yes | Shown in Settings. |
 | `assembly` | yes | File name of the plugin's `.dll`, in the same folder. No paths. |
-| `apiVersion` | yes | The plugin API version the plugin was written for. Currently `5`. See [Compatibility](#compatibility). |
+| `apiVersion` | yes | The plugin API version the plugin was written for. Currently `6`. See [Compatibility](#compatibility). |
 | `version` | no | The plugin's own version, shown in Settings. |
 | `author` | no | Shown in the plugin's tooltip in Settings. |
 | `description` | no | Shown in the plugin's tooltip in Settings. |
@@ -221,6 +222,7 @@ Things to know:
 | `Pages` | [Pages: tabs with a console](#pages-tabs-with-a-console) |
 | `Shell` | [The notch's state, notices and messages between plugins](#the-notchs-state-notices-and-messages-between-plugins) |
 | `Bus` | [The notch's state, notices and messages between plugins](#the-notchs-state-notices-and-messages-between-plugins) |
+| `Themes` | [Themes: restyling the whole notch](#themes-restyling-the-whole-notch) |
 | `Settings` | [Settings and files](#settings-and-files) |
 | `Log` | [Logging](#logging) |
 
@@ -410,6 +412,50 @@ host.Pages.Set(new PluginPage
 
 `host.Bus` (API 5) lets plugins talk to each other. `Publish(topic, payload)` delivers a message to every plugin subscribed to the topic; `Subscribe(topic, handler)` returns something to dispose when you want to stop (Notch stops it when your plugin stops). Topics are plain strings; prefix yours with your plugin's id. Handlers run on a background thread, and one that throws does not affect the others. Payloads are strings, usually JSON.
 
+## Themes: restyling the whole notch
+
+`host.Themes` (API 6) lets a plugin offer a look for the whole notch. The user picks it under **Plugin theme** in Settings, and it replaces the Dark / Light / Follow Windows choice for as long as it is picked. A plugin can offer several themes, and a plugin that does nothing else is a fine plugin: [`samples/NeonTheme`](../samples/NeonTheme) is one.
+
+```csharp
+public void Start(IPluginHost host) =>
+    host.Themes.Set(new PluginTheme
+    {
+        Id = "neon",                       // unique within your plugin, no slash; the choice is remembered by it
+        Name = "Neon",                     // shown in Settings
+        File = "themes/neon.xaml",         // inside your plugin's folder
+        Base = PluginThemeBase.Dark,       // Dark or Light: what the file builds on
+        Description = "Purple and pink.",  // optional
+    });
+```
+
+The theme itself is a XAML file whose root element is a `ResourceDictionary`. Ship it in the plugin folder (in the project file: `<None Include="themes\*.xaml" CopyToOutputDirectory="PreserveNewest" />`). Notch merges it after its own dictionaries, so it only has to say what is different: **every key it leaves out comes from the base theme.** Nothing in the notch is drawn from a value that a theme cannot replace.
+
+| Key | Type | What it changes |
+|---|---|---|
+| `IslandBrush` | Brush | The island itself. Gradients and images work. |
+| `TextBrush` | Brush | Text and icons. |
+| `AccentBrush`, `AccentHoverBrush`, `AccentPressedBrush` | Brush | The selected tab, progress bars, focus rings, button hover and press. Defining `AccentBrush` makes the theme own the accent: the accent colour chosen in Settings is then not applied. |
+| `CardBrush`, `ControlBrush`, `HoverBrush`, `PressedBrush` | Brush | Panels, and the resting, hovered and pressed fills of controls. |
+| `TrackBrush` | Brush | The unfilled part of a progress bar. |
+| `UiFontFamily`, `UiFontSize` | FontFamily, double | The font and base size of all text. |
+| `CodeFontFamily` | FontFamily | The monospace font of the terminal and of plugin code blocks. |
+| `IconFont` | FontFamily | The icon font. The glyphs are Segoe Fluent Icons code points, so use a font that has them. |
+| `CardRadius`, `ControlRadius`, `SmallRadius`, `IconButtonRadius` | CornerRadius | Corners of panels, of buttons / text boxes / tabs, of small thumbnails, and of round icon buttons. |
+| `IslandRadiusScale` | double | Multiplies the corner radius of the island in every size it takes. `0` is square, `1` the default. |
+| `TerminalBackgroundBrush`, `TerminalForegroundBrush`, `TerminalCursorBrush`, `TerminalSelectionBrush` | Brush | Terminal colours. They default to `IslandBrush` and `TextBrush` (solid colours only). |
+| `TerminalAnsi0Brush` … `TerminalAnsi15Brush` | Brush | The terminal's 16 ANSI colours, black to bright white. Left out, they come from the base theme's palette. |
+| `IconButton`, `PillButton`, `PillTextBox`, `TabButton`, `Card`, `CardLabel`, `CardValue` | Style | The control styles themselves, for changes colours and radii cannot make: a different template, padding, borders, effects. A replacement must have the same `TargetType` (`Button`, `Button`, `TextBox`, `RadioButton`, `Border`, `TextBlock`, `TextBlock`). |
+
+Brushes in a theme may be any `Brush`; `Color="#AARRGGBB"` takes an alpha, which is how the translucent card and control fills sit on any island colour. Relative paths in the file (images, fonts, further dictionaries) are resolved against the file's own folder.
+
+Things to know:
+
+- `Base` also decides whether Notch counts as dark or light for what is not XAML: the colours Notch gives to activities and cards are deepened on a light base, `host.Shell.IsDark` reports it, and the terminal starts from the matching palette.
+- A key with the wrong type (say `IslandBrush` as a number), a style for the wrong control, a file that is not a `ResourceDictionary` or one that fails to load makes Notch ignore the theme and show the user's normal one; Settings shows why under the Plugin theme box. Notch itself is never affected.
+- The theme file is read again whenever it changes on disk and `Themes.Set` is called, or the user opens Settings and saves. While writing one, run `--plugin=<build output> --plugin-theme=<plugin id>/<theme id>` to start with it applied, and call `Set` again after saving the file.
+- The user's choice is kept by `plugin-id/theme-id`. If the plugin is switched off or its theme is removed, Notch shows the normal theme, and the theme comes back when the plugin does.
+- `Remove(id)` and `Clear()` take themes away; Notch removes them when the plugin stops. `Set` throws `ArgumentException` for a blank id or name, an id with a slash, or a `File` that is not a relative path to a `.xaml` file inside the plugin's folder.
+
 ## Settings and files
 
 `host.Settings` stores small values as JSON in `settings.json` inside the plugin's data folder:
@@ -494,6 +540,7 @@ Useful flags to combine with it (see the README for all of them):
 | `--tab=plugins` | Start on the Plugins tab |
 | `--demo` | Fake media and activities, to see how yours competes for the pill |
 | `--display=2` | Use another display, away from an installed copy |
+| `--plugin-theme=<plugin id>/<theme id>` | Show a plugin's theme for this run, whatever is saved |
 
 A debug build of Notch runs side by side with an installed copy; two release copies cannot.
 
@@ -518,7 +565,7 @@ dotnet publish -c Release -o dist\yourname.hello
 
 Zip the resulting folder. `.pdb` files are optional.
 
-**Updates.** Settings checks each plugin's repository when it opens, and again when you press **Check for updates** next to the plugin list. A plugin installed from GitHub remembers where it came from; one copied in by hand is checked only if its manifest has a `repository`. When a newer release exists, an **Update and restart** button appears under the plugin: it downloads the release, replaces the plugin and restarts Notch so the new version runs (open terminal sessions are not closed without asking). Notch itself can be updated from the same window with **Update Notch now**.
+**Updates.** Settings checks each plugin's repository when it opens, and again when you press **Check for updates** next to the plugin list. A plugin installed from GitHub remembers where it came from; one copied in by hand is checked only if its manifest has a `repository`. When a newer release exists, an **Update and restart** button appears under the plugin: it downloads the release, replaces the plugin and restarts Notch so the new version runs (open terminal sessions are not closed without asking). Notch itself announces new releases with a notice in the pill and is updated from the same window with **Update Notch now**; it never installs an update on its own.
 
 To update by hand, quit Notch, replace the folder's contents and start Notch again. To remove a plugin, switch it off, quit Notch and delete its folder; its data folder under `plugin-data` can be deleted too.
 
@@ -621,6 +668,7 @@ The plugin API is `Notch.Core.Plugins` plus the types in `Notch.Core.Activities`
 | 3 | `IPluginHost.Pages`: tabs with figures and a console. |
 | 4 | Pages: `Back` and `Choices`. |
 | 5 | Pages: `Actions` and `Blocks`. `IPluginHost.Shell` (notch state, `Notify`), `IPluginBus` (messages between plugins), options listed in the manifest with `IPluginSettings.Changed`, and `repository` in the manifest. |
+| 6 | `IPluginHost.Themes`: themes that restyle the whole notch. |
 
 ## Troubleshooting
 

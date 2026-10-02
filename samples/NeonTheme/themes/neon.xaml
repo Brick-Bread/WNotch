@@ -1,0 +1,43 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+    <!-- Only the keys that differ from Notch's dark theme are listed; the rest come from it. -->
+
+    <!-- The island: a gradient is fine here, any Brush is. -->
+    <LinearGradientBrush x:Key="IslandBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#120531" Offset="0" />
+        <GradientStop Color="#2A0A4A" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="TextBrush" Color="#F6E9FF" />
+
+    <!-- Defining AccentBrush means this theme owns the accent, whatever colour is picked in Settings. -->
+    <SolidColorBrush x:Key="AccentBrush" Color="#FF3DDC" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#59FF3DDC" />
+    <SolidColorBrush x:Key="AccentPressedBrush" Color="#80FF3DDC" />
+
+    <SolidColorBrush x:Key="CardBrush" Color="#2200E5FF" />
+    <SolidColorBrush x:Key="ControlBrush" Color="#2EFF3DDC" />
+    <SolidColorBrush x:Key="HoverBrush" Color="#40FF3DDC" />
+    <SolidColorBrush x:Key="PressedBrush" Color="#59FF3DDC" />
+    <SolidColorBrush x:Key="TrackBrush" Color="#40FFFFFF" />
+
+    <FontFamily x:Key="UiFontFamily">Bahnschrift, Segoe UI</FontFamily>
+    <FontFamily x:Key="CodeFontFamily">Consolas</FontFamily>
+
+    <CornerRadius x:Key="CardRadius">3</CornerRadius>
+    <CornerRadius x:Key="ControlRadius">3</CornerRadius>
+    <CornerRadius x:Key="SmallRadius">2</CornerRadius>
+    <CornerRadius x:Key="IconButtonRadius">4</CornerRadius>
+    <sys:Double x:Key="IslandRadiusScale">0.5</sys:Double>
+
+    <!-- The terminal: background, text, cursor, selection and the 16 ANSI colours (all optional). -->
+    <SolidColorBrush x:Key="TerminalBackgroundBrush" Color="#150637" />
+    <SolidColorBrush x:Key="TerminalForegroundBrush" Color="#F6E9FF" />
+    <SolidColorBrush x:Key="TerminalCursorBrush" Color="#FF3DDC" />
+    <SolidColorBrush x:Key="TerminalSelectionBrush" Color="#6B2A8F" />
+    <SolidColorBrush x:Key="TerminalAnsi1Brush" Color="#FF5C8A" />
+    <SolidColorBrush x:Key="TerminalAnsi2Brush" Color="#5CFFB1" />
+    <SolidColorBrush x:Key="TerminalAnsi4Brush" Color="#6C9BFF" />
+    <SolidColorBrush x:Key="TerminalAnsi5Brush" Color="#FF3DDC" />
+    <SolidColorBrush x:Key="TerminalAnsi6Brush" Color="#00E5FF" />
+</ResourceDictionary>

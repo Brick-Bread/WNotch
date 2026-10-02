@@ -13,9 +13,9 @@ using Glow = Notch.Core.Activities.Glow;
 namespace Notch.App.Updates;
 
 /// <summary>
-/// Keeps an installed copy up to date without the user doing anything: checks GitHub for a
-/// newer release, downloads its installer, and runs it silently once the app is idle. The
-/// installer restarts the app when it is done.
+/// Tells the user when a newer release exists: checks GitHub in the background and shows a notice
+/// in the pill, once per release. Nothing is downloaded or installed until the user asks for it
+/// with the "Update Notch now" button, which runs the installer; the installer restarts the app.
 /// </summary>
 internal sealed class UpdateService : IDisposable
 {
@@ -27,13 +27,10 @@ internal sealed class UpdateService : IDisposable
 
     private static readonly TimeSpan FirstCheckDelay = TimeSpan.FromSeconds(45);
     private static readonly TimeSpan CheckInterval = TimeSpan.FromHours(4);
-    private static readonly TimeSpan IdleRetryInterval = TimeSpan.FromMinutes(1);
-    private static readonly TimeSpan RetrySameReleaseAfter = TimeSpan.FromHours(24);
 
     private readonly AppSettings _settings;
     private readonly SettingsStore _store;
     private readonly ActivityManager _activities;
-    private readonly Func<bool> _isBusy;
     private readonly Action _shutdown;
     private readonly Updater _updater;
     private readonly HttpClient _http = new() { Timeout = TimeSpan.FromMinutes(10) };
@@ -45,14 +42,12 @@ internal sealed class UpdateService : IDisposable
     private string? _pendingInstaller;
     private bool _working;
 
-    /// <param name="isBusy">True while restarting would interrupt the user (open terminal sessions, a running timer, the notch in use).</param>
     /// <param name="shutdown">Exits the app so the installer can replace its files.</param>
-    public UpdateService(AppSettings settings, SettingsStore store, ActivityManager activities, Func<bool> isBusy, Action shutdown)
+    public UpdateService(AppSettings settings, SettingsStore store, ActivityManager activities, Action shutdown)
     {
         _settings = settings;
         _store = store;
         _activities = activities;
-        _isBusy = isBusy;
         _shutdown = shutdown;
         _updater = new Updater(_http);
 
@@ -93,7 +88,7 @@ internal sealed class UpdateService : IDisposable
         Lifetime = TimeSpan.FromSeconds(6),
     });
 
-    /// <summary>Brings the next check forward, e.g. right after automatic updates were switched on.</summary>
+    /// <summary>Brings the next check forward, e.g. right after update notices were switched on.</summary>
     public void CheckSoon()
     {
         _timer.Stop();
@@ -102,8 +97,8 @@ internal sealed class UpdateService : IDisposable
     }
 
     /// <summary>
-    /// Updates now, for the "Update Notch now" button: ignores the automatic-update setting, the
-    /// record of earlier attempts and whether the notch is in use. The installer restarts the app.
+    /// Updates now, for the "Update Notch now" button: the only way an update is installed. It
+    /// ignores the update-notice setting. The installer restarts the app.
     /// </summary>
     /// <param name="confirmRestart">Asked once the installer is downloaded; false leaves it unused.</param>
     /// <returns>What to tell the user. When an update starts, the app is shutting down.</returns>
@@ -186,37 +181,25 @@ internal sealed class UpdateService : IDisposable
         try
         {
             _timer.Interval = CheckInterval;
-            if (!_settings.AutoUpdate || !IsInstalledCopy)
+            if (!_settings.NotifyOfUpdates || !IsInstalledCopy)
             {
-                _pendingInstaller = null;
                 return;
             }
 
-            if (_pendingInstaller is null)
+            ReleaseInfo? release = await _updater.CheckAsync(CurrentVersion);
+            if (release is null || _settings.LastNotifiedUpdateTag == release.Tag)
             {
-                ReleaseInfo? release = await _updater.CheckAsync(CurrentVersion);
-                if (release is null || WasAttemptedRecently(release))
-                {
-                    return;
-                }
-
-                _pendingInstaller = await _updater.DownloadAsync(release, _downloadFolder);
-                _pendingRelease = release;
-            }
-
-            // The download is ready; wait for a moment when restarting interrupts nothing.
-            if (_isBusy())
-            {
-                _timer.Interval = IdleRetryInterval;
                 return;
             }
 
-            Install(_pendingRelease!, _pendingInstaller);
+            // Recorded first: a notice is shown once per release, not on every start.
+            _settings.LastNotifiedUpdateTag = release.Tag;
+            _store.Save(_settings);
+            AnnounceAvailable(release);
         }
         catch (Exception e) when (e is HttpRequestException or TaskCanceledException or IOException or InvalidDataException or UnauthorizedAccessException)
         {
-            // Offline, rate limited, or a bad download: forget it and try again at the next check.
-            _pendingInstaller = null;
+            // Offline or rate limited: try again at the next check.
         }
         finally
         {
@@ -224,19 +207,20 @@ internal sealed class UpdateService : IDisposable
         }
     }
 
-    private bool WasAttemptedRecently(ReleaseInfo release) =>
-        _settings.LastUpdateAttemptTag == release.Tag
-        && _settings.LastUpdateAttemptAt is { } at
-        && DateTimeOffset.UtcNow - at < RetrySameReleaseAfter;
+    private void AnnounceAvailable(ReleaseInfo release) => _activities.Publish(new Activity
+    {
+        Id = ActivityId,
+        Tier = ActivityTier.Transient,
+        Title = $"Notch {release.Tag} is ready",
+        Detail = "Install it from Settings",
+        Glyph = UpdateGlyph,
+        Glow = new Glow(GlowColor.Blue, GlowPattern.Flash),
+        Lifetime = TimeSpan.FromSeconds(10),
+    });
 
     /// <returns>False when the installer could not be started; the app is then still running.</returns>
     private bool Install(ReleaseInfo release, string installer)
     {
-        // Recorded first: if this release's installer fails, the app must not retry it on every start.
-        _settings.LastUpdateAttemptTag = release.Tag;
-        _settings.LastUpdateAttemptAt = DateTimeOffset.UtcNow;
-        _store.Save(_settings);
-
         try
         {
             // /S installs silently; /UPDATE keeps the start-with-Windows choice and restarts the app afterwards.

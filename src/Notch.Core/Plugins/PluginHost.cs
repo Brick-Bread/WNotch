@@ -13,6 +13,7 @@ internal sealed class PluginHost : IPluginHost
     private readonly ScopedActivities _activities;
     private readonly ScopedCards _cards;
     private readonly ScopedPages _pages;
+    private readonly ScopedThemes _themes;
     private readonly ScopedShell _shell;
     private readonly ScopedBus _bus;
 
@@ -23,6 +24,7 @@ internal sealed class PluginHost : IPluginHost
         ActivityManager activities,
         PluginCardBoard cards,
         PluginPageBoard pages,
+        PluginThemeBoard themes,
         PluginShellState shell,
         PluginBus bus,
         PluginLog log)
@@ -36,6 +38,7 @@ internal sealed class PluginHost : IPluginHost
         Activities = _activities = new ScopedActivities(manifest.Id, activities);
         Cards = _cards = new ScopedCards(manifest.Id, cards, scopedLog);
         Pages = _pages = new ScopedPages(manifest.Id, pages, scopedLog);
+        Themes = _themes = new ScopedThemes(manifest.Id, pluginDirectory, themes);
         Shell = _shell = new ScopedShell(manifest.Id, shell, Activities);
         Bus = _bus = new ScopedBus(manifest.Id, bus, scopedLog);
         Settings = SettingsStore = new PluginSettingsStore(Path.Combine(dataDirectory, "settings.json"));
@@ -60,6 +63,8 @@ internal sealed class PluginHost : IPluginHost
 
     public IPluginPages Pages { get; }
 
+    public IPluginThemes Themes { get; }
+
     public IPluginShell Shell { get; }
 
     public IPluginBus Bus { get; }
@@ -77,6 +82,7 @@ internal sealed class PluginHost : IPluginHost
         _activities.Close();
         _cards.Close();
         _pages.Close();
+        _themes.Close();
         _bus.Close();
         _shell.Close();
     }
@@ -190,6 +196,63 @@ internal sealed class PluginHost : IPluginHost
                     log.Error($"The click handler of card '{card.Id}' failed.", e);
                 }
             });
+        }
+    }
+
+    private sealed class ScopedThemes(string pluginId, string pluginDirectory, PluginThemeBoard board) : IPluginThemes
+    {
+        private readonly Lock _gate = new();
+        private bool _closed;
+
+        public void Set(PluginTheme theme)
+        {
+            ArgumentNullException.ThrowIfNull(theme);
+            ArgumentException.ThrowIfNullOrWhiteSpace(theme.Id);
+            ArgumentException.ThrowIfNullOrWhiteSpace(theme.Name);
+            if (theme.Id.Contains('/'))
+            {
+                throw new ArgumentException("A theme id cannot contain a slash.", nameof(theme));
+            }
+
+            string path = ResolveFile(theme.File);
+            lock (_gate)
+            {
+                if (!_closed)
+                {
+                    board.Set(new PluginThemeEntry(pluginId, theme.Id, theme.Name.Trim(), theme.Description, theme.Base, path));
+                }
+            }
+        }
+
+        public bool Remove(string id) => board.Remove(pluginId, id);
+
+        public void Clear() => board.RemoveAll(pluginId);
+
+        public void Close()
+        {
+            lock (_gate)
+            {
+                _closed = true;
+                Clear();
+            }
+        }
+
+        /// <summary>The full path of a .xaml file inside the plugin's folder; anything else is refused, so a theme cannot point at other files.</summary>
+        private string ResolveFile(string? file)
+        {
+            if (string.IsNullOrWhiteSpace(file) || Path.IsPathRooted(file) || !file.EndsWith(".xaml", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException("A theme's file must be a relative path to a .xaml file in the plugin's folder.", nameof(file));
+            }
+
+            string root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(pluginDirectory)) + Path.DirectorySeparatorChar;
+            string full = Path.GetFullPath(Path.Combine(root, file));
+            if (!full.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException("A theme's file must be inside the plugin's folder.", nameof(file));
+            }
+
+            return full;
         }
     }
 

@@ -46,8 +46,8 @@
         <CheckBox x:Name="ShelfOpensOnDrag" Content="Open the Shelf when files are dragged onto the pill"
                   ToolTip="When off, files dropped on the pill still go on the shelf; the notch just stays closed." />
         <CheckBox x:Name="HideInFullscreen" Content="Hide while a game or other fullscreen app is showing" />
-        <CheckBox x:Name="AutoUpdate" Content="Install updates automatically"
-                  ToolTip="Checks GitHub for new releases, installs them in the background and restarts Notch when it is not in use." />
+        <CheckBox x:Name="NotifyOfUpdates" Content="Tell me when an update is available"
+                  ToolTip="Checks GitHub for new releases and shows a notice in the pill. Nothing is installed until you press Update Notch now." />
         <DockPanel Margin="0,10,0,0">
             <TextBlock Text="Display" VerticalAlignment="Center" Width="64" />
             <ComboBox x:Name="Display" />
@@ -74,6 +74,12 @@
                 <ComboBoxItem Content="Follow Windows" />
             </ComboBox>
         </DockPanel>
+        <DockPanel Margin="0,8,0,0">
+            <TextBlock Text="Plugin theme" VerticalAlignment="Center" Width="64" TextWrapping="Wrap" />
+            <ComboBox x:Name="PluginTheme"
+                      ToolTip="A look for the whole notch that a plugin offers. It replaces the theme above while it is chosen. Only plugins that are switched on and running offer themes." />
+        </DockPanel>
+        <TextBlock x:Name="PluginThemeProblem" TextWrapping="Wrap" Margin="0,4,0,0" Foreground="#C42B1C" Visibility="Collapsed" />
         <DockPanel Margin="0,8,0,0">
             <TextBlock Text="Hotkey" VerticalAlignment="Center" Width="64" />
             <TextBox x:Name="OpenHotkey"
@@ -157,7 +163,7 @@
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock x:Name="VersionText" VerticalAlignment="Center" Opacity="0.6" />
                 <Button x:Name="UpdateNotch" Content="Update Notch now" Margin="12,0,0,0"
-                        ToolTip="Checks GitHub for a newer Notch, installs it even if automatic updates are off, and restarts Notch." />
+                        ToolTip="Checks GitHub for a newer Notch, installs it even if update notices are off, and restarts Notch." />
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button x:Name="Cancel" Content="Cancel" MinWidth="88" IsCancel="True" />

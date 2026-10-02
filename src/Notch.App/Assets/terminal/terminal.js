@@ -18,12 +18,22 @@ const themes = {
   },
 };
 let theme = themes.dark;
+const defaultFont = '"Cascadia Mono", "Cascadia Code", Consolas, monospace';
+let fontFamily = defaultFont;
 
-function applyTheme(light) {
-  theme = light ? themes.light : themes.dark;
+// `palette` comes from a plugin theme and holds any of: xterm theme colours, and `fontFamily`.
+// What it leaves out is taken from the dark or light colours above.
+function applyTheme(light, palette) {
+  const { fontFamily: font, ...colors } = palette || {};
+  theme = { ...(light ? themes.light : themes.dark), ...colors };
+  fontFamily = font || defaultFont;
   document.documentElement.classList.toggle('light', light);
+  document.documentElement.style.background = palette ? theme.background : '';
+  document.body.style.background = palette ? theme.background : '';
   for (const session of sessions.values()) {
     session.terminal.options.theme = theme;
+    session.terminal.options.fontFamily = fontFamily;
+    fitSession(session);
   }
 }
 
@@ -51,7 +61,7 @@ function createSession(id) {
   document.body.appendChild(element);
 
   const terminal = new Terminal({
-    fontFamily: '"Cascadia Mono", "Cascadia Code", Consolas, monospace',
+    fontFamily,
     fontSize: 13,
     cursorBlink: true,
     scrollback: 5000,
@@ -129,7 +139,7 @@ window.chrome.webview.addEventListener('message', event => {
       sessions.get(activeId)?.terminal.focus();
       break;
     case 'theme':
-      applyTheme(message.light);
+      applyTheme(message.light, message.palette);
       break;
   }
 });

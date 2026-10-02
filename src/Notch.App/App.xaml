@@ -3,122 +3,15 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
-        <!-- Colours come from Themes/Dark.xaml or Light.xaml, which ThemeManager merges in at startup. -->
-        <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
-
-        <!-- Round, borderless button whose content is an icon-font glyph. -->
-        <Style x:Key="IconButton" TargetType="Button">
-            <Setter Property="FontFamily" Value="{StaticResource IconFont}" />
-            <Setter Property="FontSize" Value="18" />
-            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
-            <Setter Property="Width" Value="40" />
-            <Setter Property="Height" Value="40" />
-            <Setter Property="Focusable" Value="False" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Surface" Background="Transparent" CornerRadius="20">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Surface" Property="Background" Value="{DynamicResource HoverBrush}" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Surface" Property="Background" Value="{DynamicResource PressedBrush}" />
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.35" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Small rounded text button, used for the terminal's toolbar. -->
-        <Style x:Key="PillButton" TargetType="Button">
-            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
-            <Setter Property="Background" Value="{DynamicResource ControlBrush}" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="Padding" Value="10,4" />
-            <Setter Property="Margin" Value="6,0,0,0" />
-            <Setter Property="Focusable" Value="False" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Surface" Background="{TemplateBinding Background}" CornerRadius="11"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Surface" Property="Background" Value="{DynamicResource AccentHoverBrush}" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Surface" Property="Background" Value="{DynamicResource AccentPressedBrush}" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- A one-line text box shaped like the pill buttons it sits next to. -->
-        <Style x:Key="PillTextBox" TargetType="TextBox">
-            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
-            <Setter Property="CaretBrush" Value="{DynamicResource TextBrush}" />
-            <Setter Property="SelectionBrush" Value="{DynamicResource AccentBrush}" />
-            <Setter Property="Background" Value="{DynamicResource ControlBrush}" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="1.5" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="Padding" Value="8,2" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="11">
-                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"
-                                          VerticalAlignment="Center" />
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsKeyboardFocused" Value="True">
-                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <!-- The Home / Terminal / Stats headers: plain text that brightens when selected. -->
-        <Style x:Key="TabButton" TargetType="RadioButton">
-            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
-            <Setter Property="Margin" Value="0,0,20,0" />
-            <Setter Property="Focusable" Value="False" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="RadioButton">
-                        <!-- Transparent background so the gaps inside the letters are clickable too. -->
-                        <Border Background="Transparent">
-                            <TextBlock x:Name="Label" Opacity="0.45"
-                                       Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Label" Property="Opacity" Value="0.75" />
-                            </Trigger>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Label" Property="Opacity" Value="1" />
-                                <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource AccentBrush}" />
-                                <Setter TargetName="Label" Property="FontWeight" Value="SemiBold" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+        <ResourceDictionary>
+            <!-- Nothing is defined here directly: a dictionary's own entries win over the ones merged into it,
+                 and a plugin theme merged later must be able to replace any of them. Colours come from
+                 Themes/Dark.xaml or Light.xaml, which ThemeManager merges in at startup, followed by the theme
+                 a plugin offers, if one is chosen. -->
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Design.xaml" />
+                <ResourceDictionary Source="Themes/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

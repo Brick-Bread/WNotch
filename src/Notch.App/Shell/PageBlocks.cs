@@ -105,7 +105,7 @@ internal sealed class PageBlocks(Panel host)
             text.Opacity = b.Style == PluginTextStyle.Muted ? 0.55 : 1;
             text.FontSize = b.Style switch { PluginTextStyle.Heading => 15, PluginTextStyle.Muted => 11, PluginTextStyle.Code => 12, _ => 13 };
             text.FontWeight = b.Style == PluginTextStyle.Heading ? FontWeights.SemiBold : FontWeights.Normal;
-            text.FontFamily = b.Style == PluginTextStyle.Code ? new FontFamily("Cascadia Mono, Consolas") : new FontFamily("Segoe UI Variable Text, Segoe UI");
+            text.SetResourceReference(TextBlock.FontFamilyProperty, b.Style == PluginTextStyle.Code ? "CodeFontFamily" : "UiFontFamily");
         }
 
         Apply(initial);
@@ -486,7 +486,8 @@ internal sealed class PageBlocks(Panel host)
         var hint = new TextBlock { IsHitTestVisible = false, Opacity = 0.4, FontSize = 13, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0, 0, 0) };
         var plain = new TextBox { Background = Brushes.Transparent, BorderThickness = new Thickness(0), Foreground = Themed("TextBrush"), CaretBrush = Themed("TextBrush"), SelectionBrush = Themed("AccentBrush"), Padding = new Thickness(10, 5, 10, 5), FontSize = 13, VerticalContentAlignment = VerticalAlignment.Center };
         var secret = new PasswordBox { Background = Brushes.Transparent, BorderThickness = new Thickness(0), Foreground = Themed("TextBrush"), CaretBrush = Themed("TextBrush"), SelectionBrush = Themed("AccentBrush"), Padding = new Thickness(10, 5, 10, 5), FontSize = 13, VerticalContentAlignment = VerticalAlignment.Center };
-        var box = new Border { CornerRadius = new CornerRadius(11), Background = Themed("ControlBrush"), BorderThickness = new Thickness(1.5), BorderBrush = Brushes.Transparent };
+        var box = new Border { Background = Themed("ControlBrush"), BorderThickness = new Thickness(1.5), BorderBrush = Brushes.Transparent };
+        box.SetResourceReference(Border.CornerRadiusProperty, "ControlRadius");
         var inner = new Grid();
         inner.Children.Add(hint);
         inner.Children.Add(plain);

@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/samples/">
     <Project Path="samples/BreakReminder/BreakReminder.csproj" />
+    <Project Path="samples/NeonTheme/NeonTheme.csproj" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Notch.App/Notch.App.csproj" />

@@ -126,6 +126,11 @@ public partial class App : Application
         // --plugin=<folder> runs a plugin straight from its build output, enabled or not.
         _plugins.Discover(Options(e, "--plugin="));
 
+        ThemeManager.Attach(_plugins.Themes);
+
+        // --plugin-theme=<plugin id>/<theme id> shows that plugin theme for this run only.
+        ThemeManager.PluginThemeOverride = Option(e, "--plugin-theme=");
+
         // --theme=dark|light|system shows that theme for this run only.
         if (Enum.TryParse(Option(e, "--theme="), ignoreCase: true, out NotchTheme theme))
         {
@@ -195,6 +200,7 @@ public partial class App : Application
             chosen =>
             {
                 settings.Theme = chosen;
+                settings.PluginTheme = null;
                 settingsStore.Save(settings);
                 ThemeManager.Apply(settings);
             },
@@ -218,7 +224,7 @@ public partial class App : Application
             return;
         }
 
-        _updates = new UpdateService(settings, settingsStore, _activities, () => window.IsBusy, Shutdown);
+        _updates = new UpdateService(settings, settingsStore, _activities, Shutdown);
         _updates.CleanUpDownloads();
         if (HasFlag(e, UpdateService.UpdatedFlag))
         {

@@ -31,6 +31,9 @@ public partial class SettingsWindow : Window
     private readonly Dictionary<string, OptionEditors> _options = [];
     private bool _checkingUpdates;
     private NotchTheme _shownTheme;
+    private string? _shownPluginTheme;
+    private string? _chosenPluginTheme;
+    private bool _listingThemes;
 
     /// <param name="forceNotchUpdate">Updates Notch now, whatever the automatic-update setting says; given a question to ask before restarting. Returns what to tell the user.</param>
     /// <param name="hasOpenTerminals">Whether restarting would close terminal sessions.</param>
@@ -55,6 +58,14 @@ public partial class SettingsWindow : Window
         MaxHeight = SystemParameters.WorkArea.Height;
 
         // The theme can also change from the tray menu while this window is open.
+        _chosenPluginTheme = settings.PluginTheme;
+        PluginTheme.SelectionChanged += (_, _) =>
+        {
+            if (!_listingThemes)
+            {
+                _chosenPluginTheme = (PluginTheme.SelectedItem as ComboBoxItem)?.Tag as string;
+            }
+        };
         ShowTheme();
         ThemeManager.Changed += OnThemeChanged;
         Closed += (_, _) => ThemeManager.Changed -= OnThemeChanged;
@@ -67,7 +78,7 @@ public partial class SettingsWindow : Window
         ShelfOpensOnDrag.IsChecked = settings.ShelfOpensOnDrag;
         OpenHotkey.Text = settings.OpenHotkey;
         HideInFullscreen.IsChecked = settings.HideInFullscreen;
-        AutoUpdate.IsChecked = settings.AutoUpdate;
+        NotifyOfUpdates.IsChecked = settings.NotifyOfUpdates;
         GlowEffects.IsChecked = settings.GlowEffects;
         GlowIntensity.Minimum = GlowOutput.MinPercent;
         GlowIntensity.Maximum = GlowOutput.MaxPercent;
@@ -127,9 +138,15 @@ public partial class SettingsWindow : Window
 
     private void OnThemeChanged()
     {
-        if (_settings.Theme != _shownTheme)
+        // Plugins start after this window may have opened, so the list of their themes can change under it.
+        if (_settings.Theme != _shownTheme || _settings.PluginTheme != _shownPluginTheme)
         {
+            _chosenPluginTheme = _settings.PluginTheme;
             ShowTheme();
+        }
+        else
+        {
+            ListPluginThemes();
         }
     }
 
@@ -137,13 +154,55 @@ public partial class SettingsWindow : Window
     private void ShowTheme()
     {
         _shownTheme = _settings.Theme;
+        _shownPluginTheme = _settings.PluginTheme;
         Theme.SelectedIndex = (int)_shownTheme;
-        ThemeMode = _shownTheme switch
+        ListPluginThemes();
+        ThemeMode = ThemeManager.ActivePluginTheme is not null
+            ? (ThemeManager.IsLight ? ThemeMode.Light : ThemeMode.Dark)
+            : _shownTheme switch
+            {
+                NotchTheme.Light => ThemeMode.Light,
+                NotchTheme.System => ThemeMode.System,
+                _ => ThemeMode.Dark,
+            };
+    }
+
+    /// <summary>Lists the themes running plugins offer, keeping the choice even when its plugin is not running right now.</summary>
+    private void ListPluginThemes()
+    {
+        _listingThemes = true;
+        try
         {
-            NotchTheme.Light => ThemeMode.Light,
-            NotchTheme.System => ThemeMode.System,
-            _ => ThemeMode.Dark,
-        };
+            PluginTheme.Items.Clear();
+            PluginTheme.Items.Add(new ComboBoxItem { Content = "None" });
+            ComboBoxItem? chosen = null;
+            IReadOnlyList<PluginInfo> plugins = _plugins.Plugins;
+            foreach (PluginThemeEntry theme in _plugins.Themes.Snapshot())
+            {
+                string plugin = plugins.FirstOrDefault(p => p.Id == theme.PluginId)?.Name ?? theme.PluginId;
+                var item = new ComboBoxItem { Content = $"{theme.Name} ({plugin})", Tag = theme.Key, ToolTip = theme.Description };
+                PluginTheme.Items.Add(item);
+                if (theme.Key == _chosenPluginTheme)
+                {
+                    chosen = item;
+                }
+            }
+
+            if (chosen is null && _chosenPluginTheme is not null)
+            {
+                chosen = new ComboBoxItem { Content = $"{_chosenPluginTheme} (its plugin is not running)", Tag = _chosenPluginTheme };
+                PluginTheme.Items.Add(chosen);
+            }
+
+            PluginTheme.SelectedItem = chosen ?? PluginTheme.Items[0];
+        }
+        finally
+        {
+            _listingThemes = false;
+        }
+
+        PluginThemeProblem.Text = ThemeManager.Problem;
+        PluginThemeProblem.Visibility = ThemeManager.Problem is null ? Visibility.Collapsed : Visibility.Visible;
     }
 
     /// <param name="chosen">Name of the accent to show as picked; an unknown name picks "no accent".</param>
@@ -183,12 +242,13 @@ public partial class SettingsWindow : Window
         _settings.ExpandOnHover = ExpandOnHover.IsChecked == true;
         _settings.ShelfOpensOnDrag = ShelfOpensOnDrag.IsChecked == true;
         _settings.Theme = (NotchTheme)Math.Max(0, Theme.SelectedIndex);
+        _settings.PluginTheme = _chosenPluginTheme;
         _settings.Position = (NotchPosition)Math.Max(0, Position.SelectedIndex);
         _settings.Style = (NotchStyle)Math.Max(0, IslandStyle.SelectedIndex);
         _settings.AccentColor = AccentSwatches.Children.OfType<RadioButton>()
             .FirstOrDefault(swatch => swatch.IsChecked == true)?.Tag as string ?? _settings.AccentColor;
         _settings.HideInFullscreen = HideInFullscreen.IsChecked == true;
-        _settings.AutoUpdate = AutoUpdate.IsChecked == true;
+        _settings.NotifyOfUpdates = NotifyOfUpdates.IsChecked == true;
         _settings.GlowEffects = GlowEffects.IsChecked == true;
         _settings.GlowIntensity = (int)Math.Round(GlowIntensity.Value);
         _settings.PomodoroFocusMinutes = ReadMinutes(PomodoroFocus.Text, _settings.PomodoroFocusMinutes);

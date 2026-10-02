@@ -44,6 +44,13 @@ public sealed class AppSettings
     public NotchTheme Theme { get; set; } = NotchTheme.Dark;
 
     /// <summary>
+    /// A theme offered by a plugin, as "plugin-id/theme-id", used instead of <see cref="Theme"/>
+    /// while that plugin is running. Null for none. The choice is kept when the plugin is switched
+    /// off and takes effect again when it is back.
+    /// </summary>
+    public string? PluginTheme { get; set; }
+
+    /// <summary>
     /// Name of the <see cref="GlowColor"/> preset that tints buttons, bars and the selected tab.
     /// Anything that is not a preset, such as <see cref="NoAccent"/>, leaves them uncoloured.
     /// </summary>
@@ -57,13 +64,11 @@ public sealed class AppSettings
     /// <summary>Glow brightness in percent of the standard, <see cref="GlowOutput.MinPercent"/> to <see cref="GlowOutput.MaxPercent"/>.</summary>
     public int GlowIntensity { get; set; } = GlowOutput.DefaultPercent;
 
-    /// <summary>Download and install new releases without asking.</summary>
-    public bool AutoUpdate { get; set; } = true;
+    /// <summary>Show a notice in the pill when a newer release exists. Nothing is installed without the user asking.</summary>
+    public bool NotifyOfUpdates { get; set; } = true;
 
-    /// <summary>The release tag the updater last tried to install, so a release that fails to install is not retried in a loop.</summary>
-    public string? LastUpdateAttemptTag { get; set; }
-
-    public DateTimeOffset? LastUpdateAttemptAt { get; set; }
+    /// <summary>The release tag the user was last told about, so each release is announced once.</summary>
+    public string? LastNotifiedUpdateTag { get; set; }
 
     public bool ShowMedia { get; set; } = true;
 

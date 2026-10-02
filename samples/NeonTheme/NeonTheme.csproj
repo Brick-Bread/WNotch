@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Notch supplies Notch.Core at run time; see docs/plugins.md. -->
+    <ProjectReference Include="..\..\src\Notch.Core\Notch.Core.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="plugin.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="themes\*.xaml" CopyToOutputDirectory="PreserveNewest" LinkBase="themes" />
+  </ItemGroup>
+
+</Project>

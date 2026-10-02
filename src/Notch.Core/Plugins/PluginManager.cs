@@ -82,6 +82,9 @@ public sealed class PluginManager : IDisposable
     /// <summary>The pages plugins show as tabs, and their consoles.</summary>
     public PluginPageBoard Pages { get; } = new();
 
+    /// <summary>The themes plugins offer.</summary>
+    public PluginThemeBoard Themes { get; } = new();
+
     /// <summary>The shell writes the notch's state here for plugins to read.</summary>
     public PluginShellState ShellState { get; } = new();
 
@@ -340,7 +343,7 @@ public sealed class PluginManager : IDisposable
         {
             slot.Factory ??= _loader(manifest, slot.Directory);
             slot.Host = new PluginHost(
-                manifest, slot.Directory, Path.Combine(_dataDirectory, manifest.Id), _activities, _cards, Pages, ShellState, Bus, _log);
+                manifest, slot.Directory, Path.Combine(_dataDirectory, manifest.Id), _activities, _cards, Pages, Themes, ShellState, Bus, _log);
             slot.Instance = slot.Factory();
             slot.Instance.Start(slot.Host);
 

@@ -15,9 +15,9 @@ A dynamic notch for Windows 11, in the spirit of Atoll on macOS: a small black p
 - **Themes and colour.** Dark, light, or following Windows, with an accent colour of your choice. Stats, the timer and calendars each have their own colour.
 - **Widgets.** A countdown timer with a Pomodoro mode (focus and break sessions back to back), your own presets and any length you type (`12`, `1:30`, `90s`, `1h20m`), upcoming events from iCalendar (.ics) feeds, and a Stats tab with CPU, memory, GPU, network and battery.
 - **Plugins.** Small .NET libraries can add their own activities to the pill and cards to a Plugins tab. See [Plugins](#plugins).
-- **Automatic updates.** An installed copy checks this repository's releases, installs a newer one in the background and restarts itself. Can be switched off in settings.
+- **Update notices.** An installed copy checks this repository's releases and shows a notice in the pill when a newer one is ready. Nothing is installed until you press **Update Notch now** in settings. The notices can be switched off.
 - **Hotkey.** Alt+Shift+N opens and closes the notch from any app. Change it, or switch it off, in settings.
-- **Settings.** From the tray icon: start with Windows, automatic updates, which display to use, position and style, the hotkey, theme and accent colour, what the pill shows, glow brightness, timer presets, calendar feeds, plugins.
+- **Settings.** From the tray icon: start with Windows, update notices, which display to use, position and style, the hotkey, theme (including themes offered by plugins) and accent colour, what the pill shows, glow brightness, timer presets, calendar feeds, plugins.
 
 ## Install
 
@@ -40,7 +40,7 @@ Things to know:
 - The hotkey only works when no other app, and not Windows itself, already uses the same keys; settings tells you when it is taken. Windows keeps most combinations with the Win key for itself.
 - Dragging a file from the shelf into an Explorer folder on the same drive moves it there, as dragging between two folders does; hold Ctrl to copy.
 - Calendar events come from .ics links. Google Calendar and Outlook both offer one in their sharing settings.
-- Updates are checked shortly after start and every four hours. The installer is only taken from this repository's release downloads and is checked against the size and SHA-256 digest GitHub lists before it runs. The restart waits until the notch is closed, no terminal session is open and no timer is running. Copies not installed by the installer (development builds) never update themselves.
+- Updates are checked shortly after start and every four hours. The installer is only taken from this repository's release downloads and is checked against the size and SHA-256 digest GitHub lists before it runs. Updates are never installed in the background: pressing **Update Notch now** downloads the installer and restarts the app. Copies not installed by the installer (development builds) neither check nor update.
 - Agent status relies on hooks the app passes when it starts a CLI (`--settings` for Claude, a `notify` override for Codex). Sessions you start in other terminals are not tracked. Codex only reports the end of a turn, so its "working" state is inferred from terminal activity.
 
 ## Plugins
@@ -71,6 +71,7 @@ Development flags for `Notch.exe`:
 | `--open=claude\|codex\|shell` | Start a terminal session at launch |
 | `--settings` | Open the settings window at launch |
 | `--theme=dark\|light\|system` | Show that theme for this run without changing the saved setting |
+| `--plugin-theme=<plugin id>/<theme id>` | Show a theme a plugin offers for this run (see the plugin guide) |
 | `--style=notch\|island`, `--position=topcenter\|taskbarleft` | Show that style or position for this run without changing the saved settings |
 | `--display=<n>` | Use display *n* (as numbered in settings) for this run, e.g. to keep a debug build off the screen an installed copy is on |
 | `--plugin=<folder>` | Load a plugin from its build output and run it whether or not it is enabled; can be repeated |
@@ -81,7 +82,7 @@ Settings live in `%AppData%\Notch\settings.json` and the shelf in `shelf.json` b
 
 ### Releasing
 
-Set `<Version>` in `Directory.Build.props` to match the tag; installed copies compare it with the latest release to decide whether to update.
+Set `<Version>` in `Directory.Build.props` to match the tag; installed copies compare it with the latest release to decide whether a newer release exists.
 
 Pushing a tag such as `v0.2.0` runs `.github/workflows/release.yml`, which tests, publishes a self-contained build, builds the installer (`installer/build.ps1`, with the setup program in `src/Notch.Setup`) and attaches it to a GitHub release, together with the sample plugin as a zip. Running that workflow by hand builds the installer as a workflow artifact without releasing.
 
@@ -94,6 +95,7 @@ Pushing a tag such as `v0.2.0` runs `.github/workflows/release.yml`, which tests
 | `src/Notch.Platform` | Windows integrations: media sessions, audio, power, Bluetooth, ConPTY, stats |
 | `src/Notch.Hook` | Small helper the Claude and Codex CLIs run to report agent status to the app |
 | `samples/BreakReminder` | Example plugin |
+| `samples/NeonTheme` | Example plugin that offers a theme |
 | `tests/Notch.Core.Tests` | xUnit tests for `Notch.Core` |
 | `docs/plugins.md` | Guide to writing plugins |
 
