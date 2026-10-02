@@ -30,6 +30,8 @@
   <ItemGroup>
     <!-- The xterm.js page the terminal's WebView2 loads from disk. -->
     <Content Include="Assets\terminal\**" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The plugin Notch puts in opencode's plugins folder, with the setting that lets agents report; see AgentHookFiles. -->
+    <Content Include="Assets\opencode\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

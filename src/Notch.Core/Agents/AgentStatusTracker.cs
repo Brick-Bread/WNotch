@@ -12,6 +12,9 @@ public enum AgentKind
 
     /// <summary>Found running, but reports nothing about what it is doing.</summary>
     Aider,
+
+    /// <summary>Reports through the plugin Notch puts in opencode's plugins folder.</summary>
+    OpenCode,
 }
 
 public enum AgentState

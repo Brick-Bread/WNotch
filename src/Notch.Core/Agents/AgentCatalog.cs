@@ -53,7 +53,26 @@ public static class AgentCatalog
             ["@google/gemini-cli", "@google\\gemini-cli", "gemini-cli"]),
         new("aider", "Aider", AgentKind.Aider, "", ["aider"],
             ["aider-chat", "-m aider", "scripts\\aider", "bin/aider", "aider\\main", "aider/main"]),
+        new("opencode", "opencode", AgentKind.OpenCode, "", ["opencode"],
+            ["opencode-ai", "@opencode/cli", "@opencode\\cli"]),
     ];
+
+    /// <summary>
+    /// opencode programs that are not a session the user sits in: its background server (also what a
+    /// <c>--standalone</c> session starts), one-off runs, and its management commands. Looked at
+    /// by subcommand rather than as loose text, so a prompt that happens to say "run" changes nothing.
+    /// </summary>
+    private static readonly HashSet<string> OpenCodeSubcommands = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "serve", "service", "acp", "api", "run", "models", "stats", "session", "upgrade", "update", "uninstall",
+        "auth", "mcp", "plugin", "debug", "reload", "pair", "completions",
+    };
+
+    /// <summary>opencode options that take a value, whose value is not a subcommand.</summary>
+    private static readonly HashSet<string> OpenCodeValueOptions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "--session", "-s", "--prompt", "--server", "--model", "-m", "--agent", "--log-level", "--title", "--file", "-f", "--format",
+    };
 
     public static AgentDefinition? ById(string id) =>
         All.FirstOrDefault(a => a.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
@@ -96,7 +115,7 @@ public static class AgentCatalog
         {
             if (agent.ExecutableNames.Contains(name))
             {
-                return agent;
+                return NotInBackground(agent, commandLine);
             }
         }
 
@@ -106,12 +125,61 @@ public static class AgentCatalog
             {
                 if (agent.CommandLineMarkers.Any(marker => commandLine.Contains(marker, StringComparison.Ordinal)))
                 {
-                    return agent;
+                    return NotInBackground(agent, commandLine);
                 }
             }
         }
 
         return null;
+    }
+
+    /// <summary>The agent, unless this is opencode run as a server or a one-off command.</summary>
+    private static AgentDefinition? NotInBackground(AgentDefinition agent, string commandLine) =>
+        agent.Kind == AgentKind.OpenCode && IsOpenCodeBackground(commandLine) ? null : agent;
+
+    /// <summary>Whether an opencode command line is a subcommand other than the interactive session.</summary>
+    internal static bool IsOpenCodeBackground(string commandLine)
+    {
+        bool first = true;
+        bool skipNext = false;
+        foreach (System.Text.RegularExpressions.Match token in System.Text.RegularExpressions.Regex.Matches(commandLine, "\"[^\"]*\"|\\S+"))
+        {
+            if (first)
+            {
+                // The program itself (or, for a script, the runtime that runs it).
+                first = false;
+                continue;
+            }
+
+            string word = token.Value.Trim('"');
+            if (skipNext)
+            {
+                skipNext = false;
+                continue;
+            }
+
+            if (word.StartsWith('-'))
+            {
+                skipNext = OpenCodeValueOptions.Contains(word) && !word.Contains('=');
+                continue;
+            }
+
+            // The first word that is not an option: a subcommand, or the folder to start in.
+            if (OpenCodeSubcommands.Contains(word))
+            {
+                return true;
+            }
+
+            if (word.Contains('\\') || word.Contains('/') || word.Contains(':') || word.Contains('.'))
+            {
+                // A path or file name (the folder to start in, or the script a runtime was given): keep looking.
+                continue;
+            }
+
+            return false;
+        }
+
+        return false;
     }
 
     /// <summary>Whether the name could be a runtime whose command line must be read to tell what it runs.</summary>

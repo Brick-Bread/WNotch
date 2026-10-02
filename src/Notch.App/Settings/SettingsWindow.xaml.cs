@@ -489,7 +489,7 @@ public partial class SettingsWindow : Window
 
         string list = string.Join(NL, plan.Files.Select(f => $"•  {f.Path}: {f.What}"));
         string question = want
-            ? $"Notch will change:{NL2}{list}{NL2}A backup of each file is saved next to it (ending in {AgentHookFiles.BackupSuffix}). Untick the box later to remove the lines again.{problems}{NL2}Continue?"
+            ? $"Notch will change:{NL2}{list}{NL2}A backup of each settings file that already exists is saved next to it (ending in {AgentHookFiles.BackupSuffix}). Untick the box later to remove Notch's changes again.{problems}{NL2}Continue?"
             : $"Notch will change:{NL2}{list}{problems}{NL2}Continue?";
         if (MessageBox.Show(this, question, "Notch", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
         {

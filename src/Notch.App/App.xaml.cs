@@ -238,7 +238,7 @@ public partial class App : Application
         // Not under --demo: the screenshots must not show whatever the developer happens to be running.
         if (!demo)
         {
-            _agentTracker = new AgentTracker(Dispatcher, _agentBoard, settings, _terminal.HookServer);
+            _agentTracker = new AgentTracker(Dispatcher, _agentBoard, settings, _terminal.HookServer, _terminal.TryRouteOpenCode);
             _notifications = new NotificationService(settings, _activities);
             _ = ApplyNotificationsAsync(showProblem: false);
             if (settings.GlobalAgentHooks)

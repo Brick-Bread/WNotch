@@ -42,7 +42,7 @@ public sealed class ProcessScanner
         return [.. table.Select(p =>
         {
             _details.TryGetValue(p.Pid, out Detail? detail);
-            return new ProcessSnapshot(p.Pid, p.Parent, p.Name, detail?.CommandLine, detail?.Path, detail?.StartedAt);
+            return new ProcessSnapshot(p.Pid, p.Parent, p.Name, detail?.CommandLine, detail?.Path, detail?.StartedAt, detail?.WorkingDirectory);
         })];
     }
 
@@ -52,7 +52,7 @@ public sealed class ProcessScanner
         foreach (int pid in pids)
         {
             (int _, int parent, string name) = live[pid];
-            _details[pid] = new Detail(parent, name, null, null, null);
+            _details[pid] = new Detail(parent, name, null, null, null, null);
         }
 
         foreach (int[] batch in pids.Chunk(60))
@@ -80,6 +80,7 @@ public sealed class ProcessScanner
                             CommandLine = item["CommandLine"] as string,
                             Path = item["ExecutablePath"] as string,
                             StartedAt = started,
+                            WorkingDirectory = ProcessDirectory.TryRead(pid),
                         };
                     }
                 }
@@ -117,5 +118,5 @@ public sealed class ProcessScanner
         return result;
     }
 
-    private sealed record Detail(int Parent, string Name, string? CommandLine, string? Path, DateTime? StartedAt);
+    private sealed record Detail(int Parent, string Name, string? CommandLine, string? Path, DateTime? StartedAt, string? WorkingDirectory);
 }

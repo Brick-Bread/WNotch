@@ -25,12 +25,16 @@ public sealed record TerminalProfile(
         "codex", "Codex", "codex", "", AgentKind.Codex,
         "The Codex CLI is not on your PATH. Install it with: npm install -g @openai/codex");
 
+    public static TerminalProfile OpenCode { get; } = new(
+        "opencode", "opencode", "opencode", "\uE756", AgentKind.OpenCode,
+        "opencode is not on your PATH. Install it from opencode.ai, then open a new session.");
+
     public static TerminalProfile Shell { get; } = new(
         "shell", "PowerShell", "powershell", "", AgentKind.None,
         "PowerShell was not found on your PATH.");
 
-    public static IReadOnlyList<TerminalProfile> All { get; } = [Claude, Codex, Shell];
+    public static IReadOnlyList<TerminalProfile> All { get; } = [Claude, Codex, OpenCode, Shell];
 
     /// <summary>The preset list new installs start with, in the form <see cref="TerminalPresets.Parse"/> reads.</summary>
-    public static IReadOnlyList<string> DefaultPresets { get; } = ["Claude = claude", "Codex = codex", "Shell = powershell"];
+    public static IReadOnlyList<string> DefaultPresets { get; } = ["Claude = claude", "Codex = codex", "opencode = opencode", "Shell = powershell"];
 }

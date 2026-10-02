@@ -4,8 +4,8 @@ using Notch.Core.Agents;
 namespace Notch.App.Agents;
 
 /// <summary>
-/// Reads and writes the settings files of Claude Code and Codex so their hooks report to Notch
-/// whichever terminal they run in. Only ever done because the user ticked the box in Settings;
+/// Reads and writes the settings files of Claude Code and Codex, and puts a plugin in opencode's
+/// plugins folder, so they report to Notch whichever terminal they run in. Only ever done because the user ticked the box in Settings;
 /// each file gets a backup the first time it is changed, and unticking takes Notch's lines out again.
 /// </summary>
 internal static class AgentHookFiles
@@ -26,6 +26,24 @@ internal static class AgentHookFiles
             : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".codex"),
         "config.toml");
 
+    private static string UserProfile => Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+    public static string OpenCodePluginPath => OpenCodePlugin.PluginPath(Environment.GetEnvironmentVariable("OPENCODE_CONFIG_DIR"), UserProfile);
+
+    /// <summary>The plugin as it ships with this copy of Notch.</summary>
+    private static string OpenCodePluginSource => Path.Combine(AppContext.BaseDirectory, "Assets", "opencode", OpenCodePlugin.FileName);
+
+    /// <summary>
+    /// Whether opencode is on this PC: its config folder exists, or the program is on the PATH.
+    /// Notch does not create the config folder of a program that is not installed.
+    /// </summary>
+    private static bool OpenCodeIsInstalled() =>
+        Directory.Exists(OpenCodePlugin.ConfigDirectory(Environment.GetEnvironmentVariable("OPENCODE_CONFIG_DIR"), UserProfile))
+        || Notch.Core.Terminal.CommandResolver.FindOnPath("opencode") is not null;
+
+    /// <summary>Whether Notch's plugin is in opencode's plugins folder right now.</summary>
+    public static bool OpenCodePluginInstalled() => OpenCodePlugin.IsNotchs(Read(OpenCodePluginPath));
+
     /// <summary>What switching the hooks on or off would do, for showing to the user before it happens.</summary>
     /// <param name="Files">The files that would be written, with a line saying what happens to each.</param>
     /// <param name="Problems">Things the user should know: a file Notch will not touch, and why.</param>
@@ -36,7 +54,7 @@ internal static class AgentHookFiles
 
     /// <summary>Whether Notch's hooks are in the agents' settings files right now.</summary>
     public static bool IsInstalled() =>
-        AgentHookEditor.ClaudeHasHooks(Read(ClaudeSettingsPath)) || AgentHookEditor.CodexHasHook(Read(CodexConfigPath));
+        AgentHookEditor.ClaudeHasHooks(Read(ClaudeSettingsPath)) || AgentHookEditor.CodexHasHook(Read(CodexConfigPath)) || OpenCodePluginInstalled();
 
     public static Plan PlanFor(bool enable)
     {
@@ -67,11 +85,34 @@ internal static class AgentHookFiles
             problems.Add(codex.Problem);
         }
 
+        if (!enable || OpenCodeIsInstalled())
+        {
+            HookEdit openCode = OpenCodeEdit(enable);
+            if (openCode.Changed)
+            {
+                files.Add((OpenCodePluginPath, enable ? "adds Notch's opencode plugin (one small file)" : "deletes Notch's opencode plugin"));
+            }
+            else if (openCode.Problem is not null)
+            {
+                problems.Add(openCode.Problem);
+            }
+        }
+
         return new Plan(files, problems);
     }
 
     /// <summary>Makes the change <see cref="PlanFor"/> described. Throws <see cref="IOException"/> if a file cannot be written.</summary>
     public static void Apply(bool enable)
+    {
+        ApplyClaude(enable);
+        ApplyCodex(enable);
+        if (!enable || OpenCodeIsInstalled())
+        {
+            ApplyOpenCode(enable);
+        }
+    }
+
+    private static void ApplyClaude(bool enable)
     {
         HookEdit claude = enable
             ? AgentHookEditor.AddClaudeHooks(Read(ClaudeSettingsPath), HookExecutable)
@@ -80,7 +121,10 @@ internal static class AgentHookFiles
         {
             Write(ClaudeSettingsPath, claude.Text);
         }
+    }
 
+    private static void ApplyCodex(bool enable)
+    {
         HookEdit codex = enable
             ? AgentHookEditor.AddCodexHook(Read(CodexConfigPath), HookExecutable)
             : AgentHookEditor.RemoveCodexHook(Read(CodexConfigPath));
@@ -88,6 +132,46 @@ internal static class AgentHookFiles
         {
             Write(CodexConfigPath, codex.Text);
         }
+    }
+
+    private static void ApplyOpenCode(bool enable)
+    {
+        HookEdit openCode = OpenCodeEdit(enable);
+        if (openCode.Changed)
+        {
+            WriteOpenCodePlugin(openCode.Text);
+        }
+    }
+
+    /// <summary>What adding or removing opencode's plugin comes to, given what is in the plugins folder now.</summary>
+    private static HookEdit OpenCodeEdit(bool enable)
+    {
+        string? existing = Read(OpenCodePluginPath);
+        if (!enable)
+        {
+            return OpenCodePlugin.Remove(existing);
+        }
+
+        string? shipped = Read(OpenCodePluginSource);
+        return shipped is null
+            ? new HookEdit(existing ?? "", Changed: false, "Notch's opencode plugin is missing from this copy of Notch, so opencode was left alone. Reinstall Notch.")
+            : OpenCodePlugin.Add(existing, shipped);
+    }
+
+    /// <summary>Writes the plugin, or deletes it when <paramref name="text"/> is empty. A plugin Notch wrote is always replaced as a whole.</summary>
+    private static void WriteOpenCodePlugin(string text)
+    {
+        string path = OpenCodePluginPath;
+        if (text.Length == 0)
+        {
+            File.Delete(path);
+            return;
+        }
+
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        string temporary = path + ".notch-tmp";
+        File.WriteAllText(temporary, text);
+        File.Move(temporary, path, overwrite: true);
     }
 
     /// <summary>
@@ -104,16 +188,22 @@ internal static class AgentHookFiles
             string? claude = Read(ClaudeSettingsPath);
             if (AgentHookEditor.ClaudeHasHooks(claude) && claude?.Contains(forward, StringComparison.OrdinalIgnoreCase) != true)
             {
-                Apply(enable: false);
-                Apply(enable: true);
-                return;
+                ApplyClaude(enable: false);
+                ApplyClaude(enable: true);
             }
 
             string? codex = Read(CodexConfigPath);
             if (AgentHookEditor.CodexHasHook(codex) && codex?.Contains(HookExecutable, StringComparison.OrdinalIgnoreCase) != true)
             {
-                Apply(enable: false);
-                Apply(enable: true);
+                ApplyCodex(enable: false);
+                ApplyCodex(enable: true);
+            }
+
+            // A newer Notch ships a newer plugin; one Notch wrote earlier is brought up to date. Only an
+            // existing one: a plugin the user never agreed to is not added here.
+            if (OpenCodePluginInstalled())
+            {
+                ApplyOpenCode(enable: true);
             }
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)

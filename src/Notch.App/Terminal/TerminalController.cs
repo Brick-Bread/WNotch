@@ -131,6 +131,28 @@ internal sealed class TerminalController : IDisposable
 
     private TerminalSession? Find(string id) => Sessions.FirstOrDefault(s => s.Id == id);
 
+    /// <summary>
+    /// opencode's plugin runs in a background service that does not carry Notch's session variables,
+    /// so its events come without a session and are matched to opencode sessions of this terminal by
+    /// the folder they work in. Call on the UI thread. False when none of the terminal's sessions is it.
+    /// </summary>
+    public bool TryRouteOpenCode(AgentHooks.HookMessage message)
+    {
+        if (message.Folder is null)
+        {
+            return false;
+        }
+
+        TerminalSession[] matching = [.. Sessions.Where(s =>
+            s.Profile.Agent == AgentKind.OpenCode && Notch.Core.Agents.AgentDetector.SameFolder(s.Folder, message.Folder))];
+        foreach (TerminalSession session in matching)
+        {
+            session.Agent.OnHookEvent(message.EventName);
+        }
+
+        return matching.Length > 0;
+    }
+
     private void SetActive(TerminalSession session)
     {
         Active = session;

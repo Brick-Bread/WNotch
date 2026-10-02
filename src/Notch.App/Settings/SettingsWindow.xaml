@@ -116,12 +116,12 @@
         <TextBlock TextWrapping="Wrap" Opacity="0.7" Margin="0,0,0,8"
                    Text="Notch lists coding agents running anywhere on this PC, not only those started from its terminal. Clicking one brings its window to the front. Whether an agent is working, waiting for you or done is known only for agents that report it through hooks." />
         <CheckBox x:Name="DetectAgents" Content="Show agents running outside Notch's terminal"
-                  ToolTip="Looks at the running programs every few seconds for Claude Code, Codex, Gemini CLI and Aider. Sessions that only run in the background of a desktop app are left out." />
+                  ToolTip="Looks at the running programs every few seconds for Claude Code, Codex, opencode, Gemini CLI and Aider. Sessions that only run in the background of a desktop app are left out." />
         <StackPanel x:Name="AgentToggles" Margin="28,2,0,0" IsEnabled="{Binding IsChecked, ElementName=DetectAgents}" />
         <CheckBox x:Name="GlobalAgentHooks" Margin="0,8,0,0" Content="Let agents report what they are doing, wherever they run"
-                  ToolTip="Adds Notch's hooks to Claude Code's settings.json and Codex's config.toml. Notch keeps a backup of each file and takes its lines out again when you untick this." />
+                  ToolTip="Adds Notch's hooks to Claude Code's settings.json and Codex's config.toml, and a small plugin to opencode's plugins folder. Notch keeps a backup of each file it edits and takes everything out again when you untick this." />
         <TextBlock TextWrapping="Wrap" Opacity="0.7" Margin="28,2,0,0" FontSize="12"
-                   Text="Edits ~\.claude\settings.json and ~\.codex\config.toml after asking, with a backup next to each. Codex runs only one notify command, so an existing one is never replaced." />
+                   Text="Edits ~\.claude\settings.json and ~\.codex\config.toml after asking, with a backup next to each, and adds one file, plugins\notch.js, to opencode's config folder (opencode 2). Codex runs only one notify command, so an existing one is never replaced." />
 
         <TextBlock Text="Notifications" Style="{StaticResource Heading}" Margin="0,22,0,4" />
         <CheckBox x:Name="MirrorNotifications" Content="Show Windows notifications in the pill" />

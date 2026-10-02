@@ -8,7 +8,8 @@ public sealed record ProcessSnapshot(
     string Name,
     string? CommandLine = null,
     string? ExecutablePath = null,
-    DateTime? StartedAt = null);
+    DateTime? StartedAt = null,
+    string? WorkingDirectory = null);
 
 /// <summary>An agent found among the running programs.</summary>
 /// <param name="Key">Stable while the agent runs; a reused process id gets a different one.</param>
@@ -97,6 +98,37 @@ public static class AgentDetector
 
     /// <summary>Stable for one run of a program: the process id plus its start time, since ids are reused.</summary>
     public static string KeyFor(ProcessSnapshot process) => $"pid-{process.Pid}-{process.StartedAt?.Ticks ?? 0}";
+
+    /// <summary>Whether two folder names are the same folder, whatever the slashes, trailing slash or capitals.</summary>
+    public static bool SameFolder(string? a, string? b)
+    {
+        if (string.IsNullOrWhiteSpace(a) || string.IsNullOrWhiteSpace(b))
+        {
+            return false;
+        }
+
+        static string Normal(string path) => path.Trim().Replace('/', '\\').TrimEnd('\\');
+        return string.Equals(Normal(a), Normal(b), StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// The opencode windows an event about <paramref name="folder"/> is for. opencode's plugin lives in
+    /// a background service, so its events cannot name the window they came from; the folder is what
+    /// they have. A window whose folder could not be read is only chosen when it is the only one.
+    /// </summary>
+    public static IReadOnlyList<DetectedAgent> OpenCodeIn(string? folder, IReadOnlyList<ProcessSnapshot> processes, IReadOnlyList<DetectedAgent> detected)
+    {
+        DetectedAgent[] openCode = [.. detected.Where(d => d.Definition.Kind == AgentKind.OpenCode)];
+        string? FolderOf(DetectedAgent agent) => processes.FirstOrDefault(p => p.Pid == agent.Pid)?.WorkingDirectory;
+
+        DetectedAgent[] there = [.. openCode.Where(a => SameFolder(FolderOf(a), folder))];
+        if (there.Length > 0)
+        {
+            return there;
+        }
+
+        return openCode.Length == 1 && FolderOf(openCode[0]) is null ? openCode : [];
+    }
 
     /// <summary>The detected agent <paramref name="pid"/> runs under (or is), as when a hook program reports itself.</summary>
     public static DetectedAgent? AgentOf(int pid, IReadOnlyList<ProcessSnapshot> processes, IReadOnlyList<DetectedAgent> detected)

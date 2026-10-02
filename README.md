@@ -9,8 +9,8 @@ A dynamic notch for Windows 11, in the spirit of Atoll on macOS: a small black p
 - **Media.** Whatever is playing (Spotify, a browser tab, any app that reports to Windows) shows with its artwork. The expanded view has play/pause, skip and click-to-seek.
 - **System HUDs.** Volume, audio output changes, brightness, charger and low battery, Bluetooth devices connecting, Caps Lock switching on or off.
 - **Shelf.** Drag files or folders onto the pill to put them aside, then drag them out into any app or folder when you need them. The shelf remembers where the files are; it does not copy them.
-- **Terminal for Claude Code and Codex.** A real terminal inside the notch that runs the `claude` and `codex` CLIs (or PowerShell) in a folder you pick. The pill shows which agent is working, needs input, or is done, the folder it is in, and how many other sessions have something to report.
-- **Agents anywhere.** Claude Code, Codex, Gemini CLI and Aider are found wherever they run (Windows Terminal, VS Code, any shell), listed on the Home tab with where they run, and clicking one brings its window to the front. Whether an agent is working, waiting or done shows for the ones that report it through hooks, which you can switch on for all your sessions in settings (see [Agents](#agents-anywhere)).
+- **Terminal for Claude Code, Codex and opencode.** A real terminal inside the notch that runs the `claude`, `codex` and `opencode` CLIs (or PowerShell) in a folder you pick. The pill shows which agent is working, needs input, or is done, the folder it is in, and how many other sessions have something to report.
+- **Agents anywhere.** Claude Code, Codex, opencode, Gemini CLI and Aider are found wherever they run (Windows Terminal, VS Code, any shell), listed on the Home tab with where they run, and clicking one brings its window to the front. Whether an agent is working, waiting or done shows for the ones that report it through hooks, which you can switch on for all your sessions in settings (see [Agents](#agents-anywhere)).
 - **Command palette.** A second hotkey (Alt+Shift+P) opens a search box over everything the notch can do: timers, tabs, terminal sessions, jumping to an agent, switching plugins.
 - **Clipboard history.** Optional Clipboard tab to search what you copied, pin things and copy them again. Kept in memory (only pins survive a restart), and copies that password managers mark as private are never kept.
 - **Windows notifications in the pill.** Optional and off by default: shows who a notification is from and which app, never the message.
@@ -34,7 +34,7 @@ The terminal uses the WebView2 runtime, which ships with Windows 11.
 
 - Hover over the pill (or click it) to expand it. Move away to close it. The hotkey (Alt+Shift+N unless you changed it) opens it and keeps it open until you press it again or move the pointer onto the notch and away.
 - **Shelf tab:** drag files from Explorer onto the pill; the notch opens and they land on the shelf. Drag a tile out to use the file, double-click to open it, right-click for more. A file that has been moved or deleted leaves the shelf by itself.
-- **Terminal tab:** pick a folder, then a launcher button (`+ Claude`, `+ Codex`, `+ Shell` by default). Settings → Terminal buttons lets you edit them or add your own, such as a Codex fork or a second account with its own `CLAUDE_CONFIG_DIR`. While the terminal has keyboard focus the notch stays open; click any other window to close it.
+- **Terminal tab:** pick a folder, then a launcher button (`+ Claude`, `+ Codex`, `+ opencode`, `+ Shell` by default). Settings → Terminal buttons lets you edit them or add your own, such as a Codex fork or a second account with its own `CLAUDE_CONFIG_DIR`. While the terminal has keyboard focus the notch stays open; click any other window to close it.
 - **Timer:** press a preset, or **+ Custom** and type a length; a bare number is minutes. Enter starts it, Esc cancels.
 - **Tray icon:** left-click for settings, right-click to switch theme or quit.
 
@@ -51,9 +51,11 @@ Things to know:
 
 ## Agents anywhere
 
-Notch looks at the running programs every few seconds and lists any Claude Code, Codex, Gemini CLI or Aider session it finds, wherever it runs. Sessions that only run in the background of a desktop app (such as the Claude or Codex desktop apps' own servers) and one-shot `claude -p` runs are left out. Settings has a switch for it and one per agent.
+Notch looks at the running programs every few seconds and lists any Claude Code, Codex, opencode, Gemini CLI or Aider session it finds, wherever it runs. Sessions that only run in the background of a desktop app (such as the Claude or Codex desktop apps' own servers) and one-shot `claude -p` runs are left out. Settings has a switch for it and one per agent.
 
 What an agent is *doing* is known only when it reports it. In **Settings > Agents**, tick *Let agents report what they are doing, wherever they run*: Notch then adds its hooks to `~\.claude\settings.json` and `~\.codex\config.toml` (after showing you the files, keeping a backup of each next to it, and never replacing a `notify` command of your own). Unticking removes them again. Without this, an agent found elsewhere is listed as "Open" and does not light the pill.
+
+**opencode** (version 2) has no hook settings, so the same option puts one small file, `plugins\notch.js`, in opencode's config folder (`~\.config\opencode`, or `OPENCODE_CONFIG_DIR`) when opencode is installed. The plugin tells Notch when opencode starts working, asks for a permission, or finishes, so the pill shows *working*, *needs input* and *done* for opencode in Notch's terminal and in any other window. It writes one line to a pipe only you can read and sends nothing over the network; unticking the option deletes the file, and a file called `notch.js` that is not Notch's is never touched. The plugin reports the folder a session works in, which is how Notch matches it to a window: two opencode windows in the same folder show the same state. If you ticked the option before this was added, untick and tick it once to add the opencode plugin. opencode 1.x is not supported.
 
 ## Plugins
 
@@ -90,7 +92,7 @@ Development flags for `Notch.exe`:
 | `--demo` | Fake media and a loop of fake activities, to see every pill state |
 | `--pin-open` | Keep the notch expanded |
 | `--tab=home\|terminal\|stats\|shelf\|clipboard\|plugins` | Start on that tab |
-| `--open=claude\|codex\|shell` | Start a terminal session at launch |
+| `--open=claude\|codex\|opencode\|shell` | Start a terminal session at launch (any launcher button, by its id) |
 | `--settings` | Open the settings window at launch |
 | `--theme=dark\|light\|system` | Show that theme for this run without changing the saved setting |
 | `--no-plugins` | Start without running any plugin (safe mode) |

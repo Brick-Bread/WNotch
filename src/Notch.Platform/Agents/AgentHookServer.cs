@@ -43,9 +43,11 @@ public sealed class AgentHookServer : IDisposable
             NamedPipeServerStream? pipe = null;
             try
             {
+                // Duplex although nothing is ever sent back: opencode's runtime opens the pipe for reading
+                // and writing and gives up when the server end only accepts input. Hooks that only write still connect.
                 pipe = new NamedPipeServerStream(
                     pipeName,
-                    PipeDirection.In,
+                    PipeDirection.InOut,
                     NamedPipeServerStream.MaxAllowedServerInstances,
                     PipeTransmissionMode.Byte,
                     PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);

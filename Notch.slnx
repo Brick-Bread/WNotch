@@ -13,5 +13,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Notch.Core.Tests/Notch.Core.Tests.csproj" />
+    <Project Path="tests/Notch.Platform.Tests/Notch.Platform.Tests.csproj" />
   </Folder>
 </Solution>

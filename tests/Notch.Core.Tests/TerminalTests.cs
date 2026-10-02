@@ -215,7 +215,7 @@ public class TerminalTests
     public void Presets_keep_ids_apart_and_fall_back_to_the_defaults()
     {
         Assert.Equal(["a", "a-2"], TerminalPresets.FromLines(["A = x", "A = y"]).Select(p => p.Id));
-        Assert.Equal(["claude", "codex", "shell"], TerminalPresets.FromLines(["garbage"]).Select(p => p.Id));
+        Assert.Equal(["claude", "codex", "opencode", "shell"], TerminalPresets.FromLines(["garbage"]).Select(p => p.Id));
         Assert.Equal(TerminalPresets.MaxPresets, TerminalPresets.FromLines(Enumerable.Range(0, 20).Select(i => $"P{i} = x")).Count);
     }
 

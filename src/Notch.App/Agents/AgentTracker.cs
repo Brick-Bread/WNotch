@@ -19,6 +19,7 @@ internal sealed class AgentTracker : IDisposable
     private readonly AgentBoard _board;
     private readonly AppSettings _settings;
     private readonly AgentHookServer _hooks;
+    private readonly Func<AgentHooks.HookMessage, bool>? _routeToTerminal;
     private readonly ProcessScanner _scanner = new();
     private readonly CancellationTokenSource _stop = new();
     private readonly Dictionary<string, Tracked> _tracked = [];
@@ -27,8 +28,10 @@ internal sealed class AgentTracker : IDisposable
     private volatile IReadOnlyList<ProcessSnapshot> _processes = [];
     private volatile IReadOnlyList<DetectedAgent> _detected = [];
 
-    public AgentTracker(Dispatcher ui, AgentBoard board, AppSettings settings, AgentHookServer hooks)
+    /// <param name="routeToTerminal">Gives an opencode event to the terminal's own sessions, on the UI thread; true when it was theirs.</param>
+    public AgentTracker(Dispatcher ui, AgentBoard board, AppSettings settings, AgentHookServer hooks, Func<AgentHooks.HookMessage, bool>? routeToTerminal = null)
     {
+        _routeToTerminal = routeToTerminal;
         _ui = ui;
         _board = board;
         _settings = settings;
@@ -152,15 +155,16 @@ internal sealed class AgentTracker : IDisposable
     private void OnHook(AgentHooks.HookMessage message)
     {
         // Sessions Notch's terminal started are handled by the terminal.
-        if (message.Session.Length > 0 || message.HookPid <= 0 || !_settings.DetectAgents)
+        bool openCode = message.Agent == "opencode";
+        if (message.Session.Length > 0 || (message.HookPid <= 0 && !openCode) || !_settings.DetectAgents)
         {
             return;
         }
 
         _ = Task.Run(async () =>
         {
-            DetectedAgent? agent = AgentDetector.AgentOf(message.HookPid, _processes, _detected);
-            if (agent is null)
+            DetectedAgent? agent = message.HookPid > 0 ? AgentDetector.AgentOf(message.HookPid, _processes, _detected) : null;
+            if (agent is null && !openCode)
             {
                 // The agent started since the last scan.
                 await ScanAsync();
@@ -170,8 +174,41 @@ internal sealed class AgentTracker : IDisposable
             if (agent is not null)
             {
                 _ = _ui.BeginInvoke(() => ApplyHook(agent, message));
+                return;
+            }
+
+            if (openCode)
+            {
+                await RouteOpenCodeAsync(message);
             }
         });
+    }
+
+    /// <summary>
+    /// opencode's plugin cannot say which window it reports for, only which folder. A session in
+    /// Notch's own terminal in that folder takes it; otherwise the opencode windows found running there do.
+    /// </summary>
+    private async Task RouteOpenCodeAsync(AgentHooks.HookMessage message)
+    {
+        bool terminal = false;
+        await _ui.InvokeAsync(() => terminal = _routeToTerminal?.Invoke(message) == true);
+        if (terminal)
+        {
+            return;
+        }
+
+        IReadOnlyList<DetectedAgent> targets = AgentDetector.OpenCodeIn(message.Folder, _processes, _detected);
+        if (targets.Count == 0)
+        {
+            // It may have started since the last scan.
+            await ScanAsync();
+            targets = AgentDetector.OpenCodeIn(message.Folder, _processes, _detected);
+        }
+
+        foreach (DetectedAgent agent in targets)
+        {
+            _ = _ui.BeginInvoke(() => ApplyHook(agent, message));
+        }
     }
 
     private void ApplyHook(DetectedAgent agent, AgentHooks.HookMessage message)
