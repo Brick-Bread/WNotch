@@ -97,14 +97,13 @@
         el('div', {className: 'mk-title'}, title, el('p', {className: 'mk-by', textContent: p.author || p.repository}))));
       if (p.description) card.append(el('p', {className: 'mk-desc', textContent: p.description}));
 
-      if (p.tags.length) card.append(el('div', {className: 'mk-tags'}, ...p.tags.map(x => el('span', {textContent: x}))));
-
-      const facts = el('dl', {className: 'mk-facts'});
-      const fact = (label, value, cls = '') => facts.append(el('dt', {textContent: label}), el('dd', {className: cls, textContent: value}));
-      if (p.apiVersion) fact('Works with', API_SINCE[p.apiVersion] ? 'Notch ' + API_SINCE[p.apiVersion] + ' and above' : 'Plugin API ' + p.apiVersion);
-      if (p.permissions.length) fact('Uses', p.permissions.map(x => PERM[x] || x).join(', '), 'warn');
-      else fact('Uses', 'Does not say. Treat it as able to do anything.', 'warn');
-      card.append(facts);
+      const meta = el('div', {className: 'mk-meta'});
+      if (p.apiVersion) meta.append(el('span', {className: 'pill api', title: 'Plugin API ' + p.apiVersion,
+        textContent: API_SINCE[p.apiVersion] ? 'Made for Notch ' + API_SINCE[p.apiVersion] + ' and above' : 'Plugin API ' + p.apiVersion}));
+      if (p.permissions.length) for (const x of p.permissions) meta.append(el('span', {className: 'pill perm', textContent: PERM[x] || x}));
+      else meta.append(el('span', {className: 'pill none', title: 'Treat it as able to do anything.', textContent: 'Does not say what it uses'}));
+      for (const t of p.tags) meta.append(el('span', {className: 'pill tag', textContent: t}));
+      card.append(meta);
 
       const button = el('a', {className: 'btn', href: 'notch://install?id=' + encodeURIComponent(p.id), textContent: 'Install'});
       button.addEventListener('click', () => install(p, card, button));
