@@ -1,0 +1,75 @@
+name: repack legacy releases
+
+# Rebuilds old .NET release installers with the current installer wrapper.
+# The app payload is still built from each legacy tag; only installer/build.ps1
+# and src/Notch.Setup come from the branch this workflow is run from.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repack:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tag:
+          - v0.1.0
+          - v0.2.0
+          - v0.3.0
+          - v0.4.0
+          - v0.5.0
+          - v0.6.0
+          - v0.6.1
+          - v0.7.0
+          - v0.8.0
+          - v0.8.1
+
+    steps:
+      - name: Check out current installer
+        uses: actions/checkout@v4
+        with:
+          path: current
+
+      - name: Check out legacy app
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.tag }}
+          path: legacy
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Replace legacy installer with current installer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force legacy/installer | Out-Null
+          Copy-Item current/installer/build.ps1 legacy/installer/build.ps1 -Force
+
+          if (Test-Path legacy/src/Notch.Setup) {
+            Remove-Item legacy/src/Notch.Setup -Recurse -Force
+          }
+          Copy-Item current/src/Notch.Setup legacy/src/Notch.Setup -Recurse -Force
+
+      - name: Build installer
+        shell: pwsh
+        working-directory: legacy
+        run: |
+          $version = '${{ matrix.tag }}'.TrimStart('v')
+          ./installer/build.ps1 -Version $version
+
+      - name: Upload replacement installer to release
+        shell: pwsh
+        working-directory: legacy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tag = '${{ matrix.tag }}'
+          gh release view $tag
+          $installer = Get-Item artifacts/Notch-Setup-*.exe
+          gh release upload $tag $installer.FullName --clobber
