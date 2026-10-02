@@ -82,7 +82,7 @@ internal sealed class OptionEditors
                 var box = new TextBox { Text = original is { ValueKind: JsonValueKind.Number } n ? n.GetRawText() : "", ToolTip = RangeHint(field) };
                 return new Editor(field, box, original, () =>
                 {
-                    if (!double.TryParse(box.Text.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out double number))
+                    if (!double.TryParse((box.Text ?? "").Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out double number))
                     {
                         return null;
                     }
@@ -123,14 +123,14 @@ internal sealed class OptionEditors
                     VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
                     ToolTip = field.Hint ?? "One per line.",
                 };
-                return new Editor(field, box, original, () => Json(box.Text
+                return new Editor(field, box, original, () => Json((box.Text ?? "")
                     .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)));
             }
 
             default:
             {
                 var box = new TextBox { Text = original is { ValueKind: JsonValueKind.String } text ? text.GetString() : "", ToolTip = field.Hint };
-                return new Editor(field, box, original, () => Json(box.Text.Trim()));
+                return new Editor(field, box, original, () => Json((box.Text ?? "").Trim()));
             }
         }
     }
