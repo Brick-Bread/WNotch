@@ -97,13 +97,16 @@
         el('div', {className: 'mk-title'}, title, el('p', {className: 'mk-by', textContent: p.author || p.repository}))));
       if (p.description) card.append(el('p', {className: 'mk-desc', textContent: p.description}));
 
-      const meta = el('div', {className: 'mk-meta'});
-      if (p.apiVersion) meta.append(el('span', {className: 'pill api', title: 'Plugin API ' + p.apiVersion,
-        textContent: API_SINCE[p.apiVersion] ? 'Made for Notch ' + API_SINCE[p.apiVersion] + ' and above' : 'Plugin API ' + p.apiVersion}));
-      if (p.permissions.length) for (const x of p.permissions) meta.append(el('span', {className: 'pill perm', textContent: PERM[x] || x}));
-      else meta.append(el('span', {className: 'pill none', title: 'Treat it as able to do anything.', textContent: 'Does not say what it uses'}));
-      for (const t of p.tags) meta.append(el('span', {className: 'pill tag', textContent: t}));
-      card.append(meta);
+      const group = (label, ...pills) => card.append(el('div', {className: 'mk-group'},
+        label ? el('span', {className: 'mk-label', textContent: label}) : '', el('div', {className: 'mk-meta'}, ...pills)));
+      const pill = (cls, text, title) => el('span', {className: 'pill ' + cls, textContent: text, title: title || ''});
+
+      const basics = p.tags.map(x => pill('tag', x));
+      if (p.apiVersion) basics.unshift(pill('api', API_SINCE[p.apiVersion] ? 'Made for Notch ' + API_SINCE[p.apiVersion] + ' and above' : 'Plugin API ' + p.apiVersion, 'Plugin API ' + p.apiVersion));
+      if (basics.length) group('', ...basics);
+      group('Permissions used', ...(p.permissions.length
+        ? p.permissions.map(x => pill('perm', PERM[x] || x))
+        : [pill('none', 'None stated', 'The author does not say what it uses. Treat it as able to do anything.')]));
 
       const button = el('a', {className: 'btn', href: 'notch://install?id=' + encodeURIComponent(p.id), textContent: 'Install'});
       button.addEventListener('click', () => install(p, card, button));

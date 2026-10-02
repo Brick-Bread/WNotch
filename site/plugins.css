@@ -30,11 +30,15 @@
 .mk-badge svg{width:12px;height:12px}
 .mk-desc{margin:0;color:var(--dim);font-size:15px;line-height:1.55}
 
+.mk-group{display:flex;flex-direction:column;gap:6px}
+.mk-label{font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
 .mk-meta{display:flex;flex-wrap:wrap;gap:6px}
 .pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;border:1px solid var(--line);font-size:12.5px;color:var(--dim)}
 .pill.api{color:var(--text)}
 .pill.perm{border-color:color-mix(in srgb,var(--amber) 45%,var(--line));color:var(--amber)}
-.pill.none{border-style:dashed}
+.pill.none{--red:#f87171;color:var(--red);border-color:color-mix(in srgb,var(--red) 55%,var(--line));background:color-mix(in srgb,var(--red) 10%,transparent);animation:mk-pulse 1.8s ease-in-out infinite}
+@keyframes mk-pulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--red) 45%,transparent)}50%{box-shadow:0 0 0 5px transparent}}
+@media (prefers-reduced-motion:reduce){.pill.none{animation:none}}
 .pill.tag{border-color:transparent;background:color-mix(in srgb,var(--text) 7%,transparent)}
 
 .mk-actions{margin-top:auto;display:flex;gap:10px;align-items:center;padding-top:2px}
