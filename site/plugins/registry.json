@@ -1,16 +1,36 @@
 {
-  "version": 1,
   "plugins": [
     {
-      "id": "notch.break-reminder",
-      "name": "Break reminder",
-      "repository": "Brick-Bread/WNotch",
-      "author": "Notch contributors",
-      "description": "Counts how long you have been at the screen and nudges you to take a break with a notice in the pill.",
-      "tags": ["health", "sample"],
-      "permissions": [],
-      "apiVersion": 1,
-      "verified": true
+      "id": "agentstats.agent-usage",
+      "name": "WNotch-AgentStats",
+      "version": "1.3.4",
+      "author": "tinywifi",
+      "description": "Coding-agent accounts and usage in the notch.",
+      "repository": "tinywifi/WNotch-AgentStats"
+    },
+    {
+      "id": "brick-bread.calagopus",
+      "name": "Calagopus servers",
+      "version": "1.3.0",
+      "author": "Brick_Bread",
+      "description": "Watches the servers on a Calagopus panel: an overview card, alerts in the pill, and a tab to browse your servers, see their live stats, send console commands and start, stop, restart or kill them. Connects to the panel URL you configure, using your API key.",
+      "repository": "Brick-Bread/wnotchcalagopus"
+    },
+    {
+      "id": "brick-bread.catppuccin",
+      "name": "Notch Catppuccin",
+      "version": "0.2.0",
+      "author": "Brick_Bread",
+      "description": "Catppuccin Latte, Frappe, Macchiato, Mocha and Minecraft themes for the whole notch, including matching controls, fonts and terminal palettes.",
+      "repository": "Brick-Bread/wnotch-catppuccin"
+    },
+    {
+      "id": "brick-bread.glass",
+      "name": "Notch Glass",
+      "version": "0.1.2",
+      "author": "Brick_Bread",
+      "description": "Smoked and frosted glass themes for the whole notch, with translucent surfaces, fine borders and a matching terminal.",
+      "repository": "Brick-Bread/wnotch-glass"
     }
   ]
 }
