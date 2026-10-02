@@ -58,3 +58,6 @@ footer{border-top:1px solid var(--line);padding:30px 0;color:var(--dim);font-siz
 .fallback button{font:inherit;font-size:13px;margin-left:6px;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:6px;padding:2px 8px}
 .warn{border:1px solid var(--amber);border-radius:10px;padding:12px 16px;color:var(--dim);font-size:15px;margin:0 0 24px}
 .empty{color:var(--dim)}
+.sub{margin:36px 0 8px;font-size:20px}
+.stage.glass{padding:24px 20px;background:radial-gradient(120% 100% at 50% 0,#33443f,#10151a)}
+.stage.glass .shot{max-width:560px;border-radius:12px}
