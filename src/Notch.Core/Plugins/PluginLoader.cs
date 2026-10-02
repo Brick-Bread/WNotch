@@ -64,10 +64,12 @@ internal static class PluginLoader
         protected override Assembly? Load(AssemblyName assemblyName)
         {
             // The plugin must see the host's INotchPlugin, not a copy it happens to ship,
-            // or its entry point would not be recognised as one.
+            // or its entry point would not be recognised as one. Handed back directly, whatever
+            // version the plugin was built against, so a plugin made for a newer or older Notch
+            // does not fail to bind.
             if (assemblyName.Name == ContractAssembly)
             {
-                return null;
+                return typeof(INotchPlugin).Assembly;
             }
 
             string? path = _resolver?.ResolveAssemblyToPath(assemblyName);
