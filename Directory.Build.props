@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</TreatWarningsAsErrors>
-    <Version>0.11.1</Version>
+    <Version>0.11.0</Version>
     <Authors>Notch contributors</Authors>
     <!-- The app is English-only; skip the framework's translated resource folders. -->
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
