@@ -5,7 +5,17 @@ namespace Notch.Core.Terminal;
 /// <summary>Something the built-in terminal can launch.</summary>
 /// <param name="Command">Bare command name, resolved through PATH when the session starts.</param>
 /// <param name="InstallHint">Shown when <paramref name="Command"/> is not installed.</param>
-public sealed record TerminalProfile(string Id, string DisplayName, string Command, string Glyph, AgentKind Agent, string InstallHint)
+/// <param name="Arguments">Passed to <paramref name="Command"/> ahead of the ones Notch adds for its hooks.</param>
+/// <param name="Environment">Variables set for this session only, such as a different config folder per account.</param>
+public sealed record TerminalProfile(
+    string Id,
+    string DisplayName,
+    string Command,
+    string Glyph,
+    AgentKind Agent,
+    string InstallHint,
+    IReadOnlyList<string>? Arguments = null,
+    IReadOnlyDictionary<string, string>? Environment = null)
 {
     public static TerminalProfile Claude { get; } = new(
         "claude", "Claude", "claude", "", AgentKind.Claude,
@@ -20,4 +30,7 @@ public sealed record TerminalProfile(string Id, string DisplayName, string Comma
         "PowerShell was not found on your PATH.");
 
     public static IReadOnlyList<TerminalProfile> All { get; } = [Claude, Codex, Shell];
+
+    /// <summary>The preset list new installs start with, in the form <see cref="TerminalPresets.Parse"/> reads.</summary>
+    public static IReadOnlyList<string> DefaultPresets { get; } = ["Claude = claude", "Codex = codex", "Shell = powershell"];
 }

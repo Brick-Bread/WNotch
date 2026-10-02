@@ -154,7 +154,7 @@ internal sealed class TerminalController : IDisposable
         try
         {
             string commandLine = CommandResolver.BuildCommandLine(executable, BuildArguments(session.Profile));
-            var environment = new Dictionary<string, string>
+            var environment = new Dictionary<string, string>(session.Profile.Environment ?? new Dictionary<string, string>())
             {
                 [AgentHooks.PipeVariable] = _hookServer.PipeName,
                 [AgentHooks.SessionVariable] = session.Id,
@@ -172,20 +172,22 @@ internal sealed class TerminalController : IDisposable
     }
 
     private static string? Resolve(TerminalProfile profile) =>
-        ReferenceEquals(profile, TerminalProfile.Shell)
+        profile.Command.Equals("powershell", StringComparison.OrdinalIgnoreCase)
             ? CommandResolver.FindOnPath("pwsh") ?? CommandResolver.FindOnPath(profile.Command)
-            : CommandResolver.FindOnPath(profile.Command);
+            : File.Exists(profile.Command) ? profile.Command : CommandResolver.FindOnPath(profile.Command);
 
     private IReadOnlyList<string> BuildArguments(TerminalProfile profile)
     {
+        IReadOnlyList<string> own = profile.Arguments ?? [];
         if (profile.Agent == AgentKind.None)
         {
-            return ["-NoLogo"];
+            // A plain PowerShell gets its banner switched off; anything else runs as written.
+            return own.Count == 0 && profile.Command.Equals("powershell", StringComparison.OrdinalIgnoreCase) ? ["-NoLogo"] : own;
         }
 
         if (!File.Exists(_hookExecutable))
         {
-            return [];
+            return own;
         }
 
         if (profile.Agent == AgentKind.Claude)
@@ -194,7 +196,7 @@ internal sealed class TerminalController : IDisposable
             File.WriteAllText(_claudeSettingsFile, AgentHooks.BuildClaudeSettings(_hookExecutable));
         }
 
-        return AgentHooks.BuildArguments(profile.Agent, _hookExecutable, _claudeSettingsFile);
+        return [.. own, .. AgentHooks.BuildArguments(profile.Agent, _hookExecutable, _claudeSettingsFile)];
     }
 
     private void OnInput(string id, string data)

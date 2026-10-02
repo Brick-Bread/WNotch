@@ -263,6 +263,7 @@ public partial class NotchWindow : Window
         Housekeeping();
         RefreshCalendar();
         ShowTimerPresets();
+        ShowTerminalLaunchers();
         _glow.Gain = GlowOutput.Gain(_settings.GlowIntensity);
         ApplyShape();
         Refresh();

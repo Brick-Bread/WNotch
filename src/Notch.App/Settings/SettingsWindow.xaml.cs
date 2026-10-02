@@ -73,6 +73,7 @@ public partial class SettingsWindow : Window
         GlowIntensity.Maximum = GlowOutput.MaxPercent;
         GlowIntensity.ValueChanged += (_, _) => GlowIntensityText.Text = $"{GlowIntensity.Value:0}%";
         GlowIntensity.Value = Math.Clamp(settings.GlowIntensity, GlowOutput.MinPercent, GlowOutput.MaxPercent);
+        TerminalPresets.Text = string.Join(Environment.NewLine, Notch.Core.Terminal.TerminalPresets.FromLines(settings.TerminalPresets).Select(Notch.Core.Terminal.TerminalPresets.ToLine));
         TimerPresets.Text = string.Join(Environment.NewLine, settings.Timers().Select(preset => preset.ToLine()));
         PomodoroFocus.Text = settings.PomodoroFocusMinutes.ToString();
         PomodoroShortBreak.Text = settings.PomodoroShortBreakMinutes.ToString();
@@ -171,11 +172,12 @@ public partial class SettingsWindow : Window
 
     private void OnSave()
     {
-        if (!TryReadTimerPresets(out List<TimerPreset> presets) || !TryReadHotkey(out string hotkey))
+        if (!TryReadTerminalPresets(out List<string> terminalPresets) || !TryReadTimerPresets(out List<TimerPreset> presets) || !TryReadHotkey(out string hotkey))
         {
             return;
         }
 
+        _settings.TerminalPresets = terminalPresets;
         _settings.TimerPresets = presets;
         _settings.OpenHotkey = hotkey;
         _settings.ExpandOnHover = ExpandOnHover.IsChecked == true;
@@ -231,6 +233,37 @@ public partial class SettingsWindow : Window
 
         Saved?.Invoke(this, EventArgs.Empty);
         Close();
+    }
+
+    /// <summary>Reads the terminal buttons box. Says which line is wrong, and returns false, when one cannot be read.</summary>
+    private bool TryReadTerminalPresets(out List<string> lines)
+    {
+        lines = [];
+        var ids = new List<string>();
+        foreach (string line in TerminalPresets.Text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (!Notch.Core.Terminal.TerminalPresets.TryParse(line, ids, out Notch.Core.Terminal.TerminalProfile profile))
+            {
+                MessageBox.Show(
+                    this,
+                    $"This terminal button could not be read:\n\n{line}\n\nUse a name, an equals sign and a command, for example \"Codex fork = my-codex --model o3\". Put arguments that contain spaces in double quotes.",
+                    "Notch",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                TerminalPresets.Focus();
+                return false;
+            }
+
+            ids.Add(profile.Id);
+            lines.Add(line);
+        }
+
+        if (lines.Count > Notch.Core.Terminal.TerminalPresets.MaxPresets)
+        {
+            lines.RemoveRange(Notch.Core.Terminal.TerminalPresets.MaxPresets, lines.Count - Notch.Core.Terminal.TerminalPresets.MaxPresets);
+        }
+
+        return true;
     }
 
     /// <summary>Reads the presets box. Says which line is wrong, and returns false, when one cannot be read.</summary>

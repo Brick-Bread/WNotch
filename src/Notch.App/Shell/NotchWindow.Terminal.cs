@@ -12,8 +12,12 @@ namespace Notch.App.Shell;
 // Tab switching and the Terminal tab.
 public partial class NotchWindow
 {
+    /// <summary>Raised when the user clicks the settings button on the tab strip.</summary>
+    public event Action? SettingsRequested;
+
     private NotchTab _tab = NotchTab.Home;
     private string _terminalFolder = "";
+    private IReadOnlyList<TerminalProfile> _terminalProfiles = [];
 
     private enum NotchTab
     {
@@ -63,9 +67,8 @@ public partial class NotchWindow
         TabShelf.Checked += (_, _) => SelectTab(NotchTab.Shelf);
         TabPlugins.Checked += (_, _) => SelectTab(NotchTab.Plugins);
 
-        NewClaude.Click += (_, _) => OpenSession(TerminalProfile.Claude);
-        NewCodex.Click += (_, _) => OpenSession(TerminalProfile.Codex);
-        NewShell.Click += (_, _) => OpenSession(TerminalProfile.Shell);
+        ShowTerminalLaunchers();
+        OpenSettingsButton.Click += (_, _) => SettingsRequested?.Invoke();
         TerminalFolder.Click += (_, _) => ShowFolderMenu();
 
         _terminalFolder = _settings.RecentFolders.FirstOrDefault(Directory.Exists)
@@ -80,6 +83,28 @@ public partial class NotchWindow
                 SetExpanded(false);
             }
         };
+    }
+
+    /// <summary>The presets from the settings, which the launcher buttons and <c>--open=</c> start.</summary>
+    public IReadOnlyList<TerminalProfile> TerminalProfiles => _terminalProfiles;
+
+    /// <summary>Draws one "+ name" button per preset in the settings.</summary>
+    private void ShowTerminalLaunchers()
+    {
+        _terminalProfiles = TerminalPresets.FromLines(_settings.TerminalPresets);
+        TerminalLaunchers.Children.Clear();
+        var style = (Style)FindResource("PillButton");
+        foreach (TerminalProfile profile in _terminalProfiles)
+        {
+            var button = new Button
+            {
+                Style = style,
+                Content = "+ " + profile.DisplayName,
+                ToolTip = TerminalPresets.ToLine(profile),
+            };
+            button.Click += (_, _) => OpenSession(profile);
+            TerminalLaunchers.Children.Add(button);
+        }
     }
 
     private void SelectTab(NotchTab tab)

@@ -188,6 +188,38 @@ public class TerminalTests
         Assert.False(AgentHooks.TryParseMessage(line, out _, out _));
 
     [Fact]
+    public void Presets_read_environment_arguments_and_agent()
+    {
+        Assert.True(TerminalPresets.TryParse(
+            @"Work Claude = CLAUDE_CONFIG_DIR=""C:\my work\.claude"" claude --model opus", [], out TerminalProfile profile));
+
+        Assert.Equal(("Work Claude", "work-claude", "claude", AgentKind.Claude), (profile.DisplayName, profile.Id, profile.Command, profile.Agent));
+        Assert.Equal(["--model", "opus"], profile.Arguments);
+        Assert.Equal(@"C:\my work\.claude", profile.Environment!["CLAUDE_CONFIG_DIR"]);
+        Assert.Equal(AgentKind.Codex, TerminalPresets.FromLines(["Fork = C:\\bin\\my-codex.exe"])[0].Agent);
+    }
+
+    [Fact]
+    public void Presets_round_trip_and_reject_bad_lines()
+    {
+        const string line = @"Work Claude = ""A=b c"" claude ""two words""";
+        Assert.True(TerminalPresets.TryParse(line, [], out TerminalProfile profile));
+        Assert.Equal(line, TerminalPresets.ToLine(profile));
+
+        Assert.False(TerminalPresets.TryParse("no equals sign", [], out _));
+        Assert.False(TerminalPresets.TryParse("Empty =", [], out _));
+        Assert.False(TerminalPresets.TryParse("Open = claude \"quote", [], out _));
+    }
+
+    [Fact]
+    public void Presets_keep_ids_apart_and_fall_back_to_the_defaults()
+    {
+        Assert.Equal(["a", "a-2"], TerminalPresets.FromLines(["A = x", "A = y"]).Select(p => p.Id));
+        Assert.Equal(["claude", "codex", "shell"], TerminalPresets.FromLines(["garbage"]).Select(p => p.Id));
+        Assert.Equal(TerminalPresets.MaxPresets, TerminalPresets.FromLines(Enumerable.Range(0, 20).Select(i => $"P{i} = x")).Count);
+    }
+
+    [Fact]
     public void Settings_round_trip_and_survive_a_corrupt_file()
     {
         string file = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"notch-test-{Guid.NewGuid():N}", "settings.json");

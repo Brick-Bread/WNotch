@@ -183,7 +183,7 @@ public partial class App : Application
 
         // --open=claude|codex|shell starts a terminal session straight away.
         string? open = Option(e, "--open=");
-        if (TerminalProfile.All.FirstOrDefault(p => p.Id.Equals(open, StringComparison.OrdinalIgnoreCase)) is { } profile)
+        if (window.TerminalProfiles.FirstOrDefault(p => p.Id.Equals(open, StringComparison.OrdinalIgnoreCase)) is { } profile)
         {
             window.OpenTerminal(profile);
         }
@@ -208,6 +208,7 @@ public partial class App : Application
         string[] enabledPlugins = [.. settings.EnabledPlugins];
         Task.Run(() => plugins.SetEnabled(enabledPlugins));
 
+        window.SettingsRequested += () => OpenSettings(window, settings, settingsStore);
         _plugins.ShellState.OpenSettings = () => Dispatcher.Invoke(() => OpenSettings(window, settings, settingsStore));
 
         // --screenshots=<folder> (with --demo) saves pictures of the notch for the website, then quits.

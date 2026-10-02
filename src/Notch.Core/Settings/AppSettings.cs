@@ -121,6 +121,12 @@ public sealed class AppSettings
     /// <summary>Ids of the plugins the user has switched on. Installed plugins do not run until listed here.</summary>
     public List<string> EnabledPlugins { get; set; } = [];
 
+    /// <summary>
+    /// The buttons that start terminal sessions, one per line as <see cref="Terminal.TerminalPresets"/> reads them,
+    /// for example <c>Work Claude = CLAUDE_CONFIG_DIR=C:\work claude</c>.
+    /// </summary>
+    public List<string> TerminalPresets { get; set; } = [.. Terminal.TerminalProfile.DefaultPresets];
+
     /// <summary>Folders terminal sessions were started in, most recent first.</summary>
     public List<string> RecentFolders { get; set; } = [];
 

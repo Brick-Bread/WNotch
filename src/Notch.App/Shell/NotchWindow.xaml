@@ -82,6 +82,9 @@
                     <RadioButton x:Name="TabPlugins" Style="{StaticResource TabButton}" Content="Plugins"
                                  Visibility="Collapsed" />
                 </StackPanel>
+                <Button x:Name="OpenSettingsButton" Style="{StaticResource PillButton}" HorizontalAlignment="Right"
+                        VerticalAlignment="Center" Content="&#xE713;" FontFamily="{StaticResource IconFont}"
+                        ToolTip="Settings" />
 
                 <!-- Home: media, timer, calendar -->
                 <StackPanel x:Name="HomePanel" Grid.Row="1" Margin="0,16,0,0">
@@ -221,9 +224,7 @@
                     <DockPanel>
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                             <Button x:Name="TerminalFolder" Style="{StaticResource PillButton}" />
-                            <Button x:Name="NewClaude" Style="{StaticResource PillButton}" Content="+ Claude" />
-                            <Button x:Name="NewCodex" Style="{StaticResource PillButton}" Content="+ Codex" />
-                            <Button x:Name="NewShell" Style="{StaticResource PillButton}" Content="+ Shell" />
+                            <StackPanel x:Name="TerminalLaunchers" Orientation="Horizontal" />
                         </StackPanel>
 
                         <ItemsControl x:Name="SessionStrip">
