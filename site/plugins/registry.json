@@ -1,36 +1,56 @@
 {
+  "version": 1,
   "plugins": [
     {
-      "id": "agentstats.agent-usage",
-      "name": "WNotch-AgentStats",
-      "version": "1.3.4",
-      "author": "tinywifi",
-      "description": "Coding-agent accounts and usage in the notch.",
-      "repository": "tinywifi/WNotch-AgentStats"
+      "id": "notch.break-reminder",
+      "name": "Break reminder",
+      "repository": "Brick-Bread/WNotch",
+      "author": "Notch contributors",
+      "description": "Counts how long you have been at the screen and nudges you to take a break with a notice in the pill.",
+      "tags": ["health", "sample"],
+      "permissions": [],
+      "apiVersion": 1,
+      "verified": true
     },
     {
       "id": "brick-bread.calagopus",
       "name": "Calagopus servers",
-      "version": "1.3.0",
+      "repository": "Brick-Bread/wnotchcalagopus",
       "author": "Brick_Bread",
-      "description": "Watches the servers on a Calagopus panel: an overview card, alerts in the pill, and a tab to browse your servers, see their live stats, send console commands and start, stop, restart or kill them. Connects to the panel URL you configure, using your API key.",
-      "repository": "Brick-Bread/wnotchcalagopus"
+      "description": "Watches the servers on a Calagopus panel: an overview card, alerts in the pill, and a tab to browse your servers, see their live stats, send console commands and start, stop, restart or kill them.",
+      "tags": ["servers", "dev"],
+      "permissions": ["network"],
+      "apiVersion": 5
     },
     {
       "id": "brick-bread.catppuccin",
       "name": "Notch Catppuccin",
-      "version": "0.2.0",
+      "repository": "Brick-Bread/wnotch-catppuccin",
       "author": "Brick_Bread",
       "description": "Catppuccin Latte, Frappe, Macchiato, Mocha and Minecraft themes for the whole notch, including matching controls, fonts and terminal palettes.",
-      "repository": "Brick-Bread/wnotch-catppuccin"
+      "tags": ["theme"],
+      "permissions": [],
+      "apiVersion": 6
     },
     {
       "id": "brick-bread.glass",
       "name": "Notch Glass",
-      "version": "0.1.2",
+      "repository": "Brick-Bread/wnotch-glass",
       "author": "Brick_Bread",
       "description": "Smoked and frosted glass themes for the whole notch, with translucent surfaces, fine borders and a matching terminal.",
-      "repository": "Brick-Bread/wnotch-glass"
+      "tags": ["theme"],
+      "permissions": [],
+      "apiVersion": 6
+    },
+    {
+      "id": "agentstats.agent-usage",
+      "name": "WNotch-AgentStats",
+      "repository": "tinywifi/WNotch-AgentStats",
+      "author": "tinywifi",
+      "description": "Coding-agent accounts and usage in the notch.",
+      "tags": ["dev", "ai"],
+      "permissions": [],
+      "apiVersion": 5
     }
   ]
 }
