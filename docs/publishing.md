@@ -13,6 +13,17 @@ Your plugin must:
 3. Have a `plugin.json` whose `id` is the id you list. Notch checks this after downloading and refuses to switch on a plugin that turns out to be a different one.
 4. Say honestly what it uses in `permissions` (see the manifest table in plugins.md).
 
+## Your listing on the website
+
+The website reads two optional files from the **root of your plugin's repository** (the default branch):
+
+| File | Used for |
+|---|---|
+| `description.md` | The description on your card. Basic Markdown works: paragraphs, headings, lists, **bold**, *italic*, `code` and links. Long text is cut short with a "Show more" button. Up to 20 KB. |
+| `logo.png` or `logo.webp` | The picture on your card, shown square. `logo.png` is tried first. |
+
+Without them the card shows the `description` from your registry entry and a coloured tile with your plugin's first letter. GitHub caches raw files for a few minutes, so changes appear shortly after you push.
+
 ## The entry
 
 Add an object to the `plugins` array:

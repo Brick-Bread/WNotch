@@ -78,6 +78,77 @@
   const hue = id => { let h = 0; for (const c of id) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
   const html = (name, markup, props = {}) => Object.assign(el(name, props), {innerHTML: markup});
 
+  // A plugin's repository can carry its own listing: description.md and logo.png (or logo.webp) in its root.
+  const raw = (repo, file) => 'https://raw.githubusercontent.com/' + repo + '/HEAD/' + file;
+
+  function inline(text) {
+    const out = [];
+    const re = /`([^`]+)`|\*\*([^*]+)\*\*|(?<![\w*])\*([^*\s][^*]*)\*(?!\w)|\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+    let last = 0, m;
+    while ((m = re.exec(text))) {
+      if (m.index > last) out.push(text.slice(last, m.index));
+      if (m[1] !== undefined) out.push(el('code', {textContent: m[1]}));
+      else if (m[2] !== undefined) out.push(el('strong', {textContent: m[2]}));
+      else if (m[3] !== undefined) out.push(el('em', {textContent: m[3]}));
+      else out.push(el('a', {href: m[5], textContent: m[4], target: '_blank', rel: 'noopener noreferrer'}));
+      last = re.lastIndex;
+    }
+    if (last < text.length) out.push(text.slice(last));
+    return out;
+  }
+
+  // Just enough Markdown for a description: paragraphs, headings, lists, bold, italic, code and links.
+  // It builds elements and never inserts the file's text as HTML.
+  function markdown(source) {
+    const root = el('div', {className: 'md'});
+    for (const block of source.replace(/\r/g, '').trim().split(/\n\s*\n/)) {
+      const lines = block.split('\n');
+      if (lines.every(l => /^\s*[-*+]\s+/.test(l))) {
+        root.append(el('ul', {}, ...lines.map(l => el('li', {}, ...inline(l.replace(/^\s*[-*+]\s+/, ''))))));
+      } else if (lines.every(l => /^\s*\d+[.)]\s+/.test(l))) {
+        root.append(el('ol', {}, ...lines.map(l => el('li', {}, ...inline(l.replace(/^\s*\d+[.)]\s+/, ''))))));
+      } else if (/^#{1,6}\s/.test(lines[0])) {
+        root.append(el('h4', {}, ...inline(lines[0].replace(/^#{1,6}\s+/, ''))));
+        if (lines.length > 1) root.append(el('p', {}, ...inline(lines.slice(1).join(' '))));
+      } else {
+        root.append(el('p', {}, ...inline(lines.join(' '))));
+      }
+    }
+    return root;
+  }
+
+  function describe(card, holder, repo) {
+    fetch(raw(repo, 'description.md'))
+      .then(r => r.ok ? r.text() : Promise.reject(r.status))
+      .then(text => {
+        if (!text.trim()) return;
+        const body = markdown(text.slice(0, 20000));
+        body.classList.add('clamped');
+        holder.replaceChildren(body);
+        setTimeout(() => {
+          if (body.scrollHeight <= body.clientHeight + 2) { body.classList.remove('clamped'); return; }
+          const more = el('button', {type: 'button', className: 'mk-more', textContent: 'Show more'});
+          more.onclick = () => { const open = body.classList.toggle('clamped'); more.textContent = open ? 'Show more' : 'Show less'; };
+          holder.append(more);
+        }, 50);
+      })
+      .catch(() => {}); // No file: the description from the list stays.
+  }
+
+  // logo.png, else logo.webp, else the plugin's initial on a coloured tile.
+  function logo(icon, repo) {
+    const image = el('img', {alt: '', loading: 'lazy'});
+    const files = ['logo.png', 'logo.webp'];
+    const next = () => {
+      const file = files.shift();
+      if (file) image.src = raw(repo, file); else image.remove();
+    };
+    image.onerror = next;
+    image.onload = () => icon.classList.add('has-logo');
+    icon.append(image);
+    next();
+  }
+
   function render() {
     const needle = q.value.trim().toLowerCase();
     const shown = plugins.filter(p =>
@@ -90,20 +161,27 @@
       const card = el('article', {className: 'mk-card'});
       const icon = el('div', {className: 'mk-icon', textContent: (p.name.match(/[A-Za-z0-9]/) || ['?'])[0].toUpperCase()});
       icon.setAttribute('aria-hidden', 'true');
+      logo(icon, p.repository);
       icon.style.setProperty('--h', hue(p.id));
       const title = el('h3', {textContent: p.name});
       if (p.verified) title.append(html('span', ICON.check + 'Verified', {className: 'mk-badge', title: 'The Notch maintainers have read this plugin’s code'}));
       card.append(el('div', {className: 'mk-head'}, icon,
         el('div', {className: 'mk-title'}, title, el('p', {className: 'mk-by', textContent: p.author || p.repository}))));
-      if (p.description) card.append(el('p', {className: 'mk-desc', textContent: p.description}));
+      const desc = el('div', {className: 'mk-desc'});
+      if (p.description) desc.append(el('p', {textContent: p.description}));
+      card.append(desc);
+      describe(card, desc, p.repository);
 
-      const meta = el('div', {className: 'mk-meta'});
-      if (p.apiVersion) meta.append(el('span', {className: 'pill api', title: 'Plugin API ' + p.apiVersion,
-        textContent: API_SINCE[p.apiVersion] ? 'Made for Notch ' + API_SINCE[p.apiVersion] + ' and above' : 'Plugin API ' + p.apiVersion}));
-      if (p.permissions.length) for (const x of p.permissions) meta.append(el('span', {className: 'pill perm', textContent: PERM[x] || x}));
-      else meta.append(el('span', {className: 'pill none', title: 'Treat it as able to do anything.', textContent: 'Does not say what it uses'}));
-      for (const t of p.tags) meta.append(el('span', {className: 'pill tag', textContent: t}));
-      card.append(meta);
+      const group = (label, ...pills) => card.append(el('div', {className: 'mk-group'},
+        label ? el('span', {className: 'mk-label', textContent: label}) : '', el('div', {className: 'mk-meta'}, ...pills)));
+      const pill = (cls, text, title) => el('span', {className: 'pill ' + cls, textContent: text, title: title || ''});
+
+      const basics = p.tags.map(x => pill('tag', x));
+      if (p.apiVersion) basics.unshift(pill('api', API_SINCE[p.apiVersion] ? 'Made for Notch ' + API_SINCE[p.apiVersion] + ' and above' : 'Plugin API ' + p.apiVersion, 'Plugin API ' + p.apiVersion));
+      if (basics.length) group('', ...basics);
+      group('Permissions used', ...(p.permissions.length
+        ? p.permissions.map(x => pill('perm', PERM[x] || x))
+        : [pill('none', 'None stated', 'The author does not say what it uses. Treat it as able to do anything.')]));
 
       const button = el('a', {className: 'btn', href: 'notch://install?id=' + encodeURIComponent(p.id), textContent: 'Install'});
       button.addEventListener('click', () => install(p, card, button));
