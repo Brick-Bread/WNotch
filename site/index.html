@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Notch for Windows 11</title>
+<meta name="description" content="A dynamic notch for Windows 11: a small pill at the top of your screen that grows to show media, system HUDs, timers and your Claude Code and Codex agents.">
+<meta property="og:title" content="Notch for Windows 11">
+<meta property="og:description" content="A small black pill that grows to show what is happening on your machine.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+<nav><b>Notch</b><div><a href="#features">Features</a><a href="#install">Install</a><a href="#plugins">Plugins</a><a href="https://github.com/Brick-Bread/WNotch">GitHub</a></div></nav>
+
+<header class="hero">
+<div class="screen" id="screen">
+ <img class="on" src="shots/pill-media.png" alt="The notch showing the song that is playing">
+ <img src="shots/pill-agent-working.png" alt="The notch while Claude is working">
+ <img src="shots/pill-agent-needs-input.png" alt="The notch when Claude needs input">
+ <img src="shots/pill-agent-done.png" alt="The notch when Claude is done">
+ <img src="shots/pill-volume.png" alt="The notch showing the volume">
+</div>
+<div class="cap" id="cap" aria-live="off"></div>
+<h1>A dynamic notch for Windows 11</h1>
+<p>A small black pill at the top of your screen that grows to show what is happening: music, volume, timers, and your coding agents.</p>
+<a class="btn" id="dl" href="https://github.com/Brick-Bread/WNotch/releases/latest">Download for Windows</a>
+<a class="btn alt" href="https://github.com/Brick-Bread/WNotch">View source</a>
+<div class="small" id="ver">Free and open source. Windows 10 2004 or later, Windows 11 recommended.</div>
+</header>
+
+<section id="features">
+<h2>What it does</h2>
+<p class="lead">Always on top, never takes focus, and gets out of the way of fullscreen games.</p>
+<div class="grid">
+<div class="card"><h3>Media</h3><p>Whatever is playing shows with its artwork, with play/pause, skip and click-to-seek when expanded.</p></div>
+<div class="card"><h3>System HUDs</h3><p>Volume, audio output, brightness, charger, low battery and Bluetooth devices connecting.</p></div>
+<div class="card"><h3>Terminal for Claude Code and Codex</h3><p>A real terminal in the notch. The pill shows whether an agent is working, needs input, or is done.</p></div>
+<div class="card"><h3>Widgets</h3><p>Timer with Pomodoro mode, upcoming events from .ics feeds, and live CPU, memory, GPU, network and battery stats.</p></div>
+<div class="card"><h3>Notch or island</h3><p>Grow out of the screen edge or float as a Dynamic Island, at the top or in the taskbar.</p></div>
+<div class="card"><h3>Themes</h3><p>Dark, light or follow Windows, with your own accent colour.</p></div>
+</div>
+</section>
+
+<section>
+<h2>Inside</h2>
+<p class="lead">Hover the pill and it opens. Home has what is playing, a timer and your calendar; Stats shows the machine.</p>
+<div class="grid">
+<div class="stage"><img class="shot" src="shots/home.png" alt="The Home tab with media controls, a timer and a calendar"></div>
+<div class="stage"><img class="shot" src="shots/stats.png" alt="The Stats tab with CPU, memory, GPU, network and battery"></div>
+</div>
+</section>
+
+<section>
+<h2>Glow that means something</h2>
+<p class="lead">The pill lights up in a colour and rhythm that matches the moment.</p>
+<div class="states">
+<div class="state"><img src="shots/pill-agent-working.png" alt=""><span>An agent is working</span></div>
+<div class="state"><img src="shots/pill-agent-needs-input.png" alt=""><span>An agent needs you</span></div>
+<div class="state"><img src="shots/pill-agent-done.png" alt=""><span>It is done</span></div>
+<div class="state"><img src="shots/pill-volume.png" alt=""><span>Volume</span></div>
+<div class="state"><img src="shots/pill-charging.png" alt=""><span>Charger connected</span></div>
+<div class="state"><img src="shots/pill-bluetooth.png" alt=""><span>Bluetooth device</span></div>
+<div class="state"><img src="shots/pill-low-battery.png" alt=""><span>Low battery</span></div>
+<div class="state"><img src="shots/pill-media.png" alt=""><span>Music, in the artwork's colour</span></div>
+</div>
+</section>
+
+<section id="install">
+<h2>Install</h2>
+<ol>
+<li>Download <code>Notch-Setup-&lt;version&gt;.exe</code> from the <a href="https://github.com/Brick-Bread/WNotch/releases/latest">latest release</a>.</li>
+<li>Run it. It installs for your user, with no admin rights.</li>
+<li>The installer is not code-signed, so SmartScreen will ask you to confirm.</li>
+</ol>
+<p class="small">Installed copies check this repository's releases and update themselves; you can turn that off in Settings.</p>
+</section>
+
+<section id="plugins">
+<h2>Plugins</h2>
+<p class="lead">Small .NET libraries can add their own activities to the pill and cards to a Plugins tab. In Settings, type a GitHub repository into the Plugins box and press Install.</p>
+<pre>Brick-Bread/WNotch</pre>
+<p><a href="https://github.com/Brick-Bread/WNotch/blob/main/docs/plugins.md">Read the plugin guide</a> · <a href="https://github.com/Brick-Bread/WNotch/tree/main/samples/BreakReminder">Sample plugin</a></p>
+</section>
+</div>
+<footer>Notch is open source. <a href="https://github.com/Brick-Bread/WNotch/blob/main/LICENSE">Licence</a> · <a href="https://github.com/Brick-Bread/WNotch">GitHub</a></footer>
+<script>
+fetch("https://api.github.com/repos/Brick-Bread/WNotch/releases/latest").then(function(r){return r.ok?r.json():null}).then(function(r){
+ if(!r)return;
+ var a=(r.assets||[]).find(function(x){return /\.exe$/i.test(x.name)});
+ if(a)document.getElementById("dl").href=a.browser_download_url;
+ document.getElementById("ver").textContent="Version "+r.tag_name.replace(/^v/,"")+" · free and open source · Windows 10 2004 or later";
+}).catch(function(){});
+(function(){
+ var imgs=document.querySelectorAll("#screen img"),cap=document.getElementById("cap"),i=0;
+ var names=["Playing music","An agent is working","An agent needs you","An agent is done","Volume"];
+ function show(n){imgs.forEach(function(m,k){m.classList.toggle("on",k===n)});cap.textContent=names[n]}
+ show(0);
+ if(!matchMedia("(prefers-reduced-motion:reduce)").matches)setInterval(function(){i=(i+1)%imgs.length;show(i)},2800);
+})();
+</script>
+</body>
+</html>

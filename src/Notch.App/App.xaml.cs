@@ -58,7 +58,8 @@ public partial class App : Application
         const string instanceName = @"Local\Notch.SingleInstance";
 #endif
         _singleInstance = new Mutex(initiallyOwned: true, instanceName, out bool isFirstInstance);
-        if (!isFirstInstance)
+        // A screenshot run is a separate short-lived process and works beside a running notch.
+        if (!isFirstInstance && Option(e, "--screenshots=") is null)
         {
             Shutdown();
             return;
@@ -180,6 +181,13 @@ public partial class App : Application
 
         _plugins.ShellState.OpenSettings = () => Dispatcher.Invoke(() => OpenSettings(window, settings, settingsStore));
 
+        // --screenshots=<folder> (with --demo) saves pictures of the notch for the website, then quits.
+        if (demo && Option(e, "--screenshots=") is { } shots)
+        {
+            _ = TakeScreenshotsAsync(window, shots);
+            return;
+        }
+
         _updates = new UpdateService(settings, settingsStore, _activities, () => window.IsBusy, Shutdown);
         _updates.CleanUpDownloads();
         if (HasFlag(e, UpdateService.UpdatedFlag))
@@ -191,6 +199,22 @@ public partial class App : Application
         {
             _demo = new DemoDriver(_activities);
         }
+    }
+
+    private async Task TakeScreenshotsAsync(NotchWindow window, string folder)
+    {
+        int exitCode = 0;
+        try
+        {
+            await ScreenshotRunner.RunAsync(window, _activities!, folder);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex);
+            exitCode = 1;
+        }
+
+        Shutdown(exitCode);
     }
 
     protected override void OnExit(ExitEventArgs e)

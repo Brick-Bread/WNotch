@@ -1,0 +1,61 @@
+name: Pages
+
+# The pictures on the site are rendered by the app itself (Notch.exe --demo --screenshots=...),
+# so every deploy shows the notch exactly as the code on main draws it.
+on:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  screenshots:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet build src/Notch.App -c Release -p:ContinuousIntegrationBuild=true
+      - name: Render the notch
+        shell: pwsh
+        run: |
+          $exe = (Get-ChildItem src/Notch.App/bin/Release -Recurse -Filter Notch.exe | Select-Object -First 1).FullName
+          $out = Join-Path $PWD 'shots'
+          $p = Start-Process $exe -ArgumentList '--demo', "--screenshots=`"$out`"" -Wait -PassThru
+          $count = (Get-ChildItem $out -Filter *.png -ErrorAction SilentlyContinue).Count
+          if ($p.ExitCode -ne 0 -or $count -lt 10) { throw "Screenshots failed: exit $($p.ExitCode), $count pictures" }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shots
+          path: shots
+          if-no-files-found: error
+
+  deploy:
+    needs: screenshots
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: shots
+          path: site/shots
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4
