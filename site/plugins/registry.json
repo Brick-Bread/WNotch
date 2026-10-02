@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "plugins": [
+    {
+      "id": "notch.break-reminder",
+      "name": "Break reminder",
+      "repository": "Brick-Bread/WNotch",
+      "author": "Notch contributors",
+      "description": "Counts how long you have been at the screen and nudges you to take a break with a notice in the pill.",
+      "tags": ["health", "sample"],
+      "permissions": [],
+      "apiVersion": 1,
+      "verified": true
+    }
+  ]
+}

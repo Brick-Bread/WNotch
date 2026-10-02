@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plugins for Notch</title>
+<meta name="description" content="Plugins for Notch: new activities, cards, pages and themes for the pill. Click Install and Notch asks before it adds one.">
+<meta property="og:title" content="Plugins for Notch">
+<meta property="og:description" content="Add activities, cards and themes to the notch. Install opens Notch and asks first.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+<nav><b><a href="./" style="color:inherit">Notch</a></b><div><a href="./#features">Features</a><a href="./#install">Install</a><a href="plugins.html">Plugins</a><a href="https://github.com/Brick-Bread/WNotch">GitHub</a></div></nav>
+
+<header style="padding:30px 0 10px">
+<h1 style="margin:10px 0 12px;font-size:clamp(30px,5vw,48px)">Plugins</h1>
+<p class="lead" style="margin-bottom:20px">Plugins add activities to the pill, cards and pages to the notch, and whole themes. Press Install and Notch opens, tells you what the plugin is, and installs it only if you say yes.</p>
+<p class="warn"><b>Only install plugins you trust.</b> A plugin is a program that runs as you, with the same access to your files and accounts. The permissions shown here are what the author says the plugin uses; they are a statement, not a limit.</p>
+</header>
+
+<main>
+<div class="pl-tools">
+<input id="q" type="search" placeholder="Search plugins" aria-label="Search plugins">
+<div class="chips" id="chips" role="group" aria-label="Filter by tag"></div>
+</div>
+<div class="grid" id="list" aria-live="polite"><p class="empty">Loading the plugin list…</p></div>
+
+<section>
+<h2>Make your own</h2>
+<p class="lead">A plugin is a small .NET library with a <code>plugin.json</code>, published as one .zip on a GitHub release. To be listed here, open a pull request that adds it to <a href="https://github.com/Brick-Bread/WNotch/blob/main/site/plugins/registry.json"><code>site/plugins/registry.json</code></a>.</p>
+<p><a href="https://github.com/Brick-Bread/WNotch/blob/main/docs/plugins.md">Plugin guide</a> · <a href="https://github.com/Brick-Bread/WNotch/blob/main/docs/publishing.md">Getting listed</a> · <a href="https://github.com/Brick-Bread/WNotch/tree/main/samples">Samples</a></p>
+</section>
+</main>
+</div>
+<footer>Notch is open source. <a href="https://github.com/Brick-Bread/WNotch/blob/main/LICENSE">Licence</a> · <a href="https://github.com/Brick-Bread/WNotch">GitHub</a></footer>
+
+<script>
+(() => {
+  const list = document.getElementById('list'), q = document.getElementById('q'), chipBox = document.getElementById('chips');
+  const PERM = {network:'Connects to the internet', filesystem:'Reads or writes your files', terminal:'Starts or reads terminal sessions', shell:'Runs other programs', notifications:'Reads your notifications', clipboard:'Reads or writes the clipboard'};
+  let plugins = [], tag = '';
+
+  const el = (name, props = {}, ...kids) => {
+    const node = Object.assign(document.createElement(name), props);
+    for (const kid of kids) node.append(kid);
+    return node;
+  };
+
+  function install(plugin, card, link) {
+    // If Notch handles the link, this page loses focus almost at once. If nothing happened, say what to do.
+    let left = false;
+    const away = () => { left = true; };
+    window.addEventListener('blur', away, {once: true});
+    document.addEventListener('visibilitychange', away, {once: true});
+    setTimeout(() => {
+      window.removeEventListener('blur', away);
+      if (left || card.querySelector('.fallback')) return;
+      const copy = el('button', {type: 'button', textContent: 'Copy'});
+      copy.onclick = () => navigator.clipboard?.writeText(plugin.repository).then(() => { copy.textContent = 'Copied'; });
+      card.append(el('div', {className: 'fallback'},
+        'Nothing opened? Notch has to be installed (version 0.10 or later). ',
+        el('a', {href: 'https://github.com/Brick-Bread/WNotch/releases/latest', textContent: 'Get Notch'}),
+        '. Or in Notch, open Settings, Plugins, and paste ',
+        el('code', {textContent: plugin.repository}), copy));
+    }, 1600);
+  }
+
+  function render() {
+    const needle = q.value.trim().toLowerCase();
+    const shown = plugins.filter(p =>
+      (!tag || p.tags.includes(tag)) &&
+      (!needle || [p.name, p.author, p.description, ...p.tags].some(t => (t || '').toLowerCase().includes(needle))));
+    list.replaceChildren();
+    if (!shown.length) { list.append(el('p', {className: 'empty', textContent: plugins.length ? 'No plugin matches.' : 'No plugins are listed yet.'})); return; }
+    for (const p of shown) {
+      const card = el('div', {className: 'card pl-card'});
+      card.append(el('h3', {textContent: p.name}));
+      card.append(el('p', {className: 'by', textContent: (p.author ? p.author + ' · ' : '') + p.repository}));
+      if (p.verified) card.append(el('div', {className: 'ok', textContent: '✔ Checked: the Notch maintainers have read this plugin’s code'}));
+      if (p.description) card.append(el('p', {textContent: p.description}));
+      card.append(el('p', {className: 'perm', textContent: p.permissions.length
+        ? 'Says it uses: ' + p.permissions.map(x => PERM[x] || x).join(' · ')
+        : 'Does not say what it uses. Treat it as able to do anything.'}));
+      if (p.tags.length) card.append(el('div', {className: 'tags'}, ...p.tags.map(t => el('span', {className: 'tag', textContent: t}))));
+      const button = el('a', {className: 'btn', href: 'notch://install?id=' + encodeURIComponent(p.id), textContent: 'Install'});
+      button.addEventListener('click', () => install(p, card, button));
+      card.append(el('div', {className: 'pl-actions'}, button,
+        el('a', {className: 'src', href: 'https://github.com/' + p.repository, textContent: 'Source'})));
+      list.append(card);
+    }
+  }
+
+  function chips() {
+    const tags = [...new Set(plugins.flatMap(p => p.tags))].sort();
+    chipBox.replaceChildren();
+    if (!tags.length) return;
+    for (const t of ['', ...tags]) {
+      const chip = el('button', {type: 'button', className: 'chip', textContent: t || 'All'});
+      chip.setAttribute('aria-pressed', String(t === tag));
+      chip.onclick = () => { tag = t; chips(); render(); };
+      chipBox.append(chip);
+    }
+  }
+
+  q.addEventListener('input', render);
+  fetch('plugins/registry.json', {cache: 'no-cache'})
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(data => {
+      plugins = (data.plugins || []).map(p => ({...p, tags: p.tags || [], permissions: p.permissions || []}));
+      chips(); render();
+    })
+    .catch(() => { list.replaceChildren(el('p', {className: 'empty', textContent: 'The plugin list could not be loaded. Try again in a moment.'})); });
+})();
+</script>
+</body>
+</html>

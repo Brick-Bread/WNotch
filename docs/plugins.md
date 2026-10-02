@@ -182,6 +182,9 @@ Notch reads the manifest to list a plugin in Settings before running any of its 
 | `description` | no | Shown in the plugin's tooltip in Settings. |
 | `repository` | no | Where the plugin is published, as `owner/name`. Lets Notch look for updates to a copy that was not installed from GitHub. A plugin installed from GitHub is checked without it. |
 | `settings` | no | Options the user can change in Notch's Settings window; see [Settings and files](#settings-and-files). |
+| `permissions` | no | What the plugin uses, as a list of words: `network`, `filesystem`, `terminal`, `shell`, `notifications`, `clipboard`. Shown to the user before the plugin is installed from the plugin list. See below. |
+
+**`permissions` is disclosure, not a limit.** A plugin is .NET code running as the user, so Notch cannot stop it doing anything the user can. The list lets people see what you say the plugin does before they install it, and a plugin that lists nothing is shown as "does not say what it uses". Be honest: list what your plugin really does. Adding the property needs no new `apiVersion`; older Notch versions ignore it.
 
 Property names are not case-sensitive. Comments and trailing commas are accepted. Unknown properties are ignored.
 

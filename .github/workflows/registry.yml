@@ -1,0 +1,29 @@
+name: registry
+
+# Pull requests that change the website's plugin list are checked: every entry well formed, and
+# every plugin's latest release really installable by Notch.
+on:
+  pull_request:
+    paths:
+      - 'site/plugins/registry.json'
+      - '.github/scripts/validate-registry.ps1'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check the plugin list
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          $base = ''
+          if ($env:GITHUB_BASE_REF) {
+            git show "origin/$($env:GITHUB_BASE_REF):site/plugins/registry.json" > base-registry.json 2>$null
+            if ($LASTEXITCODE -eq 0) { $base = 'base-registry.json' }
+          }
+          ./.github/scripts/validate-registry.ps1 -BaseFile $base
