@@ -58,4 +58,23 @@ public class HudTests
     [Fact]
     public void Machines_without_a_battery_never_report() =>
         Assert.Null(new PowerHudTracker().Update(hasBattery: false, pluggedIn: true, percent: 100));
+
+    [Fact]
+    public void Caps_lock_that_was_already_on_at_start_is_silent() =>
+        Assert.Null(new CapsLockHudTracker().Update(on: true));
+
+    [Fact]
+    public void Switching_caps_lock_shows_a_hud_each_time()
+    {
+        var tracker = new CapsLockHudTracker();
+        tracker.Update(on: false);
+
+        Assert.Equal("On", tracker.Update(on: true)?.Detail);
+        Assert.Null(tracker.Update(on: true));
+
+        Activity? off = tracker.Update(on: false);
+        Assert.Equal("Off", off?.Detail);
+        Assert.Equal(HudActivities.CapsLockId, off?.Id);
+        Assert.Equal(ActivityTier.Transient, off?.Tier);
+    }
 }

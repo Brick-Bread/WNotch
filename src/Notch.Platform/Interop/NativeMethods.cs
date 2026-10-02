@@ -27,8 +27,46 @@ internal struct MONITORINFO
     public uint Flags;
 }
 
+[StructLayout(LayoutKind.Sequential)]
+internal struct SIZE
+{
+    public int Width;
+    public int Height;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct BITMAP
+{
+    public int Type;
+    public int Width;
+    public int Height;
+    public int WidthBytes;
+    public ushort Planes;
+    public ushort BitsPixel;
+    public nint Bits;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct BITMAPINFOHEADER
+{
+    public uint Size;
+    public int Width;
+    public int Height;
+    public ushort Planes;
+    public ushort BitCount;
+    public uint Compression;
+    public uint SizeImage;
+    public int XPelsPerMeter;
+    public int YPelsPerMeter;
+    public uint ClrUsed;
+    public uint ClrImportant;
+}
+
 internal static unsafe partial class NativeMethods
 {
+    internal const int VK_CAPITAL = 0x14;
+    internal const uint MOD_NOREPEAT = 0x4000;
+
     internal const int GWL_STYLE = -16;
     internal const int GWL_EXSTYLE = -20;
 
@@ -130,4 +168,35 @@ internal static unsafe partial class NativeMethods
 
     [LibraryImport("shcore.dll")]
     internal static partial int GetDpiForMonitor(nint monitor, int dpiType, out uint dpiX, out uint dpiY);
+
+    [LibraryImport("user32.dll")]
+    internal static partial short GetKeyState(int virtualKey);
+
+    [LibraryImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool RegisterHotKey(nint hwnd, int id, uint modifiers, uint virtualKey);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool UnregisterHotKey(nint hwnd, int id);
+
+    [LibraryImport("shell32.dll", StringMarshalling = StringMarshalling.Utf16)]
+    internal static partial int SHCreateItemFromParsingName(string path, nint bindContext, Guid* interfaceId, out nint item);
+
+    [LibraryImport("gdi32.dll", EntryPoint = "GetObjectW")]
+    internal static partial int GetObject(nint handle, int size, BITMAP* bitmap);
+
+    [LibraryImport("gdi32.dll")]
+    internal static partial int GetDIBits(nint hdc, nint bitmap, uint start, uint lines, byte* bits, BITMAPINFOHEADER* info, uint usage);
+
+    [LibraryImport("gdi32.dll")]
+    internal static partial nint CreateCompatibleDC(nint hdc);
+
+    [LibraryImport("gdi32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool DeleteDC(nint hdc);
+
+    [LibraryImport("gdi32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool DeleteObject(nint handle);
 }

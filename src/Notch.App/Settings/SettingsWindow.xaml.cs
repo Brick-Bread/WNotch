@@ -10,6 +10,7 @@ using Notch.App.Shell;
 using Notch.Core.Activities;
 using Notch.Core.Plugins;
 using Notch.Core.Settings;
+using Notch.Core.Shell;
 using Notch.Core.Widgets;
 using Notch.Platform.Display;
 using Notch.Platform.Startup;
@@ -63,6 +64,8 @@ public partial class SettingsWindow : Window
         ListAccents(settings.AccentColor);
         StartWithWindows.IsChecked = StartupRegistration.IsEnabled;
         ExpandOnHover.IsChecked = settings.ExpandOnHover;
+        ShelfOpensOnDrag.IsChecked = settings.ShelfOpensOnDrag;
+        OpenHotkey.Text = settings.OpenHotkey;
         HideInFullscreen.IsChecked = settings.HideInFullscreen;
         AutoUpdate.IsChecked = settings.AutoUpdate;
         GlowEffects.IsChecked = settings.GlowEffects;
@@ -79,6 +82,7 @@ public partial class SettingsWindow : Window
         ShowBrightness.IsChecked = settings.ShowBrightness;
         ShowPower.IsChecked = settings.ShowPower;
         ShowBluetooth.IsChecked = settings.ShowBluetooth;
+        ShowCapsLock.IsChecked = settings.ShowCapsLock;
         CalendarFeeds.Text = string.Join(Environment.NewLine, settings.CalendarFeeds);
 
         // First entry follows whichever display Windows treats as primary.
@@ -167,13 +171,15 @@ public partial class SettingsWindow : Window
 
     private void OnSave()
     {
-        if (!TryReadTimerPresets(out List<TimerPreset> presets))
+        if (!TryReadTimerPresets(out List<TimerPreset> presets) || !TryReadHotkey(out string hotkey))
         {
             return;
         }
 
         _settings.TimerPresets = presets;
+        _settings.OpenHotkey = hotkey;
         _settings.ExpandOnHover = ExpandOnHover.IsChecked == true;
+        _settings.ShelfOpensOnDrag = ShelfOpensOnDrag.IsChecked == true;
         _settings.Theme = (NotchTheme)Math.Max(0, Theme.SelectedIndex);
         _settings.Position = (NotchPosition)Math.Max(0, Position.SelectedIndex);
         _settings.Style = (NotchStyle)Math.Max(0, IslandStyle.SelectedIndex);
@@ -191,6 +197,7 @@ public partial class SettingsWindow : Window
         _settings.ShowBrightness = ShowBrightness.IsChecked == true;
         _settings.ShowPower = ShowPower.IsChecked == true;
         _settings.ShowBluetooth = ShowBluetooth.IsChecked == true;
+        _settings.ShowCapsLock = ShowCapsLock.IsChecked == true;
         _settings.DisplayIndex = Display.SelectedIndex > 0 ? Display.SelectedIndex - 1 : null;
         _settings.CalendarFeeds = [.. CalendarFeeds.Text
             .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
@@ -249,6 +256,31 @@ public partial class SettingsWindow : Window
         }
 
         return true;
+    }
+
+    /// <summary>Reads the hotkey box, tidied; empty means none. Says what is wrong, and returns false, when it cannot be read.</summary>
+    private bool TryReadHotkey(out string hotkey)
+    {
+        hotkey = OpenHotkey.Text.Trim();
+        if (hotkey.Length == 0)
+        {
+            return true;
+        }
+
+        if (Hotkey.TryParse(hotkey, out Hotkey parsed))
+        {
+            hotkey = parsed.ToString();
+            return true;
+        }
+
+        MessageBox.Show(
+            this,
+            $"This hotkey could not be read:\n\n{hotkey}\n\nUse Ctrl, Alt or Win (and Shift if you like) with a letter, a digit, F1 to F24 or Space, for example Alt+Shift+N or Ctrl+Alt+F12. Leave the box empty for no hotkey.",
+            "Notch",
+            MessageBoxButton.OK,
+            MessageBoxImage.Warning);
+        OpenHotkey.Focus();
+        return false;
     }
 
     /// <summary>The ids ticked in the list right now, which may differ from the saved settings.</summary>

@@ -24,6 +24,9 @@ internal sealed class TerminalBridge
     {
         DefaultBackgroundColor = System.Drawing.Color.Black,
         Focusable = true,
+
+        // A file dropped on the page would make the browser open it in place of the terminal.
+        AllowExternalDrop = false,
     };
 
     /// <summary>The page created a terminal and measured it: id, columns, rows.</summary>

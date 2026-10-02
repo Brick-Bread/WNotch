@@ -10,6 +10,7 @@ public static class HudActivities
     public const string PowerId = "hud.power";
     public const string BluetoothId = "hud.bluetooth";
     public const string AudioOutputId = "hud.audio-output";
+    public const string CapsLockId = "hud.caps-lock";
 
     private static readonly TimeSpan NoticeLifetime = TimeSpan.FromSeconds(3.5);
 
@@ -75,6 +76,17 @@ public static class HudActivities
         Glow = new Glow(GlowColor.Blue, GlowPattern.Flash, connected ? 1 : 0.5),
         Glyph = "",
         Lifetime = NoticeLifetime,
+    };
+
+    public static Activity CapsLock(bool on) => new()
+    {
+        Id = CapsLockId,
+        Tier = ActivityTier.Transient,
+        Title = "Caps Lock",
+        Detail = on ? "On" : "Off",
+        Glow = new Glow(GlowColor.White, GlowPattern.Flash, on ? 0.8 : 0.4),
+        Glyph = "",
+        Lifetime = TimeSpan.FromSeconds(2),
     };
 
     public static Activity AudioOutput(string deviceName) => new()

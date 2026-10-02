@@ -112,6 +112,8 @@ internal sealed class TerminalController : IDisposable
                 Activate(Sessions[Math.Min(index, Sessions.Count - 1)]);
             }
         }
+
+        PublishAgents();
     }
 
     public void Dispose()
@@ -281,14 +283,28 @@ internal sealed class TerminalController : IDisposable
             return;
         }
 
-        Activity? activity = AgentActivities.For(session.Id, session.Profile.DisplayName, session.Profile.Glyph, session.Agent.State);
-        if (activity is null)
+        PublishAgents();
+    }
+
+    /// <summary>
+    /// Puts every session's state in the pill. All of them, not just the one that changed: each
+    /// says how many others have something to report, since the pill only shows one.
+    /// </summary>
+    private void PublishAgents()
+    {
+        int reporting = Sessions.Count(session => session.Agent.State != AgentState.Idle);
+        foreach (TerminalSession session in Sessions)
         {
-            _activities.Remove(AgentActivities.IdFor(session.Id));
-        }
-        else
-        {
-            _activities.Publish(activity);
+            Activity? activity = AgentActivities.For(
+                session.Id, session.Profile.DisplayName, session.Profile.Glyph, session.Agent.State, session.FolderName, reporting - 1);
+            if (activity is null)
+            {
+                _activities.Remove(AgentActivities.IdFor(session.Id));
+            }
+            else
+            {
+                _activities.Publish(activity);
+            }
         }
     }
 

@@ -20,6 +20,7 @@ public partial class NotchWindow
         Home,
         Terminal,
         Stats,
+        Shelf,
         Plugins,
         Page,
     }
@@ -27,7 +28,7 @@ public partial class NotchWindow
     /// <summary>Something in the notch is taking keyboard input, so it must not close under the user while it has focus.</summary>
     private bool KeyboardInUse => _expanded && IsActive && (_tab == NotchTab.Terminal || PageTakesInput || _timerEntryOpen);
 
-    /// <summary>Selects a tab by name ("home", "terminal", "stats", "plugins"); unknown names are ignored.</summary>
+    /// <summary>Selects a tab by name ("home", "terminal", "stats", "shelf", "plugins"); unknown names are ignored.</summary>
     public void ShowTab(string name)
     {
         if (Enum.TryParse(name, ignoreCase: true, out NotchTab tab))
@@ -36,6 +37,7 @@ public partial class NotchWindow
             {
                 NotchTab.Terminal => TabTerminal,
                 NotchTab.Stats => TabStats,
+                NotchTab.Shelf => TabShelf,
                 NotchTab.Plugins => TabPlugins,
                 _ => TabHome,
             }).IsChecked = true;
@@ -58,6 +60,7 @@ public partial class NotchWindow
         TabHome.Checked += (_, _) => SelectTab(NotchTab.Home);
         TabTerminal.Checked += (_, _) => SelectTab(NotchTab.Terminal);
         TabStats.Checked += (_, _) => SelectTab(NotchTab.Stats);
+        TabShelf.Checked += (_, _) => SelectTab(NotchTab.Shelf);
         TabPlugins.Checked += (_, _) => SelectTab(NotchTab.Plugins);
 
         NewClaude.Click += (_, _) => OpenSession(TerminalProfile.Claude);
@@ -72,7 +75,7 @@ public partial class NotchWindow
         // Clicking another window is how the user leaves a focused terminal.
         Deactivated += (_, _) =>
         {
-            if (!PointerOverIsland())
+            if (!PointerOverIsland() && !_dragOutActive && !_shelfMenuOpen)
             {
                 SetExpanded(false);
             }
@@ -85,6 +88,7 @@ public partial class NotchWindow
         HomePanel.Visibility = tab == NotchTab.Home ? Visibility.Visible : Visibility.Collapsed;
         TerminalPanel.Visibility = tab == NotchTab.Terminal ? Visibility.Visible : Visibility.Collapsed;
         StatsPanel.Visibility = tab == NotchTab.Stats ? Visibility.Visible : Visibility.Collapsed;
+        ShelfPanel.Visibility = tab == NotchTab.Shelf ? Visibility.Visible : Visibility.Collapsed;
         PluginsPanel.Visibility = tab == NotchTab.Plugins ? Visibility.Visible : Visibility.Collapsed;
         PagePanel.Visibility = tab == NotchTab.Page ? Visibility.Visible : Visibility.Collapsed;
 

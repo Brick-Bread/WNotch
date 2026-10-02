@@ -1,5 +1,7 @@
 using Notch.Core.Activities;
+using Notch.Core.Hud;
 using Notch.Core.Settings;
+using Notch.Core.Shell;
 using Notch.Core.Widgets;
 
 namespace Notch.Core.Tests;
@@ -87,6 +89,33 @@ public class SettingsTests
         Assert.Equal(new TimerPreset("Stretch", 120), timers[0]);
         Assert.Equal("Far too lo", timers[1].Name);
         Assert.All(timers, preset => Assert.True(preset.IsValid));
+    }
+
+    [Fact]
+    public void Shelf_and_hotkey_settings_have_working_defaults_and_round_trip()
+    {
+        WithStore(store =>
+        {
+            AppSettings fresh = store.Load();
+            Assert.True(fresh.ShelfOpensOnDrag);
+            Assert.True(Hotkey.TryParse(fresh.OpenHotkey, out _));
+
+            store.Save(new AppSettings { ShelfOpensOnDrag = false, OpenHotkey = "" });
+
+            AppSettings saved = store.Load();
+            Assert.False(saved.ShelfOpensOnDrag);
+            Assert.Equal("", saved.OpenHotkey);
+        });
+    }
+
+    [Fact]
+    public void Switching_a_hud_off_suppresses_its_activity()
+    {
+        Assert.Empty(new AppSettings().SuppressedActivityIds());
+
+        Assert.Equal(
+            [HudActivities.BluetoothId, HudActivities.CapsLockId],
+            new AppSettings { ShowBluetooth = false, ShowCapsLock = false }.SuppressedActivityIds());
     }
 
     private static void WithStore(Action<SettingsStore> test)

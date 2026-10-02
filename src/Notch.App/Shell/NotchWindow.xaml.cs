@@ -9,9 +9,11 @@ using Notch.App.Terminal;
 using Notch.Core.Media;
 using Notch.Core.Plugins;
 using Notch.Core.Settings;
+using Notch.Core.Shelf;
 using Notch.Core.Shell;
 using Notch.Core.Widgets;
 using Notch.Platform.Display;
+using Keyboard = Notch.Platform.Input.Keyboard;
 
 namespace Notch.App.Shell;
 
@@ -43,6 +45,7 @@ public partial class NotchWindow : Window
     private readonly PluginCardBoard _pluginCards;
     private readonly PluginPageBoard _pluginPages;
     private readonly PluginShellState _shellState;
+    private readonly FileShelf _shelf;
     private readonly SettingsStore _settingsStore;
     private readonly AppSettings _settings;
     private readonly NotchAnimator _animator;
@@ -75,6 +78,7 @@ public partial class NotchWindow : Window
         PluginCardBoard pluginCards,
         PluginPageBoard pluginPages,
         PluginShellState shellState,
+        FileShelf shelf,
         SettingsStore settingsStore,
         AppSettings settings)
     {
@@ -87,6 +91,7 @@ public partial class NotchWindow : Window
         _pluginCards = pluginCards;
         _pluginPages = pluginPages;
         _shellState = shellState;
+        _shelf = shelf;
         _settingsStore = settingsStore;
         _settings = settings;
         _glow = new GlowController(GlowLayer, GlowCore) { Gain = GlowOutput.Gain(settings.GlowIntensity) };
@@ -95,6 +100,8 @@ public partial class NotchWindow : Window
         InitializeWidgets();
         InitializePlugins();
         InitializePages();
+        InitializeShelf();
+        InitializeKeyboard();
 
         Shape idle = ShapeFor(NotchMode.Idle);
         _animator = new NotchAnimator(idle.Width, idle.Height, idle.Radius);
@@ -143,6 +150,7 @@ public partial class NotchWindow : Window
         NotchMode.Peek => new Shape(360, 44, 22),
         NotchMode.Expanded when _tab == NotchTab.Terminal => new Shape(920, 540, 30),
         NotchMode.Expanded when _tab == NotchTab.Stats => new Shape(640, 290, 30),
+        NotchMode.Expanded when _tab == NotchTab.Shelf => new Shape(640, ShelfTabHeight, 30),
         NotchMode.Expanded when _tab == NotchTab.Plugins => new Shape(640, PluginsTabHeight, 30),
         NotchMode.Expanded when _tab == NotchTab.Page => new Shape(920, 540, 30),
 
@@ -160,6 +168,7 @@ public partial class NotchWindow : Window
         HwndSource.FromHwnd(_hwnd).AddHook(WndProc);
 
         Reposition();
+        RegisterOpenHotkey();
         _housekeepingTimer.Start();
 
         // The periodic check alone would leave the notch over a game for up to a second after it starts.
@@ -179,6 +188,7 @@ public partial class NotchWindow : Window
         _media.Changed -= OnMediaChanged;
         _pluginCards.Changed -= OnPluginCardsChanged;
         _pluginPages.Changed -= OnPluginPagesChanged;
+        _shelf.Changed -= OnShelfChanged;
         ThemeManager.Changed -= OnThemeChanged;
         _mediaTimer.Stop();
         _glow.Dispose();
@@ -186,13 +196,24 @@ public partial class NotchWindow : Window
         _pointerWatch.Stop();
         _housekeepingTimer.Stop();
         _fullscreenRecheck.Stop();
+        _capsLockTimer.Stop();
+        if (_hotkeyRegistered)
+        {
+            Keyboard.UnregisterHotkey(_hwnd, OpenHotkeyId);
+        }
+
         _foregroundWatcher?.Dispose();
         base.OnClosed(e);
     }
 
     private nint WndProc(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
     {
-        if (msg is WM_DISPLAYCHANGE or WM_DPICHANGED)
+        if (msg == Keyboard.HotkeyMessage && wParam == OpenHotkeyId)
+        {
+            OnOpenHotkey();
+            handled = true;
+        }
+        else if (msg is WM_DISPLAYCHANGE or WM_DPICHANGED)
         {
             // Let WPF finish its own DPI handling before measuring against the new layout.
             Dispatcher.BeginInvoke(Reposition, DispatcherPriority.Background);
@@ -238,6 +259,7 @@ public partial class NotchWindow : Window
     {
         ThemeManager.Apply(_settings);
         Reposition();
+        RegisterOpenHotkey();
         Housekeeping();
         RefreshCalendar();
         ShowTimerPresets();
@@ -348,7 +370,8 @@ public partial class NotchWindow : Window
         NoteForegroundWindow();
 
         // Not while the user is typing into the notch: then it is the foreground window, by their choice.
-        bool fullscreen = _settings.HideInFullscreen && !KeyboardInUse && FullscreenDetector.IsFullscreenAppOn(_display, _hwnd);
+        // Nor in the middle of a drag out of it, which may well end on a fullscreen app.
+        bool fullscreen = _settings.HideInFullscreen && !KeyboardInUse && !_dragOutActive && FullscreenDetector.IsFullscreenAppOn(_display, _hwnd);
         SetHiddenForFullscreen(fullscreen);
         if (!fullscreen)
         {
@@ -433,13 +456,15 @@ public partial class NotchWindow : Window
         bool closePending = _hoverTimer.IsEnabled && !_hoverWantsExpanded;
         if (PointerOverIsland())
         {
+            // From here on the pointer is in charge again: leaving closes the notch as usual.
+            _hotkeyHold = false;
             if (closePending)
             {
                 HoverTrace.Write("watch: close cancelled");
                 _hoverTimer.Stop();
             }
         }
-        else if (!closePending && !_pinnedOpen)
+        else if (!closePending && !_pinnedOpen && !HoldOpen)
         {
             HoverTrace.Write("watch: pointer left");
             ScheduleExpanded(false, CloseDelay);
@@ -478,9 +503,15 @@ public partial class NotchWindow : Window
         SetExpanded(true);
     }
 
+    /// <summary>
+    /// Something keeps the notch open although the pointer is not on it: it has the keyboard, a
+    /// file is being dragged out of it, a menu of its own is showing, or the hotkey opened it.
+    /// </summary>
+    private bool HoldOpen => KeyboardInUse || _dragOutActive || _shelfMenuOpen || _hotkeyHold;
+
     private void ScheduleExpanded(bool expanded, TimeSpan delay)
     {
-        if (!expanded && KeyboardInUse)
+        if (!expanded && HoldOpen)
         {
             return;
         }
@@ -533,11 +564,13 @@ public partial class NotchWindow : Window
             if (expanded)
             {
                 UpdateCalendar();
+                PruneShelf();
                 _pointerWatch.Start();
             }
             else
             {
                 _pointerWatch.Stop();
+                _hotkeyHold = false;
                 SetTimerEntryOpen(false);
             }
 

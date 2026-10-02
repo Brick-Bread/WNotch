@@ -34,7 +34,7 @@ jobs:
           $out = Join-Path $PWD 'shots'
           $p = Start-Process $exe -ArgumentList '--demo', "--screenshots=`"$out`"" -Wait -PassThru
           $count = (Get-ChildItem $out -Filter *.png -ErrorAction SilentlyContinue).Count
-          if ($p.ExitCode -ne 0 -or $count -lt 10) { throw "Screenshots failed: exit $($p.ExitCode), $count pictures" }
+          if ($p.ExitCode -ne 0 -or $count -lt 12) { throw "Screenshots failed: exit $($p.ExitCode), $count pictures" }
       - uses: actions/upload-artifact@v4
         with:
           name: shots

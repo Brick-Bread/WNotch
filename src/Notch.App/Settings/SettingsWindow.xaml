@@ -43,6 +43,8 @@
         <TextBlock Text="General" Style="{StaticResource Heading}" />
         <CheckBox x:Name="StartWithWindows" Content="Start with Windows" />
         <CheckBox x:Name="ExpandOnHover" Content="Open the notch when the pointer hovers over it" />
+        <CheckBox x:Name="ShelfOpensOnDrag" Content="Open the Shelf when files are dragged onto the pill"
+                  ToolTip="When off, files dropped on the pill still go on the shelf; the notch just stays closed." />
         <CheckBox x:Name="HideInFullscreen" Content="Hide while a game or other fullscreen app is showing" />
         <CheckBox x:Name="AutoUpdate" Content="Install updates automatically"
                   ToolTip="Checks GitHub for new releases, installs them in the background and restarts Notch when it is not in use." />
@@ -72,6 +74,11 @@
                 <ComboBoxItem Content="Follow Windows" />
             </ComboBox>
         </DockPanel>
+        <DockPanel Margin="0,8,0,0">
+            <TextBlock Text="Hotkey" VerticalAlignment="Center" Width="64" />
+            <TextBox x:Name="OpenHotkey"
+                     ToolTip="Opens and closes the notch from any app. Ctrl, Alt, Shift and Win with a letter, a digit, F1 to F24 or Space, such as Alt+Shift+N or Ctrl+Alt+F12. Leave empty for none." />
+        </DockPanel>
         <DockPanel Margin="0,10,0,0">
             <TextBlock Text="Accent" VerticalAlignment="Center" Width="64" />
             <!-- One swatch per colour, added in code. -->
@@ -92,6 +99,7 @@
         <CheckBox x:Name="ShowBrightness" Content="Brightness changes" />
         <CheckBox x:Name="ShowPower" Content="Charging and low battery" />
         <CheckBox x:Name="ShowBluetooth" Content="Bluetooth devices connecting" />
+        <CheckBox x:Name="ShowCapsLock" Content="Caps Lock switching on or off" />
 
         <TextBlock Text="Timer presets" Style="{StaticResource Heading}" Margin="0,22,0,4" />
         <TextBlock TextWrapping="Wrap" Opacity="0.7" Margin="0,0,0,8"

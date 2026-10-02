@@ -27,6 +27,16 @@ public sealed class AppSettings
     /// <summary>Open the notch by hovering over it. When off, it opens on click only.</summary>
     public bool ExpandOnHover { get; set; } = true;
 
+    /// <summary>Open the notch on its Shelf tab when files are dragged onto the pill. When off, files can still be dropped on the open Shelf tab.</summary>
+    public bool ShelfOpensOnDrag { get; set; } = true;
+
+    /// <summary>
+    /// Keys that open and close the notch from any app, as <see cref="Shell.Hotkey.TryParse"/> reads them.
+    /// Empty, or anything it cannot read, means no hotkey. The default has no Win key, whose
+    /// combinations Windows keeps taking for itself, and not Ctrl+Alt, which is how AltGr types letters.
+    /// </summary>
+    public string OpenHotkey { get; set; } = "Alt+Shift+N";
+
     public bool HideInFullscreen { get; set; } = true;
 
     /// <summary>Dark or light colours, or whichever Windows is set to for apps.</summary>
@@ -64,6 +74,8 @@ public sealed class AppSettings
     public bool ShowPower { get; set; } = true;
 
     public bool ShowBluetooth { get; set; } = true;
+
+    public bool ShowCapsLock { get; set; } = true;
 
     public int PomodoroFocusMinutes { get; set; } = 25;
 
@@ -139,6 +151,11 @@ public sealed class AppSettings
         if (!ShowBluetooth)
         {
             yield return HudActivities.BluetoothId;
+        }
+
+        if (!ShowCapsLock)
+        {
+            yield return HudActivities.CapsLockId;
         }
     }
 

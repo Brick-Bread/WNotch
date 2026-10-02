@@ -24,6 +24,33 @@ public class ShellTests
     public void Expanded_wins_over_activities() =>
         Assert.Equal(NotchMode.Expanded, NotchModeResolver.Resolve(expanded: true, [Make(ActivityTier.Transient)]));
 
+    [Theory]
+    [InlineData("Win+Shift+N", HotkeyModifiers.Win | HotkeyModifiers.Shift, 0x4E, "Shift+Win+N")]
+    [InlineData(" ctrl + alt + space ", HotkeyModifiers.Ctrl | HotkeyModifiers.Alt, 0x20, "Ctrl+Alt+Space")]
+    [InlineData("Control+7", HotkeyModifiers.Ctrl, 0x37, "Ctrl+7")]
+    [InlineData("windows+f12", HotkeyModifiers.Win, 0x7B, "Win+F12")]
+    public void Hotkey_is_read_as_typed_and_written_tidily(string text, HotkeyModifiers modifiers, int key, string tidy)
+    {
+        Assert.True(Hotkey.TryParse(text, out Hotkey hotkey));
+
+        Assert.Equal(new Hotkey(modifiers, key), hotkey);
+        Assert.Equal(tidy, hotkey.ToString());
+    }
+
+    // Nothing, no key, a key Notch does not offer, an unknown modifier, and keys that would be taken away from typing.
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("Ctrl+")]
+    [InlineData("Ctrl+Alt")]
+    [InlineData("Ctrl+Enter")]
+    [InlineData("Ctrl+F25")]
+    [InlineData("Hyper+N")]
+    [InlineData("N")]
+    [InlineData("Shift+N")]
+    public void Hotkey_that_cannot_be_used_is_refused(string? text) =>
+        Assert.False(Hotkey.TryParse(text, out _));
+
     // A 2560-wide display at 150%, to the right of another one; the idle pill is 180 x 32 DIPs.
     [Theory]
     [InlineData(3200, 0, true)]

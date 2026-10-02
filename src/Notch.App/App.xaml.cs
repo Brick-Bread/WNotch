@@ -13,6 +13,7 @@ using Notch.Core.Activities;
 using Notch.Core.Media;
 using Notch.Core.Plugins;
 using Notch.Core.Settings;
+using Notch.Core.Shelf;
 using Notch.Core.Terminal;
 using Notch.Platform.Hud;
 using Notch.Platform.Media;
@@ -22,6 +23,16 @@ namespace Notch.App;
 public partial class App : Application
 {
     private static readonly HttpClient PluginHttp = new() { Timeout = TimeSpan.FromMinutes(2) };
+
+    /// <summary>What is on the shelf under <c>--demo</c>. None of it exists, so each tile shows a plain glyph.</summary>
+    private static readonly string[] DemoShelf =
+    [
+        @"C:\Demo\Quarterly report.pdf",
+        @"C:\Demo\Holiday photos",
+        @"C:\Demo\budget.xlsx",
+        @"C:\Demo\notes.txt",
+        @"C:\Demo\logo.png",
+    ];
 
     private Mutex? _singleInstance;
     private ActivityManager? _activities;
@@ -121,9 +132,27 @@ public partial class App : Application
             ThemeManager.Override = theme;
         }
 
+        // The demo's shelf is made up and never saved, so it cannot touch the real one.
+        FileShelf shelf;
+        if (demo)
+        {
+            shelf = new FileShelf(DemoShelf);
+        }
+        else
+        {
+            var shelfStore = new ShelfStore(Path.Combine(appData, "shelf.json"));
+            shelf = new FileShelf(shelfStore.Load());
+
+            // One save at a time: the shelf reports changes on whichever thread made them.
+            shelf.Changed += (_, _) => Dispatcher.BeginInvoke(() => shelfStore.Save(shelf.Snapshot()));
+        }
+
         // Before any window exists, so nothing is ever drawn without its colours.
         ThemeManager.Apply(settings);
-        var window = new NotchWindow(_activities, media, _terminal, pluginCards, _plugins.Pages, _plugins.ShellState, settingsStore, settings);
+        var window = new NotchWindow(_activities, media, _terminal, pluginCards, _plugins.Pages, _plugins.ShellState, shelf, settingsStore, settings)
+        {
+            ShelfKeepsMissingFiles = demo,
+        };
 
         // --display=2 uses the display the settings window lists as "Display 2", for this run only.
         if (int.TryParse(Option(e, "--display="), out int display))
@@ -253,6 +282,12 @@ public partial class App : Application
             _activities?.SetSuppressed(settings.SuppressedActivityIds());
             notch.ApplySettings();
             _updates?.CheckSoon();
+
+            // Only now is it known whether Windows lets Notch have the hotkey.
+            if (notch.HotkeyProblem is { } problem)
+            {
+                MessageBox.Show(problem + " Choose another one in Settings.", "Notch", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
 
             string[] enabledPlugins = [.. settings.EnabledPlugins];
             Task.Run(() => _plugins?.SetEnabled(enabledPlugins));

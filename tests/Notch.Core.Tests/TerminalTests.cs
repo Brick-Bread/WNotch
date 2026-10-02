@@ -127,6 +127,18 @@ public class TerminalTests
     }
 
     [Fact]
+    public void Agent_activity_names_its_folder_and_counts_the_other_sessions()
+    {
+        Activity alone = AgentActivities.For("1", "Claude", "g", AgentState.Working, "notch")!;
+        Assert.Equal(("Claude · notch", "Working"), (alone.Title, alone.Detail));
+
+        Activity oneOfThree = AgentActivities.For("1", "Codex", "g", AgentState.NeedsInput, "website", others: 2)!;
+        Assert.Equal(("Codex · website", "Needs input · +2"), (oneOfThree.Title, oneOfThree.Detail));
+
+        Assert.Equal("Claude", AgentActivities.For("1", "Claude", "g", AgentState.Done, folderName: "")!.Title);
+    }
+
+    [Fact]
     public void Claude_settings_hook_every_tracked_event()
     {
         JsonNode settings = JsonNode.Parse(AgentHooks.BuildClaudeSettings(@"C:\Apps\Notch\Notch.Hook.exe"))!;

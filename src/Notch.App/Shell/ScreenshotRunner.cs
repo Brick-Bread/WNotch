@@ -35,6 +35,7 @@ internal static class ScreenshotRunner
         await Compact("pill-charging", HudActivities.Power(pluggedIn: true, percent: 82));
         await Compact("pill-bluetooth", HudActivities.Bluetooth("Headphones", connected: true));
         await Compact("pill-low-battery", HudActivities.LowBattery(9));
+        await Compact("pill-caps-lock", HudActivities.CapsLock(on: true));
 
         window.SetPinned(true);
         window.ShowTab("home");
@@ -45,5 +46,9 @@ internal static class ScreenshotRunner
         await window.WaitUntilSettledAsync();
         await Task.Delay(10000);
         window.SavePicture(File("stats"));
+
+        window.ShowTab("shelf");
+        await window.WaitUntilSettledAsync();
+        window.SavePicture(File("shelf"));
     }
 }
