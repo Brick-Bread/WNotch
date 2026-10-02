@@ -218,6 +218,9 @@ Things to know:
 | `DataDirectory` | A folder for the plugin's own files. Created on first access. |
 | `Activities` | [Activities: the pill](#activities-the-pill) |
 | `Cards` | [Cards: the Plugins tab](#cards-the-plugins-tab) |
+| `Pages` | [Pages: tabs with a console](#pages-tabs-with-a-console) |
+| `Shell` | [The notch's state, notices and messages between plugins](#the-notchs-state-notices-and-messages-between-plugins) |
+| `Bus` | [The notch's state, notices and messages between plugins](#the-notchs-state-notices-and-messages-between-plugins) |
 | `Settings` | [Settings and files](#settings-and-files) |
 | `Log` | [Logging](#logging) |
 

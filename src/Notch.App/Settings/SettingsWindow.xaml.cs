@@ -197,7 +197,21 @@ public partial class SettingsWindow : Window
             .Distinct(StringComparer.OrdinalIgnoreCase)];
         _settings.EnabledPlugins = [.. TickedPlugins()];
         _store.Save(_settings);
-// Plugin options go to each plugin's own settings file. A running plugin is told, or restarted,        // which runs its code, so not on this thread.        var optionChanges = _options.ToDictionary(o => o.Key, o => o.Value.Changes()).Where(o => o.Value.Count > 0).ToList();        if (optionChanges.Count > 0)        {            PluginManager plugins = _plugins;            _ = Task.Run(() =>            {                foreach ((string pluginId, Dictionary<string, System.Text.Json.JsonElement> changes) in optionChanges)                {                    plugins.ApplySettings(pluginId, changes);                }            });        }
+
+        // Plugin options go to each plugin's own settings file. A running plugin is told, or restarted,
+        // which runs its code, so not on this thread.
+        var optionChanges = _options.ToDictionary(o => o.Key, o => o.Value.Changes()).Where(o => o.Value.Count > 0).ToList();
+        if (optionChanges.Count > 0)
+        {
+            PluginManager plugins = _plugins;
+            _ = Task.Run(() =>
+            {
+                foreach ((string pluginId, Dictionary<string, System.Text.Json.JsonElement> changes) in optionChanges)
+                {
+                    plugins.ApplySettings(pluginId, changes);
+                }
+            });
+        }
 
         try
         {
