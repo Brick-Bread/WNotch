@@ -52,7 +52,8 @@ public partial class SettingsWindow : Window
         PluginInstallFlow installFlow,
         Func<Func<bool>, Task<string>> forceNotchUpdate,
         Func<bool> hasOpenTerminals,
-        Action restart)
+        Action restart,
+        Action clearClipboard)
     {
         InitializeComponent();
         _settings = settings;
@@ -134,6 +135,13 @@ public partial class SettingsWindow : Window
         CheckPluginUpdates.Click += (_, _) => _ = CheckPluginUpdatesAsync(userInitiated: true);
         UpdateNotch.Click += (_, _) => OnUpdateNotch();
         BrowsePlugins.Click += (_, _) => OnBrowsePlugins();
+
+        ClipboardHistory.IsChecked = settings.ClipboardHistory;
+        ClearClipboard.Click += (_, _) =>
+        {
+            clearClipboard();
+            ClearClipboard.Content = "Cleared";
+        };
 
         DetectAgents.IsChecked = settings.DetectAgents;
         foreach (AgentDefinition agent in AgentCatalog.All)
@@ -329,6 +337,7 @@ public partial class SettingsWindow : Window
         }
 
         _settings.DetectAgents = DetectAgents.IsChecked == true;
+        _settings.ClipboardHistory = ClipboardHistory.IsChecked == true;
         _settings.HiddenAgents = [.. AgentToggles.Children.OfType<CheckBox>().Where(c => c.IsChecked != true).Select(c => (string)c.Tag)];
         if (!TryApplyAgentHooks())
         {

@@ -81,13 +81,14 @@ public static class TerminalPresets
             return AgentKind.Claude;
         }
 
-        return file.Contains("codex", StringComparison.OrdinalIgnoreCase) ? AgentKind.Codex : AgentKind.None;
+        // Any other agent Notch knows by name (Codex, Gemini, Aider).
+        return AgentCatalog.ForCommand(command)?.Kind ?? AgentKind.None;
     }
 
     private static string GlyphFor(AgentKind agent) => agent switch
     {
-        AgentKind.Claude => "\uE99A",
-        AgentKind.Codex => "\uE943",
+        AgentKind.Claude or AgentKind.Gemini => "\uE99A",
+        AgentKind.Codex or AgentKind.Aider => "\uE943",
         _ => "\uE756",
     };
 

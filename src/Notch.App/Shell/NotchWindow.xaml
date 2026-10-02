@@ -60,6 +60,9 @@
                     <RadioButton x:Name="TabTerminal" Style="{DynamicResource TabButton}" Content="Terminal" />
                     <RadioButton x:Name="TabStats" Style="{DynamicResource TabButton}" Content="Stats" />
                     <RadioButton x:Name="TabShelf" Style="{DynamicResource TabButton}" Content="Shelf" />
+                    <!-- Only shown while the clipboard history is switched on in settings. -->
+                    <RadioButton x:Name="TabClipboard" Style="{DynamicResource TabButton}" Content="Clipboard"
+                                 Visibility="Collapsed" />
                     <!-- Only shown while a plugin has a card to put on it. -->
                     <RadioButton x:Name="TabPlugins" Style="{DynamicResource TabButton}" Content="Plugins"
                                  Visibility="Collapsed" />
@@ -380,6 +383,65 @@
                     </ScrollViewer>
 
                     <TextBlock x:Name="ShelfEmpty" Grid.Row="1" Opacity="0.45" Text="Drag files onto the notch to keep them here"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Grid>
+
+                <!-- Clipboard: what was copied lately. Click a row to copy it again. -->
+                <Grid x:Name="ClipboardPanel" Grid.Row="1" Margin="0,10,0,0" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <DockPanel>
+                        <Button x:Name="ClipboardClear" DockPanel.Dock="Right" Style="{DynamicResource PillButton}"
+                                Content="Clear" ToolTip="Forget everything except what is pinned" />
+                        <Grid>
+                            <TextBox x:Name="ClipboardSearch" Style="{StaticResource PillTextBox}" Padding="10,5" FontSize="13" />
+                            <TextBlock x:Name="ClipboardSearchHint" IsHitTestVisible="False" Opacity="0.4" Margin="12,0,0,0"
+                                       VerticalAlignment="Center" FontSize="13" Text="Search what you copied" />
+                        </Grid>
+                    </DockPanel>
+
+                    <ScrollViewer Grid.Row="1" Margin="0,8,0,0" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl x:Name="ClipboardList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="Transparent" Cursor="Hand" Height="38" Margin="0,0,0,2"
+                                            CornerRadius="{DynamicResource ControlRadius}" Tag="{Binding}"
+                                            MouseLeftButtonDown="OnClipboardRowClicked" ToolTip="Click to copy it again">
+                                        <Grid Margin="6,0,2,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="34" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Grid Width="28" Height="28" HorizontalAlignment="Left">
+                                                <TextBlock Text="{Binding Glyph}" FontFamily="{DynamicResource IconFont}" FontSize="16"
+                                                           Opacity="0.6" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" />
+                                            </Grid>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Preview}" FontSize="12" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding Subtitle}" FontSize="10" Opacity="0.5" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Style="{DynamicResource IconButton}" Content="&#xE8D5;" FontSize="12" Width="26" Height="26"
+                                                        Tag="{Binding}" Visibility="{Binding ShelfVisibility}" ToolTip="Put these files on the shelf"
+                                                        Click="OnClipboardShelfClicked" />
+                                                <Button Style="{DynamicResource IconButton}" Content="{Binding PinGlyph}" FontSize="12" Width="26" Height="26"
+                                                        Tag="{Binding}" ToolTip="{Binding PinTip}" Click="OnClipboardPinClicked" />
+                                                <Button Style="{DynamicResource IconButton}" Content="&#xE711;" FontSize="10" Width="26" Height="26"
+                                                        Tag="{Binding}" ToolTip="Forget this one" Click="OnClipboardDeleteClicked" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <TextBlock x:Name="ClipboardEmpty" Grid.Row="1" Opacity="0.45" Text="Things you copy will show up here"
                                HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Grid>
 

@@ -13,6 +13,7 @@ using Notch.Core.Settings;
 using Notch.Core.Shelf;
 using Notch.Core.Shell;
 using Notch.Core.Widgets;
+using Notch.Platform.Clipboard;
 using Notch.Platform.Display;
 using Keyboard = Notch.Platform.Input.Keyboard;
 
@@ -108,6 +109,7 @@ public partial class NotchWindow : Window
         InitializeShelf();
         InitializeKeyboard();
         InitializeAgents();
+        InitializeClipboard();
 
         Shape idle = ShapeFor(NotchMode.Idle);
         _animator = new NotchAnimator(idle.Width, idle.Height, idle.Radius);
@@ -164,6 +166,7 @@ public partial class NotchWindow : Window
         NotchMode.Expanded when _tab == NotchTab.Stats => new Shape(640, 290, 30),
         NotchMode.Expanded when _tab == NotchTab.Shelf => new Shape(640, ShelfTabHeight, 30),
         NotchMode.Expanded when _tab == NotchTab.Plugins => new Shape(640, PluginsTabHeight, 30),
+        NotchMode.Expanded when _tab == NotchTab.Clipboard => new Shape(640, ClipboardTabHeight, 30),
         NotchMode.Expanded when _tab == NotchTab.Page => new Shape(920, 540, 30),
 
         // Home is taller while the media card or the agents card is showing.
@@ -178,6 +181,7 @@ public partial class NotchWindow : Window
         _hwnd = new WindowInteropHelper(this).Handle;
         OverlayWindow.ApplyOverlayStyles(_hwnd);
         HwndSource.FromHwnd(_hwnd).AddHook(WndProc);
+        ApplyClipboardSetting();
 
         Reposition();
         RegisterOpenHotkey();
@@ -214,6 +218,11 @@ public partial class NotchWindow : Window
             Keyboard.UnregisterHotkey(_hwnd, OpenHotkeyId);
         }
 
+        if (_clipboardRegistered)
+        {
+            ClipboardListener.Unregister(_hwnd);
+        }
+
         _foregroundWatcher?.Dispose();
         base.OnClosed(e);
     }
@@ -223,6 +232,11 @@ public partial class NotchWindow : Window
         if (msg == Keyboard.HotkeyMessage && wParam == OpenHotkeyId)
         {
             OnOpenHotkey();
+            handled = true;
+        }
+        else if (msg == ClipboardListener.UpdateMessage)
+        {
+            OnClipboardUpdate();
             handled = true;
         }
         else if (msg is WM_DISPLAYCHANGE or WM_DPICHANGED)
@@ -273,6 +287,7 @@ public partial class NotchWindow : Window
         ThemeManager.Apply(_settings);
         Reposition();
         RegisterOpenHotkey();
+        ApplyClipboardSetting();
         Housekeeping();
         RefreshCalendar();
         ShowTimerPresets();

@@ -118,6 +118,12 @@
         <TextBlock TextWrapping="Wrap" Opacity="0.7" Margin="28,2,0,0" FontSize="12"
                    Text="Edits ~\.claude\settings.json and ~\.codex\config.toml after asking, with a backup next to each. Codex runs only one notify command, so an existing one is never replaced." />
 
+        <TextBlock Text="Clipboard" Style="{StaticResource Heading}" Margin="0,22,0,4" />
+        <CheckBox x:Name="ClipboardHistory" Content="Keep a history of what I copy (adds a Clipboard tab)" />
+        <TextBlock TextWrapping="Wrap" Opacity="0.7" Margin="28,2,0,0" FontSize="12"
+                   Text="Kept in memory and gone when Notch quits, except what you pin. Copies that password managers mark as private are never kept." />
+        <Button x:Name="ClearClipboard" Content="Clear the history now" HorizontalAlignment="Left" Margin="28,6,0,0" />
+
         <TextBlock Text="Terminal buttons" Style="{StaticResource Heading}" Margin="0,22,0,4" />
         <TextBlock TextWrapping="Wrap" Opacity="0.7" Margin="0,0,0,8"
                    Text="One per line, up to six: Name = command arguments. Put NAME=value pairs before the command to set environment variables for that button only, for example &quot;Work Claude = CLAUDE_CONFIG_DIR=C:\work claude&quot; or &quot;Codex fork = my-codex --model o3&quot;. A command with claude or codex in its name gets the agent status in the pill." />

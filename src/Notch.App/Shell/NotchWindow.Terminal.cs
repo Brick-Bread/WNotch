@@ -25,23 +25,38 @@ public partial class NotchWindow
         Terminal,
         Stats,
         Shelf,
+        Clipboard,
         Plugins,
         Page,
     }
 
     /// <summary>Something in the notch is taking keyboard input, so it must not close under the user while it has focus.</summary>
-    private bool KeyboardInUse => _expanded && IsActive && (_tab == NotchTab.Terminal || PageTakesInput || _timerEntryOpen);
+    private bool KeyboardInUse => _expanded && IsActive && (_tab is NotchTab.Terminal or NotchTab.Clipboard || PageTakesInput || _timerEntryOpen);
 
     /// <summary>Selects a tab by name ("home", "terminal", "stats", "shelf", "plugins"); unknown names are ignored.</summary>
     public void ShowTab(string name)
     {
         if (Enum.TryParse(name, ignoreCase: true, out NotchTab tab))
         {
+            if (tab == NotchTab.Clipboard && !_settings.ClipboardHistory)
+            {
+                _activities.Publish(new Notch.Core.Activities.Activity
+                {
+                    Id = "notice.clipboard-off",
+                    Tier = Notch.Core.Activities.ActivityTier.Transient,
+                    Title = "Clipboard history is off",
+                    Detail = "Switch it on in Settings",
+                    Lifetime = TimeSpan.FromSeconds(3),
+                });
+                return;
+            }
+
             (tab switch
             {
                 NotchTab.Terminal => TabTerminal,
                 NotchTab.Stats => TabStats,
                 NotchTab.Shelf => TabShelf,
+                NotchTab.Clipboard => TabClipboard,
                 NotchTab.Plugins => TabPlugins,
                 _ => TabHome,
             }).IsChecked = true;
@@ -115,6 +130,7 @@ public partial class NotchWindow
         StatsPanel.Visibility = tab == NotchTab.Stats ? Visibility.Visible : Visibility.Collapsed;
         ShelfPanel.Visibility = tab == NotchTab.Shelf ? Visibility.Visible : Visibility.Collapsed;
         PluginsPanel.Visibility = tab == NotchTab.Plugins ? Visibility.Visible : Visibility.Collapsed;
+        ClipboardPanel.Visibility = tab == NotchTab.Clipboard ? Visibility.Visible : Visibility.Collapsed;
         PagePanel.Visibility = tab == NotchTab.Page ? Visibility.Visible : Visibility.Collapsed;
 
         if (tab != NotchTab.Home)
@@ -135,6 +151,13 @@ public partial class NotchWindow
         {
             FocusTerminal();
         }
+
+        if (tab == NotchTab.Clipboard)
+        {
+            UpdateClipboardList();
+            Activate();
+            ClipboardSearch.Focus();
+        }
     }
 
     /// <summary>
@@ -147,7 +170,7 @@ public partial class NotchWindow
         bool terminal = _expanded && _tab == NotchTab.Terminal;
         if (_hwnd != 0)
         {
-            OverlayWindow.SetNoActivate(_hwnd, !(terminal || (_expanded && (_timerEntryOpen || PageTakesInput))));
+            OverlayWindow.SetNoActivate(_hwnd, !(terminal || (_expanded && (_timerEntryOpen || PageTakesInput || _tab == NotchTab.Clipboard))));
         }
 
         _terminal.IsViewing = terminal;

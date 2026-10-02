@@ -353,7 +353,8 @@ public partial class App : Application
             _installFlow!,
             confirm => _updates?.ForceUpdateAsync(confirm) ?? Task.FromResult("Updates are not available yet."),
             () => notch.HasTerminalSessions,
-            Restart);
+            Restart,
+            notch.ClearClipboardHistory);
         _settingsWindow.Saved += (_, _) =>
         {
             _activities?.SetSuppressed(settings.SuppressedActivityIds());
