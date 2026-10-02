@@ -5,26 +5,40 @@ using Notch.Core.Media;
 
 namespace Notch.App.Shell;
 
-/// <summary>A fake player for <c>--demo</c>, so the media views can be seen without anything playing.</summary>
+/// <summary>
+/// A fake player for <c>--demo</c>, so the media views can be seen without anything playing.
+/// It is also what the website's pictures show. The artwork is drawn here, not a real cover.
+/// </summary>
 internal sealed class DemoMediaService : IMediaService
 {
-    private static readonly TimeSpan TrackLength = TimeSpan.FromSeconds(245);
+    private const string Artist = "Linkin Park";
 
-    private MediaSnapshot _current = new()
-    {
-        SourceAppId = "demo",
-        Title = "Weightless",
-        Artist = "Marconi Union",
-        Album = "Demo",
-        IsPlaying = true,
-        Position = TimeSpan.FromSeconds(72),
-        PositionUpdatedAt = DateTimeOffset.UtcNow,
-        Duration = TrackLength,
-        Thumbnail = DrawArtwork(),
-        CanTogglePlayPause = true,
-        CanGoNext = true,
-        CanSeek = true,
-    };
+    /// <summary>Shorter than every track, so the progress bar never starts full.</summary>
+    private static readonly TimeSpan StartPosition = TimeSpan.FromSeconds(72);
+
+    private static readonly Track[] Tracks =
+    [
+        new("In the End", "Hybrid Theory", 216),
+        new("Papercut", "Hybrid Theory", 184),
+        new("One Step Closer", "Hybrid Theory", 155),
+        new("Crawling", "Hybrid Theory", 209),
+        new("Numb", "Meteora", 187),
+        new("Faint", "Meteora", 162),
+        new("Somewhere I Belong", "Meteora", 213),
+        new("Breaking the Habit", "Meteora", 196),
+        new("What I've Done", "Minutes to Midnight", 205),
+        new("New Divide", "New Divide", 268),
+        new("Burn It Down", "Living Things", 230),
+        new("The Emptiness Machine", "From Zero", 190),
+    ];
+
+    private static readonly byte[] Artwork = DrawArtwork();
+
+    // One track per run: every picture of a screenshot run shows the same song, and the next run may show another.
+    private int _track = Random.Shared.Next(Tracks.Length);
+    private MediaSnapshot _current;
+
+    public DemoMediaService() => _current = Playing(Tracks[_track], StartPosition, isPlaying: true);
 
     public MediaSnapshot? Current => _current;
 
@@ -33,14 +47,37 @@ internal sealed class DemoMediaService : IMediaService
     public Task TogglePlayPauseAsync() =>
         Update(_current with { IsPlaying = !_current.IsPlaying, Position = Now(), PositionUpdatedAt = DateTimeOffset.UtcNow });
 
-    public Task NextAsync() => SeekAsync(TimeSpan.Zero);
+    public Task NextAsync() => Skip(1);
 
-    public Task PreviousAsync() => SeekAsync(TimeSpan.Zero);
+    public Task PreviousAsync() => Skip(-1);
 
     public Task SeekAsync(TimeSpan position) =>
         Update(_current with { Position = position, PositionUpdatedAt = DateTimeOffset.UtcNow });
 
     private TimeSpan Now() => _current.PositionAt(DateTimeOffset.UtcNow);
+
+    private Task Skip(int step)
+    {
+        _track = (_track + step + Tracks.Length) % Tracks.Length;
+        return Update(Playing(Tracks[_track], TimeSpan.Zero, _current.IsPlaying));
+    }
+
+    private static MediaSnapshot Playing(Track track, TimeSpan position, bool isPlaying) => new()
+    {
+        SourceAppId = "demo",
+        Title = track.Title,
+        Artist = Artist,
+        Album = track.Album,
+        IsPlaying = isPlaying,
+        Position = position,
+        PositionUpdatedAt = DateTimeOffset.UtcNow,
+        Duration = TimeSpan.FromSeconds(track.Seconds),
+        Thumbnail = Artwork,
+        CanTogglePlayPause = true,
+        CanGoNext = true,
+        CanGoPrevious = true,
+        CanSeek = true,
+    };
 
     private Task Update(MediaSnapshot snapshot)
     {
@@ -71,4 +108,6 @@ internal sealed class DemoMediaService : IMediaService
         encoder.Save(stream);
         return stream.ToArray();
     }
+
+    private sealed record Track(string Title, string Album, int Seconds);
 }
