@@ -68,7 +68,7 @@ pub fn save_settings(app: AppHandle, backend: State<'_, Backend>, settings: AppS
 }
 
 #[tauri::command]
-pub fn open_session(backend: State<'_, Backend>, profile_id: String, folder: String) -> Result<Opened, String> {
+pub fn open_session(app: AppHandle, backend: State<'_, Backend>, profile_id: String, folder: String) -> Result<Opened, String> {
     let (profile, snapshot) = {
         let mut settings = backend.settings();
         let profile = settings
@@ -80,6 +80,11 @@ pub fn open_session(backend: State<'_, Backend>, profile_id: String, folder: Str
         (profile, settings.clone())
     };
     backend.store.save(&snapshot);
+
+    let changed = SettingsChanged { profiles: snapshot.profiles(), settings: snapshot };
+    if let Err(e) = app.emit("settings", &changed) {
+        log::warn!("could not emit settings: {e}");
+    }
 
     Ok(Opened { id: backend.terminals.open(profile, folder) })
 }

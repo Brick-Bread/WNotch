@@ -192,7 +192,7 @@ impl Terminals {
         if let Some(process) = lock(&session.process).as_ref() {
             let size = PtySize { rows: rows.max(1), cols: cols.max(1), pixel_width: 0, pixel_height: 0 };
             let _ = process.master.resize(size);
-        }
+        };
     }
 
     pub fn bell(&self, id: &str) {
@@ -219,10 +219,6 @@ impl Terminals {
                 self.after_change(&session, changed);
             }
         }
-    }
-
-    pub fn has_sessions(&self) -> bool {
-        !lock(&self.sessions).is_empty()
     }
 
     fn find(&self, id: &str) -> Option<Arc<Session>> {
