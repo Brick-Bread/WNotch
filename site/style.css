@@ -37,3 +37,6 @@ pre,code{font-family:ui-monospace,Consolas,monospace}
 pre{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;overflow:auto;font-size:14px}
 ol{padding-left:20px}li{margin:6px 0}
 footer{border-top:1px solid var(--line);padding:30px 0;color:var(--dim);font-size:14px;text-align:center}
+.sub{margin:36px 0 8px;font-size:20px}
+.stage.glass{padding:24px 20px;background:radial-gradient(120% 100% at 50% 0,#33443f,#10151a)}
+.stage.glass .shot{max-width:560px;border-radius:12px}
