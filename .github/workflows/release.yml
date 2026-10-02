@@ -31,9 +31,21 @@ jobs:
         run: dotnet test Notch.slnx -c Release
 
       # Publishes the app self-contained and appends it to the setup program; see installer/build.ps1.
+      # With CODESIGN_PFX_BASE64 and CODESIGN_PFX_PASSWORD set as secrets, Notch's own programs are signed.
       - name: Build the installer
         shell: pwsh
+        env:
+          CODESIGN_PFX_BASE64: ${{ secrets.CODESIGN_PFX_BASE64 }}
+          CODESIGN_PFX_PASSWORD: ${{ secrets.CODESIGN_PFX_PASSWORD }}
         run: ./installer/build.ps1 -Version ${{ steps.version.outputs.version }}
+
+      # The app only runs an update whose installer has a valid signature from this key
+      # (UpdateSigning.PublicKey). Without the UPDATE_SIGNING_KEY secret no .sig is made.
+      - name: Sign the installer for the updater
+        shell: pwsh
+        env:
+          UPDATE_SIGNING_KEY: ${{ secrets.UPDATE_SIGNING_KEY }}
+        run: ./installer/sign-update.ps1 -File (Get-Item artifacts/Notch-Setup-*.exe).FullName
 
       # The one .zip on the release: what "Brick-Bread/WNotch" installs from the app's plugin settings.
       - name: Package the sample plugin
@@ -46,7 +58,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: Notch-Setup-${{ steps.version.outputs.version }}
-          path: artifacts/Notch-Setup-*.exe
+          path: |
+            artifacts/Notch-Setup-*.exe
+            artifacts/Notch-Setup-*.exe.sig
           if-no-files-found: error
 
       - name: Publish the GitHub release
@@ -56,4 +70,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $installer = Get-Item artifacts/Notch-Setup-*.exe
-          gh release create $env:GITHUB_REF_NAME $installer.FullName artifacts/BreakReminder-plugin.zip --title "Notch ${{ steps.version.outputs.version }}" --generate-notes
+          # The signature, when there is one, goes on the same release: the app looks for <installer>.sig.
+          $signatures = @(Get-ChildItem artifacts/Notch-Setup-*.exe.sig -ErrorAction SilentlyContinue | ForEach-Object FullName)
+          gh release create $env:GITHUB_REF_NAME $installer.FullName @signatures artifacts/BreakReminder-plugin.zip --title "Notch ${{ steps.version.outputs.version }}" --generate-notes

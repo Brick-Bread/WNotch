@@ -4,7 +4,8 @@ using System.Text.Json.Nodes;
 namespace Notch.Core.Updates;
 
 /// <param name="Sha256">Lower-case hex digest GitHub reports for the installer, or null if it reports none.</param>
-public sealed record ReleaseInfo(Version Version, string Tag, string InstallerUrl, long InstallerSize, string? Sha256);
+/// <param name="SignatureUrl">The installer's <c>.sig</c> file on the same release, or null when it has none.</param>
+public sealed record ReleaseInfo(Version Version, string Tag, string InstallerUrl, long InstallerSize, string? Sha256, string? SignatureUrl = null);
 
 /// <summary>Reads the project's GitHub releases to find installers to update to.</summary>
 public static class ReleaseFeed
@@ -47,7 +48,14 @@ public static class ReleaseFeed
                     ? digest["sha256:".Length..].ToLowerInvariant()
                     : null;
 
-                return new ReleaseInfo(version, tag, url, (long?)asset?["size"] ?? 0, sha256);
+                // The signature is a small file next to the installer, named after it.
+                string signatureName = name + ".sig";
+                string? signatureUrl = assets
+                    .Select(a => (Name: (string?)a?["name"] ?? "", Url: (string?)a?["browser_download_url"] ?? ""))
+                    .FirstOrDefault(a => a.Name.Equals(signatureName, StringComparison.OrdinalIgnoreCase)
+                        && a.Url.StartsWith(TrustedDownloadPrefix, StringComparison.Ordinal)).Url;
+
+                return new ReleaseInfo(version, tag, url, (long?)asset?["size"] ?? 0, sha256, string.IsNullOrEmpty(signatureUrl) ? null : signatureUrl);
             }
 
             return null;

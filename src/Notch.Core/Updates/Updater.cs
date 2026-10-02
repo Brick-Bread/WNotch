@@ -3,8 +3,10 @@ using System.Security.Cryptography;
 namespace Notch.Core.Updates;
 
 /// <summary>Finds newer releases and downloads their installers, checking each download before it is trusted.</summary>
-public sealed class Updater(HttpClient http)
+public sealed class Updater(HttpClient http, string? signingKey = UpdateSigning.PublicKey)
 {
+    private const int MaxSignatureLength = 1024;
+
     /// <summary>The latest release if it is newer than <paramref name="current"/>, otherwise null.</summary>
     /// <exception cref="HttpRequestException">GitHub could not be reached.</exception>
     public async Task<ReleaseInfo?> CheckAsync(Version current, CancellationToken cancellation = default)
@@ -53,12 +55,23 @@ public sealed class Updater(HttpClient http)
         }
     }
 
-    private static async Task VerifyAsync(ReleaseInfo release, string path, CancellationToken cancellation)
+    private async Task VerifyAsync(ReleaseInfo release, string path, CancellationToken cancellation)
     {
         long size = new FileInfo(path).Length;
         if (size == 0 || (release.InstallerSize > 0 && size != release.InstallerSize))
         {
             throw new InvalidDataException($"The installer is {size} bytes; the release lists {release.InstallerSize}.");
+        }
+
+        bool signed = UpdateSigning.IsConfigured(signingKey);
+        if (signed)
+        {
+            await VerifySignatureAsync(release, path, cancellation);
+        }
+        else if (release.Sha256 is null)
+        {
+            // Nothing to check it against: an installer that cannot be verified is not run.
+            throw new InvalidDataException("The release lists no digest for the installer and is not signed, so it cannot be verified.");
         }
 
         if (release.Sha256 is null)
@@ -71,6 +84,30 @@ public sealed class Updater(HttpClient http)
         if (!actual.Equals(release.Sha256, StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidDataException("The installer does not match the digest the release lists for it.");
+        }
+    }
+
+    /// <summary>The installer must carry a valid signature from the maintainer's key.</summary>
+    private async Task VerifySignatureAsync(ReleaseInfo release, string path, CancellationToken cancellation)
+    {
+        if (release.SignatureUrl is null)
+        {
+            throw new InvalidDataException("The installer is not signed.");
+        }
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, release.SignatureUrl);
+        request.Headers.UserAgent.ParseAdd("Notch-Updater");
+        using HttpResponseMessage response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellation);
+        response.EnsureSuccessStatusCode();
+        if (response.Content.Headers.ContentLength > MaxSignatureLength)
+        {
+            throw new InvalidDataException("The installer's signature is not a signature.");
+        }
+
+        string signature = await response.Content.ReadAsStringAsync(cancellation);
+        if (signature.Length > MaxSignatureLength || !UpdateSigning.Verify(path, signature, signingKey!))
+        {
+            throw new InvalidDataException("The installer's signature is not valid.");
         }
     }
 }

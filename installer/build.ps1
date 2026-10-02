@@ -32,6 +32,9 @@ if (-not $SkipPublish) {
     Invoke-Dotnet publish (Join-Path $root 'src\Notch.App') -c Release -r win-x64 --self-contained true -o $publish "-p:Version=$Version"
     Invoke-Dotnet publish (Join-Path $root 'src\Notch.Hook') -c Release -r win-x64 --self-contained true -o $publish "-p:Version=$Version"
     Invoke-Dotnet publish (Join-Path $root 'src\Notch.Cli') -c Release -r win-x64 --self-contained true -o $publish "-p:Version=$Version"
+
+    # Signs Notch's own programs when the certificate is configured (CODESIGN_PFX_BASE64); otherwise says it did not.
+    & (Join-Path $PSScriptRoot 'sign-authenticode.ps1') -Path $publish
 }
 Get-ChildItem $publish -Filter *.pdb -Recurse | Remove-Item -Force
 

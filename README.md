@@ -10,6 +10,11 @@ A dynamic notch for Windows 11, in the spirit of Atoll on macOS: a small black p
 - **System HUDs.** Volume, audio output changes, brightness, charger and low battery, Bluetooth devices connecting, Caps Lock switching on or off.
 - **Shelf.** Drag files or folders onto the pill to put them aside, then drag them out into any app or folder when you need them. The shelf remembers where the files are; it does not copy them.
 - **Terminal for Claude Code and Codex.** A real terminal inside the notch that runs the `claude` and `codex` CLIs (or PowerShell) in a folder you pick. The pill shows which agent is working, needs input, or is done, the folder it is in, and how many other sessions have something to report.
+- **Agents anywhere.** Claude Code, Codex, Gemini CLI and Aider are found wherever they run (Windows Terminal, VS Code, any shell), listed on the Home tab with where they run, and clicking one brings its window to the front. Whether an agent is working, waiting or done shows for the ones that report it through hooks, which you can switch on for all your sessions in settings (see [Agents](#agents-anywhere)).
+- **Command palette.** A second hotkey (Alt+Shift+P) opens a search box over everything the notch can do: timers, tabs, terminal sessions, jumping to an agent, switching plugins.
+- **Clipboard history.** Optional Clipboard tab to search what you copied, pin things and copy them again. Kept in memory (only pins survive a restart), and copies that password managers mark as private are never kept.
+- **Windows notifications in the pill.** Optional and off by default: shows who a notification is from and which app, never the message.
+- **Scriptable.** `notch://` links, the `notchctl` command and an optional local webhook; see [docs/automation.md](docs/automation.md).
 - **Glow effects.** The pill lights up in a colour and rhythm that matches what is happening: it pulses to the music in the album art's colour, breathes blue while an agent works, pulses amber when it needs you, turns green when it is done, and flashes for volume, charging, Bluetooth and low battery. Brightness is adjustable in settings.
 - **Notch or Dynamic Island, top or taskbar.** The pill can grow out of the screen edge like a notch or float clear of it as an island, and sit at the top of the screen or in the far left of the taskbar, where it opens upwards.
 - **Themes and colour.** Dark, light, or following Windows, with an accent colour of your choice. Stats, the timer and calendars each have their own colour.
@@ -41,9 +46,18 @@ Things to know:
 - Dragging a file from the shelf into an Explorer folder on the same drive moves it there, as dragging between two folders does; hold Ctrl to copy.
 - Calendar events come from .ics links. Google Calendar and Outlook both offer one in their sharing settings.
 - Updates are checked shortly after start and every four hours. The installer is only taken from this repository's release downloads and is checked against the size and SHA-256 digest GitHub lists before it runs. Updates are never installed in the background: pressing **Update Notch now** downloads the installer and restarts the app. Copies not installed by the installer (development builds) neither check nor update.
-- Agent status relies on hooks the app passes when it starts a CLI (`--settings` for Claude, a `notify` override for Codex). Sessions you start in other terminals are not tracked. Codex only reports the end of a turn, so its "working" state is inferred from terminal activity.
+- Agent status in Notch's own terminal relies on hooks the app passes when it starts a CLI (`--settings` for Claude, a `notify` override for Codex). Codex only reports the end of a turn, so its "working" state is inferred from terminal activity. For agents started elsewhere see [Agents anywhere](#agents-anywhere).
+- Updates are checked against the size and SHA-256 digest GitHub lists. Once the maintainer has set an update signing key (`installer/new-update-key.ps1`), an installer also needs a valid signature from that key before it is run.
+
+## Agents anywhere
+
+Notch looks at the running programs every few seconds and lists any Claude Code, Codex, Gemini CLI or Aider session it finds, wherever it runs. Sessions that only run in the background of a desktop app (such as the Claude or Codex desktop apps' own servers) and one-shot `claude -p` runs are left out. Settings has a switch for it and one per agent.
+
+What an agent is *doing* is known only when it reports it. In **Settings > Agents**, tick *Let agents report what they are doing, wherever they run*: Notch then adds its hooks to `~\.claude\settings.json` and `~\.codex\config.toml` (after showing you the files, keeping a backup of each next to it, and never replacing a `notify` command of your own). Unticking removes them again. Without this, an agent found elsewhere is listed as "Open" and does not light the pill.
 
 ## Plugins
+
+Browse the [plugin list on the website](https://brick-bread.github.io/WNotch/plugins.html) and press **Install**: Notch opens, shows who made the plugin and what it says it uses, and installs it only if you agree. It lands switched off. **Settings > Plugins > Browse plugins** shows the same list inside Notch. To get your own plugin listed, see [docs/publishing.md](docs/publishing.md).
 
 A plugin is a folder in `%AppData%\Notch\plugins` holding a `plugin.json` and a .NET library. To install one from GitHub, type its repository (`owner/name` or a link) into the box under **Plugins** in Settings and press **Install**, then save. Entering `Brick-Bread/WNotch` installs the sample plugin. A plugin folder can also be copied in by hand (Settings has an **Open folder** button) and ticked in the same list.
 
@@ -67,7 +81,7 @@ Development flags for `Notch.exe`:
 |---|---|
 | `--demo` | Fake media and a loop of fake activities, to see every pill state |
 | `--pin-open` | Keep the notch expanded |
-| `--tab=home\|terminal\|stats\|shelf\|plugins` | Start on that tab |
+| `--tab=home\|terminal\|stats\|shelf\|clipboard\|plugins` | Start on that tab |
 | `--open=claude\|codex\|shell` | Start a terminal session at launch |
 | `--settings` | Open the settings window at launch |
 | `--theme=dark\|light\|system` | Show that theme for this run without changing the saved setting |
