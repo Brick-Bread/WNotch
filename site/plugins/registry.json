@@ -20,7 +20,8 @@
       "description": "Watches the servers on a Calagopus panel: an overview card, alerts in the pill, and a tab to browse your servers, see their live stats, send console commands and start, stop, restart or kill them.",
       "tags": ["servers", "dev"],
       "permissions": ["network"],
-      "apiVersion": 5
+      "apiVersion": 5,
+      "verified": true
     },
     {
       "id": "brick-bread.catppuccin",
@@ -30,7 +31,8 @@
       "description": "Catppuccin Latte, Frappe, Macchiato, Mocha and Minecraft themes for the whole notch, including matching controls, fonts and terminal palettes.",
       "tags": ["theme"],
       "permissions": [],
-      "apiVersion": 6
+      "apiVersion": 6,
+      "verified": true
     },
     {
       "id": "brick-bread.glass",
@@ -40,7 +42,8 @@
       "description": "Smoked and frosted glass themes for the whole notch, with translucent surfaces, fine borders and a matching terminal.",
       "tags": ["theme"],
       "permissions": [],
-      "apiVersion": 6
+      "apiVersion": 6,
+      "verified": true
     },
     {
       "id": "agentstats.agent-usage",
@@ -50,7 +53,8 @@
       "description": "Coding-agent accounts and usage in the notch.",
       "tags": ["dev", "ai"],
       "permissions": [],
-      "apiVersion": 5
+      "apiVersion": 5,
+      "verified": true
     }
   ]
 }

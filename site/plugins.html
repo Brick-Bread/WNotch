@@ -67,6 +67,9 @@
     }, 1600);
   }
 
+  // The first Notch release that offered each plugin API version (see "Compatibility" in docs/plugins.md).
+  const API_SINCE = {1: '0.4.0', 2: '0.5.0', 3: '0.6.0', 4: '0.6.1', 5: '0.7.0', 6: '0.9.0'};
+
   function render() {
     const needle = q.value.trim().toLowerCase();
     const shown = plugins.filter(p =>
@@ -80,6 +83,7 @@
       card.append(el('p', {className: 'by', textContent: (p.author ? p.author + ' · ' : '') + p.repository}));
       if (p.verified) card.append(el('div', {className: 'ok', textContent: '✔ Checked: the Notch maintainers have read this plugin’s code'}));
       if (p.description) card.append(el('p', {textContent: p.description}));
+      if (p.apiVersion) card.append(el('p', {className: 'api', textContent: (API_SINCE[p.apiVersion] ? 'Made for Notch ' + API_SINCE[p.apiVersion] + ' · ' : '') + 'plugin API ' + p.apiVersion}));
       card.append(el('p', {className: 'perm', textContent: p.permissions.length
         ? 'Says it uses: ' + p.permissions.map(x => PERM[x] || x).join(' · ')
         : 'Does not say what it uses. Treat it as able to do anything.'}));

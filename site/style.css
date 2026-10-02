@@ -49,6 +49,7 @@ footer{border-top:1px solid var(--line);padding:30px 0;color:var(--dim);font-siz
 .pl-card .tags{display:flex;gap:6px;flex-wrap:wrap}
 .tag{font-size:12px;padding:2px 10px;border-radius:999px;border:1px solid var(--line);color:var(--dim)}
 .ok{color:var(--green);font-size:13px}
+.api{color:var(--muted,#8a8f98);font-size:13px;margin:0}
 .perm{color:var(--amber);font-size:13px;margin:0}
 .pl-actions{margin-top:auto;display:flex;gap:10px;align-items:center;padding-top:6px}
 .pl-actions .btn{padding:8px 18px;font-size:15px}
