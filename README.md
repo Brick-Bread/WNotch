@@ -83,7 +83,7 @@ Settings live in `%AppData%\Notch\settings.json` and the shelf in `shelf.json` b
 
 Set `<Version>` in `Directory.Build.props` to match the tag; installed copies compare it with the latest release to decide whether to update.
 
-Pushing a tag such as `v0.2.0` runs `.github/workflows/release.yml`, which tests, publishes a self-contained build, compiles the NSIS installer (`installer/Notch.nsi`) and attaches it to a GitHub release, together with the sample plugin as a zip. Running that workflow by hand builds the installer as a workflow artifact without releasing.
+Pushing a tag such as `v0.2.0` runs `.github/workflows/release.yml`, which tests, publishes a self-contained build, builds the installer (`installer/build.ps1`, with the setup program in `src/Notch.Setup`) and attaches it to a GitHub release, together with the sample plugin as a zip. Running that workflow by hand builds the installer as a workflow artifact without releasing.
 
 ## Layout
 

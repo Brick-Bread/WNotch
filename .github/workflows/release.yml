@@ -26,29 +26,14 @@ jobs:
         run: |
           $version = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME.TrimStart('v') } else { "0.0.0-dev.$env:GITHUB_RUN_NUMBER" }
           "version=$version" >> $env:GITHUB_OUTPUT
-          # The installer's file properties need four plain numbers.
-          "file_version=$(($version -split '-')[0]).0" >> $env:GITHUB_OUTPUT
 
       - name: Test
         run: dotnet test Notch.slnx -c Release
 
-      # Both executables are published self-contained into one folder so they share a
-      # single copy of the .NET runtime and users need nothing preinstalled.
-      - name: Publish
-        shell: pwsh
-        run: |
-          dotnet publish src/Notch.App -c Release -r win-x64 --self-contained true -o artifacts/publish -p:Version=${{ steps.version.outputs.version }}
-          dotnet publish src/Notch.Hook -c Release -r win-x64 --self-contained true -o artifacts/publish -p:Version=${{ steps.version.outputs.version }}
-
+      # Publishes the app self-contained and appends it to the setup program; see installer/build.ps1.
       - name: Build the installer
         shell: pwsh
-        run: |
-          if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) {
-            choco install nsis -y --no-progress
-            $env:PATH += ';C:\Program Files (x86)\NSIS'
-          }
-          makensis /V2 /DVERSION=${{ steps.version.outputs.version }} /DFILE_VERSION=${{ steps.version.outputs.file_version }} installer\Notch.nsi
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        run: ./installer/build.ps1 -Version ${{ steps.version.outputs.version }}
 
       # The one .zip on the release: what "Brick-Bread/WNotch" installs from the app's plugin settings.
       - name: Package the sample plugin

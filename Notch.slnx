@@ -7,6 +7,7 @@
     <Project Path="src/Notch.Core/Notch.Core.csproj" />
     <Project Path="src/Notch.Hook/Notch.Hook.csproj" />
     <Project Path="src/Notch.Platform/Notch.Platform.csproj" />
+    <Project Path="src/Notch.Setup/Notch.Setup.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Notch.Core.Tests/Notch.Core.Tests.csproj" />
