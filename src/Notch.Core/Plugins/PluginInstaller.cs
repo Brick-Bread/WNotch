@@ -40,7 +40,7 @@ public sealed partial record PluginSource(string Owner, string Repository)
 /// True when the plugin was running, so its files could not be replaced: the new version is
 /// set aside and takes over the next time Notch starts.
 /// </param>
-public sealed record PluginInstallResult(PluginManifest Manifest, string Tag, bool Pending);
+public sealed record PluginInstallResult(PluginManifest Manifest, string Tag, bool Pending, string? Directory = null);
 
 /// <summary>
 /// Installs plugins from GitHub: downloads the .zip attached to a repository's latest release,
@@ -115,8 +115,8 @@ public sealed class PluginInstaller(HttpClient http, string pluginsDirectory, Fu
 
             PluginManifest manifest = Unpack(archive, staging);
             PluginOrigin.Write(staging, repository, package.Tag);
-            bool pending = Place(staging, manifest);
-            return new PluginInstallResult(manifest, package.Tag, pending);
+            bool pending = Place(staging, manifest, out string placedAt);
+            return new PluginInstallResult(manifest, package.Tag, pending, placedAt);
         }
         catch (HttpRequestException e)
         {
@@ -334,7 +334,7 @@ public sealed class PluginInstaller(HttpClient http, string pluginsDirectory, Fu
     }
 
     /// <summary>Moves the unpacked plugin into the plugins folder. True when that has to wait for a restart.</summary>
-    private bool Place(string staging, PluginManifest manifest)
+    private bool Place(string staging, PluginManifest manifest, out string placedAt)
     {
         // Replace the copy that is already installed, whatever its folder is called.
         string folder = InstalledFolderOf(manifest.Id) ?? manifest.Id;
@@ -352,6 +352,7 @@ public sealed class PluginInstaller(HttpClient http, string pluginsDirectory, Fu
             if (isLoaded?.Invoke(manifest.Id) == true)
             {
                 Directory.Move(staging, update);
+                placedAt = update;
                 return true;
             }
 
@@ -370,6 +371,7 @@ public sealed class PluginInstaller(HttpClient http, string pluginsDirectory, Fu
             catch (Exception e) when (e is IOException or UnauthorizedAccessException)
             {
                 Directory.Move(staging, update);
+                placedAt = update;
                 return true;
             }
 
@@ -377,6 +379,7 @@ public sealed class PluginInstaller(HttpClient http, string pluginsDirectory, Fu
         }
 
         Directory.Move(staging, target);
+        placedAt = target;
         return false;
     }
 

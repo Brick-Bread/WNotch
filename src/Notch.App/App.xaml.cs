@@ -19,6 +19,7 @@ using Notch.Core.Agents;
 using Notch.Core.Automation;
 using Notch.Core.Media;
 using Notch.Core.Plugins;
+using Notch.Core.Plugins.Checks;
 using Notch.Core.Settings;
 using Notch.Core.Shelf;
 using Notch.Core.Terminal;
@@ -48,6 +49,7 @@ public partial class App : Application
     private TerminalController? _terminal;
     private volatile SystemHudSources? _huds;
     private PluginManager? _plugins;
+    private string? _pluginStartMarker;
     private PluginInstaller? _pluginInstaller;
     private TaskbarIcon? _tray;
     private SettingsWindow? _settingsWindow;
@@ -131,24 +133,63 @@ public partial class App : Application
 
         var pluginCards = new PluginCardBoard();
         string appData = Path.GetDirectoryName(settingsStore.FilePath)!;
+
+        // Plugins are looked over before they start: what the user approved, what the registry withdrew,
+        // and what is inside them. See "Plugin checks" in docs/plugins.md.
+        string localData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Notch");
+        string registryCache = Path.Combine(appData, "registry.json");
+        string trustFile = Path.Combine(appData, "plugin-trust.json");
+        bool firstCheckedRun = !File.Exists(trustFile);
+        var checks = new PluginChecks
+        {
+            Audit = new FilePluginAudit(Path.Combine(localData, "plugin-audit.log")),
+            Trust = new PluginTrustStore(trustFile),
+            Revocations = () => PluginRevocations.Read(registryCache),
+        };
         _plugins = new PluginManager(
             Path.Combine(appData, "plugins"),
             Path.Combine(appData, "plugin-data"),
             _activities,
             pluginCards,
-            new PluginLog(Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Notch", "plugins.log")));
+            new PluginLog(Path.Combine(localData, "plugins.log")),
+            checks: checks);
+        _pluginStartMarker = Path.Combine(appData, "plugins-starting");
 
         // Before anything is loaded, so plugin updates downloaded during the last run can replace their files.
         PluginInstaller.ApplyPendingUpdates(_plugins.PluginsDirectory);
         _pluginInstaller = new PluginInstaller(PluginHttp, _plugins.PluginsDirectory, _plugins.IsLoaded);
         _installFlow = new PluginInstallFlow(
-            PluginHttp, _pluginInstaller, _plugins, settings, settingsStore, _activities, Path.Combine(appData, "registry.json"));
+            PluginHttp, _pluginInstaller, _plugins, settings, settingsStore, _activities, registryCache);
         _installFlow.Installed += _ => _settingsWindow?.RefreshPlugins();
 
         // Only reads manifests, so it is cheap enough to do before the window shows.
         // --plugin=<folder> runs a plugin straight from its build output, enabled or not.
         _plugins.Discover(Options(e, "--plugin="));
+
+        // Plugins switched on before approvals existed keep running, as they did; later ones are asked about.
+        if (firstCheckedRun)
+        {
+            _plugins.ApproveExisting(settings.EnabledPlugins);
+        }
+
+        // --no-plugins starts without any plugin. So does the start after Notch stopped while plugins
+        // were starting, so a plugin that breaks startup cannot lock the user out.
+        bool stoppedWhileStarting = File.Exists(_pluginStartMarker);
+        _plugins.SafeMode = HasFlag(e, "--no-plugins") || stoppedWhileStarting;
+        if (stoppedWhileStarting)
+        {
+            DeleteQuietly(_pluginStartMarker);
+            _activities.Publish(new Notch.Core.Activities.Activity
+            {
+                Id = "notice.plugins-safe-mode",
+                Tier = ActivityTier.Transient,
+                Title = "Plugins are off",
+                Detail = "Notch stopped while plugins were starting. Restart Notch to turn them back on.",
+                Glyph = "\uE7BA",
+                Glow = new Glow(GlowColor.Orange, GlowPattern.Flash),
+                Lifetime = TimeSpan.FromSeconds(8),
+            });
+        }
 
         ThemeManager.Attach(_plugins.Themes);
 
@@ -249,7 +290,38 @@ public partial class App : Application
         // Off the UI thread: loading assemblies and starting plugins must not delay the notch.
         PluginManager plugins = _plugins;
         string[] enabledPlugins = [.. settings.EnabledPlugins];
-        Task.Run(() => plugins.SetEnabled(enabledPlugins));
+        string? startMarker = plugins.SafeMode ? null : _pluginStartMarker;
+        Task.Run(async () =>
+        {
+            // The marker is there only while plugins are starting; finding it at the next start means they broke it.
+            if (startMarker is not null)
+            {
+                WriteQuietly(startMarker);
+            }
+
+            try
+            {
+                plugins.SetEnabled(enabledPlugins);
+            }
+            finally
+            {
+                DeleteQuietly(startMarker);
+            }
+
+            // The plugin list also names plugins withdrawn for being harmful; one already running is stopped.
+            if (!demo && settings.NotifyOfUpdates && _installFlow is { } flow)
+            {
+                try
+                {
+                    await flow.GetRegistryAsync(forceReload: true);
+                    plugins.EnforceRevocations();
+                }
+                catch (Exception ex) when (ex is PluginLoadException or HttpRequestException or TaskCanceledException)
+                {
+                    // Offline; the copy from the last time is used for the checks.
+                }
+            }
+        });
 
         window.SettingsRequested += () => OpenSettings(window, settings, settingsStore);
         _plugins.ShellState.OpenSettings = () => Dispatcher.Invoke(() => OpenSettings(window, settings, settingsStore));
@@ -293,7 +365,7 @@ public partial class App : Application
             _installFlow!,
             () => OpenSettings(window, settings, settingsStore),
             window.TogglePalette);
-        window.PaletteExtras = () => PluginPaletteEntries(settings);
+        window.PaletteExtras = () => PluginPaletteEntries(settings, settingsStore);
         _commandPipe = new CommandPipe(_commands.HandleArgumentsAsync);
 
         _webhook = new WebhookService(settings, settingsStore, _activities!, _commands);
@@ -327,7 +399,7 @@ public partial class App : Application
     }
 
     /// <summary>The palette's entries for plugins: switch each installed one on or off.</summary>
-    private IEnumerable<PaletteEntry> PluginPaletteEntries(AppSettings settings)
+    private IEnumerable<PaletteEntry> PluginPaletteEntries(AppSettings settings, SettingsStore store)
     {
         foreach (PluginInfo plugin in _plugins!.Plugins.Where(p => p is { Id: not null, AlwaysEnabled: false }))
         {
@@ -338,6 +410,58 @@ public partial class App : Application
                 "Plugin",
                 "plugins enable disable",
                 () => _ = _commands!.RunAsync(new SetPluginEnabledCommand(id, !on)));
+        }
+
+        yield return new PaletteEntry(
+            "Stop all plugins",
+            "Plugin",
+            "plugins kill stop emergency off",
+            () => StopAllPlugins(settings, store));
+    }
+
+    /// <summary>The kill switch: ends every plugin at once and switches them all off until the user turns each one on again.</summary>
+    private void StopAllPlugins(AppSettings settings, SettingsStore store)
+    {
+        IReadOnlyList<string> stopped = _plugins!.KillAll("stopped by the user");
+        settings.EnabledPlugins = [];
+        store.Save(settings);
+        _settingsWindow?.ShowAllPluginsOff();
+        _activities!.Publish(new Notch.Core.Activities.Activity
+        {
+            Id = "notice.plugins-stopped",
+            Tier = ActivityTier.Transient,
+            Title = "Plugins stopped",
+            Detail = stopped.Count == 0 ? "None were running. All are switched off." : $"{stopped.Count} stopped and switched off.",
+            Glyph = "\uE7BA",
+            Glow = new Glow(GlowColor.Orange, GlowPattern.Flash),
+            Lifetime = TimeSpan.FromSeconds(5),
+        });
+    }
+
+    private static void WriteQuietly(string path)
+    {
+        try
+        {
+            File.WriteAllText(path, "");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Without the marker a crash during startup is not detected; nothing else changes.
+        }
+    }
+
+    private static void DeleteQuietly(string? path)
+    {
+        try
+        {
+            if (path is not null)
+            {
+                File.Delete(path);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Left in place, it only makes the next start a safe-mode one.
         }
     }
 
@@ -359,6 +483,9 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        // Leaving normally while plugins are still starting is not a crash.
+        DeleteQuietly(_pluginStartMarker);
+
         _demo?.Dispose();
         _webhook?.Dispose();
         _agentTracker?.Dispose();

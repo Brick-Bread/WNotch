@@ -61,7 +61,15 @@ Browse the [plugin list on the website](https://brick-bread.github.io/WNotch/plu
 
 A plugin is a folder in `%AppData%\Notch\plugins` holding a `plugin.json` and a .NET library. To install one from GitHub, type its repository (`owner/name` or a link) into the box under **Plugins** in Settings and press **Install**, then save. Entering `Brick-Bread/WNotch` installs the sample plugin. A plugin folder can also be copied in by hand (Settings has an **Open folder** button) and ticked in the same list.
 
-Plugins are not sandboxed: they run inside Notch and can do anything Notch can. An installed plugin does nothing until you switch it on, so only switch on plugins you trust.
+Plugins are not sandboxed: they run inside Notch and can do anything Notch can, so only switch on plugins you trust. Notch does check them first. **Plugin checks** (new in 0.11):
+
+- A plugin runs only after you approved its files. Switching one on shows who made it, what it says it uses and anything risky Notch noticed inside it; if the files change later, you are asked again.
+- Notch looks inside a plugin's libraries, without running them, and refuses one that reads the keyboard, captures the screen, fakes keyboard or mouse input or reaches into other programs.
+- The plugin list on the website can withdraw a plugin for being harmful; Notch stops it, even while it is running.
+- **Stop all** in Settings (or "Stop all plugins" in the command palette) ends every plugin at once. `--no-plugins` starts Notch without any, and Notch does that by itself after it stopped while plugins were starting.
+- What each plugin did (started, blocked, approved) is written to `%LocalAppData%\Notch\plugin-audit.log`.
+
+These checks catch plugins that announce what they do; a determined author can hide it from a scan. They are a safeguard, not a sandbox: see [Plugin checks](docs/plugins.md#plugin-checks).
 
 To write one and publish it on GitHub so others can install it by name, read the [plugin guide](docs/plugins.md). [`samples/BreakReminder`](samples/BreakReminder) is a complete example: a card that counts down to your next break and a nudge in the pill when it is due.
 
@@ -85,6 +93,7 @@ Development flags for `Notch.exe`:
 | `--open=claude\|codex\|shell` | Start a terminal session at launch |
 | `--settings` | Open the settings window at launch |
 | `--theme=dark\|light\|system` | Show that theme for this run without changing the saved setting |
+| `--no-plugins` | Start without running any plugin (safe mode) |
 | `--plugin-theme=<plugin id>/<theme id>` | Show a theme a plugin offers for this run (see the plugin guide) |
 | `--style=notch\|island`, `--position=topcenter\|taskbarleft` | Show that style or position for this run without changing the saved settings |
 | `--display=<n>` | Use display *n* (as numbered in settings) for this run, e.g. to keep a debug build off the screen an installed copy is on |

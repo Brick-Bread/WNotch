@@ -186,6 +186,8 @@
         <DockPanel Margin="0,22,0,4">
             <Button x:Name="BrowsePlugins" DockPanel.Dock="Right" Content="Browse plugins" Margin="8,0,0,0"
                     ToolTip="The plugins listed on the Notch website." />
+            <Button x:Name="StopPlugins" DockPanel.Dock="Right" Content="Stop all" Margin="8,0,0,0"
+                    ToolTip="Ends every running plugin at once and switches them all off." />
             <Button x:Name="CheckPluginUpdates" DockPanel.Dock="Right" Content="Check for updates" Margin="8,0,0,0"
                     ToolTip="Asks GitHub whether the plugins installed from it have newer releases." />
             <Button x:Name="OpenPluginsFolder" DockPanel.Dock="Right" Content="Open folder"

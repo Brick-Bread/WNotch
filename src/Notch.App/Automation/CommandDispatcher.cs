@@ -4,6 +4,7 @@ using Notch.App.Plugins;
 using Notch.App.Shell;
 using Notch.Core.Automation;
 using Notch.Core.Plugins;
+using Notch.Core.Plugins.Checks;
 using Notch.Core.Widgets;
 
 namespace Notch.App.Automation;
@@ -107,14 +108,26 @@ internal sealed class CommandDispatcher(
         }
 
         // Switching a plugin on runs its code, so that is always the user's own decision.
-        if (toggle.Enabled
-            && MessageBox.Show(
+        if (toggle.Enabled)
+        {
+            PluginReview? review = plugins.Review(toggle.PluginId);
+            if (review is { Approved: false })
+            {
+                if (!PluginReviewPrompt.Ask(null, review, "Something asked to switch on a plugin. Switch it on, and approve it as it is now,"))
+                {
+                    return new CommandResult(false, "Cancelled.");
+                }
+
+                plugins.Approve(toggle.PluginId, "approved when switched on by a command");
+            }
+            else if (MessageBox.Show(
                 $"Something asked to switch on the plugin \"{plugin.Name}\". Plugins run as you, with access to everything you can reach. Switch it on?",
                 "Notch",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question) != MessageBoxResult.Yes)
-        {
-            return new CommandResult(false, "Cancelled.");
+            {
+                return new CommandResult(false, "Cancelled.");
+            }
         }
 
         if (toggle.Enabled)

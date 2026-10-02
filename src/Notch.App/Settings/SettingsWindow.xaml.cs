@@ -13,6 +13,7 @@ using Notch.Core.Activities;
 using Notch.Core.Agents;
 using Notch.Core.Automation;
 using Notch.Core.Plugins;
+using Notch.Core.Plugins.Checks;
 using Notch.Core.Settings;
 using Notch.Core.Shell;
 using Notch.Core.Widgets;
@@ -136,6 +137,7 @@ public partial class SettingsWindow : Window
         CheckPluginUpdates.Click += (_, _) => _ = CheckPluginUpdatesAsync(userInitiated: true);
         UpdateNotch.Click += (_, _) => OnUpdateNotch();
         BrowsePlugins.Click += (_, _) => OnBrowsePlugins();
+        StopPlugins.Click += (_, _) => OnStopPlugins();
 
         MirrorNotifications.IsChecked = settings.MirrorNotifications;
         MirroredApps.Text = string.Join(Environment.NewLine, settings.MirroredApps);
@@ -201,6 +203,37 @@ public partial class SettingsWindow : Window
     public event EventHandler? Saved;
 
     /// <summary>Lists the plugins again, e.g. after one was installed from a link while this window was open. Ticks are kept.</summary>
+    public void ShowAllPluginsOff() => ListPlugins([]);
+
+    /// <summary>The kill switch: ends every plugin at once and leaves them all switched off.</summary>
+    private void OnStopPlugins()
+    {
+        IReadOnlyList<string> stopped = _plugins.KillAll("stopped by the user in Settings");
+        _settings.EnabledPlugins = [];
+        _store.Save(_settings);
+        ListPlugins([]);
+        ShowPluginUpdateStatus(stopped.Count == 0
+            ? "No plugin was running. All plugins are switched off."
+            : $"Stopped {stopped.Count} plugin{(stopped.Count == 1 ? "" : "s")} and switched all plugins off. Tick the ones you want and save to use them again.");
+    }
+
+    /// <summary>Asks about a plugin that is being switched on, unless the user already approved these exact files.</summary>
+    private bool ApprovePlugin(string pluginId)
+    {
+        PluginReview? review = _plugins.Review(pluginId);
+        if (review is null || review.Approved)
+        {
+            return true;
+        }
+
+        if (!PluginReviewPrompt.Ask(this, review, "Switch on"))
+        {
+            return false;
+        }
+
+        return _plugins.Approve(pluginId);
+    }
+
     public void RefreshPlugins()
     {
         HashSet<string> ticked = TickedPlugins();
@@ -383,7 +416,17 @@ public partial class SettingsWindow : Window
         _settings.CalendarFeeds = [.. CalendarFeeds.Text
             .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Distinct(StringComparer.OrdinalIgnoreCase)];
-        _settings.EnabledPlugins = [.. TickedPlugins()];
+        // A plugin being switched on for the first time (or after its files changed) is asked about; if the user says no it stays off.
+        HashSet<string> wanted = TickedPlugins();
+        foreach (string pluginId in wanted.Where(id => !_settings.EnabledPlugins.Contains(id)).ToList())
+        {
+            if (!ApprovePlugin(pluginId))
+            {
+                wanted.Remove(pluginId);
+            }
+        }
+
+        _settings.EnabledPlugins = [.. wanted];
         _store.Save(_settings);
 
         // Plugin options go to each plugin's own settings file. A running plugin is told, or restarted,
@@ -719,8 +762,15 @@ public partial class SettingsWindow : Window
         ShowPluginUpdateStatus($"Downloading {update.Name} {update.LatestTag}…");
         try
         {
+            bool wasApproved = _plugins.Review(update.PluginId)?.Approved == true;
             PluginInstallResult result = await Task.Run(() => _installer.InstallAsync(update.Source.ToString()));
             _pluginUpdates.Remove(update.PluginId);
+
+            // Pressing Update on a plugin the user had approved carries that approval over to the new files.
+            if (wasApproved && result.Directory is not null)
+            {
+                _plugins.ApproveFiles(update.PluginId, result.Directory, "approved when updated from Settings");
+            }
 
             if (!result.Pending)
             {

@@ -184,7 +184,7 @@ Notch reads the manifest to list a plugin in Settings before running any of its 
 | `settings` | no | Options the user can change in Notch's Settings window; see [Settings and files](#settings-and-files). |
 | `permissions` | no | What the plugin uses, as a list of words: `network`, `filesystem`, `terminal`, `shell`, `notifications`, `clipboard`. Shown to the user before the plugin is installed from the plugin list. See below. |
 
-**`permissions` is disclosure, not a limit.** A plugin is .NET code running as the user, so Notch cannot stop it doing anything the user can. The list lets people see what you say the plugin does before they install it, and a plugin that lists nothing is shown as "does not say what it uses". Be honest: list what your plugin really does. Adding the property needs no new `apiVersion`; older Notch versions ignore it.
+**`permissions` is disclosure, not a limit.** (Notch does look inside your plugin before it runs; see [Plugin checks](#plugin-checks).) A plugin is .NET code running as the user, so Notch cannot stop it doing anything the user can. The list lets people see what you say the plugin does before they install it, and a plugin that lists nothing is shown as "does not say what it uses". Be honest: list what your plugin really does. Adding the property needs no new `apiVersion`; older Notch versions ignore it.
 
 Property names are not case-sensitive. Comments and trailing commas are accepted. Unknown properties are ignored.
 
@@ -550,6 +550,36 @@ A debug build of Notch runs side by side with an installed copy; two release cop
 To use a debugger, start Notch with `--plugin=` and attach to the `Notch` process, or set Notch.exe as the plugin project's start program with the flag as its argument. Breakpoints in plugin code work as long as the plugin's `.pdb` is in its folder.
 
 Rebuilding the plugin while Notch has it loaded fails because the `.dll` is locked; quit Notch first.
+
+## Plugin checks
+
+A plugin is .NET code running inside Notch as the user, so Notch cannot confine it. What it does is look at a plugin before starting it, and keep a record. These apply from Notch 0.11.
+
+**Approval.** A plugin starts only if the user approved its files. Switching it on in Settings (or by a command or the palette) shows its name, author, what it says it uses (`permissions`) and anything risky Notch noticed inside it, and asks. Installing from the plugin list with "Install and switch on", or pressing Update on a plugin that was already approved, counts as approving the new files. Approval is of the exact files: change a byte, or replace the folder with a different version by hand, and the plugin shows as failed ("Its files changed since you approved it") until the user switches it off and on again and approves it. Plugins that were switched on before 0.11 were approved once, automatically, when Notch was updated. A plugin run with `--plugin=<folder>` skips approval, because it is your own build, but not the scan.
+
+**The scan.** Before it starts, Notch reads the plugin's assemblies without loading them. A plugin that imports any of these is refused, with the reason shown in Settings:
+
+| Category | Examples |
+|---|---|
+| Keyboard and mouse capture | `SetWindowsHookEx`, `GetAsyncKeyState`, `GetKeyboardState`, raw input |
+| Screen capture | `BitBlt`, `StretchBlt`, `PrintWindow`, `Graphics.CopyFromScreen`, Windows.Graphics.Capture |
+| Faked input | `SendInput`, `keybd_event`, `mouse_event`, `SetCursorPos`, `SendKeys` |
+| Reaching into other programs | `CreateRemoteThread`, `WriteProcessMemory`, `VirtualAllocEx`, `QueueUserAPC` |
+
+Less clear-cut things (starting programs, loading code at run time, calling native libraries by name, native `.dll` files that cannot be read) do not stop the plugin but are listed when the user is asked. There is no legitimate reason for a plugin to read other programs' keystrokes or pictures; if yours needs something on this list, it cannot be a Notch plugin.
+
+**Be clear about what this is.** The scan matches names. A plugin that builds the call at run time, or hides it in native code, is not caught. Nothing here stops an approved plugin from doing what the user can do. The protection is that unapproved, changed, withdrawn and obviously hostile plugins do not run, and that the user can see and end what is running.
+
+**Withdrawal.** The plugin list (`registry.json` on the website) may contain a `revoked` array naming plugins that must not run:
+
+```json
+{ "revoked": [ { "id": "evil.plugin", "reason": "Logs keystrokes" },
+               { "id": "acme.tool", "sha256": "<hash of one release's files>", "reason": "Version 1.2 is malicious" } ] }
+```
+
+Without `sha256` every version is withdrawn. Notch reads the list at start (and keeps the last copy for when it is offline), refuses a withdrawn plugin and stops one that is running. A list can only stop plugins, never start them.
+
+**Stop all, safe mode, record.** **Stop all** in Settings, and "Stop all plugins" in the command palette, end every plugin and switch them all off. `Notch.exe --no-plugins` starts without running any. If Notch stops while plugins are starting, the next start is a safe-mode start too, with a notice. `%LocalAppData%\Notch\plugin-audit.log` records, one JSON object per line, when plugins were started, stopped, approved, refused or withdrawn.
 
 ## Installing and sharing
 

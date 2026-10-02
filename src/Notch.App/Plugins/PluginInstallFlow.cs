@@ -3,6 +3,7 @@ using System.Windows;
 using Notch.Core.Activities;
 using Notch.Core.Automation;
 using Notch.Core.Plugins;
+using Notch.Core.Plugins.Checks;
 using Notch.Core.Settings;
 
 namespace Notch.App.Plugins;
@@ -85,6 +86,7 @@ public sealed class PluginInstallFlow(
             }
 
             PluginInstallResult result;
+            bool wasApproved = plugins.Review(entry.Id)?.Approved == true;
             try
             {
                 result = await Task.Run(() => installer.InstallAsync(entry.Repository));
@@ -103,7 +105,15 @@ public sealed class PluginInstallFlow(
                 return new CommandResult(false, message);
             }
 
-            if (window.Choice == PluginConfirmChoice.InstallAndEnable)
+            // The install window showed what the plugin says it uses; "install and switch on", or updating a plugin
+            // that was already approved, is the user's approval of these files.
+            bool enable = window.Choice == PluginConfirmChoice.InstallAndEnable;
+            if ((enable || wasApproved) && result.Directory is not null)
+            {
+                plugins.ApproveFiles(entry.Id, result.Directory, "approved when installed from the plugin list");
+            }
+
+            if (enable)
             {
                 Enable(entry.Id);
             }

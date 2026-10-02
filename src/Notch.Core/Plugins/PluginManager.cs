@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Reflection;
 using Notch.Core.Activities;
+using Notch.Core.Plugins.Checks;
 
 namespace Notch.Core.Plugins;
 
@@ -34,7 +35,8 @@ public sealed record PluginInfo(
     bool AlwaysEnabled,
     string? Repository = null,
     string? InstalledTag = null,
-    IReadOnlyList<PluginSettingField>? Settings = null);
+    IReadOnlyList<PluginSettingField>? Settings = null,
+    IReadOnlyList<string>? Permissions = null);
 
 /// <summary>
 /// Finds plugins on disk and starts and stops them. A plugin is a folder holding a
@@ -53,6 +55,7 @@ public sealed class PluginManager : IDisposable
     private readonly PluginCardBoard _cards;
     private readonly PluginLog _log;
     private readonly Func<PluginManifest, string, Func<INotchPlugin>> _loader;
+    private readonly PluginChecks? _checks;
     private bool _disposed;
 
     /// <param name="pluginsDirectory">Each subfolder with a <c>plugin.json</c> is a plugin. Need not exist.</param>
@@ -64,15 +67,20 @@ public sealed class PluginManager : IDisposable
         ActivityManager activities,
         PluginCardBoard cards,
         PluginLog log,
-        Func<PluginManifest, string, Func<INotchPlugin>>? loader = null)
+        Func<PluginManifest, string, Func<INotchPlugin>>? loader = null,
+        PluginChecks? checks = null)
     {
         PluginsDirectory = pluginsDirectory;
         _dataDirectory = dataDirectory;
         _activities = activities;
         _cards = cards;
         _log = log;
+        _checks = checks;
         _loader = loader ?? PluginLoader.Load;
     }
+
+    /// <summary>When true, no plugin is started: the way back into Notch after a plugin broke it.</summary>
+    public bool SafeMode { get; set; }
 
     /// <summary>Raised when the list of plugins or a plugin's status changed, on whichever thread caused it.</summary>
     public event EventHandler? Changed;
@@ -167,9 +175,16 @@ public sealed class PluginManager : IDisposable
                 }
 
                 bool wanted = slot.Pinned || enabled.Contains(slot.Manifest.Id);
+                if (SafeMode && wanted && slot.Status == PluginStatus.Disabled)
+                {
+                    slot.Error = "Safe mode: plugins are switched off until Notch is started normally.";
+                    continue;
+                }
+
                 switch (slot.Status)
                 {
                     case PluginStatus.Disabled when wanted:
+                        slot.Error = null;
                         Start(slot, slot.Manifest);
                         break;
 
@@ -341,6 +356,14 @@ public sealed class PluginManager : IDisposable
     {
         try
         {
+            if (Refusal(slot, manifest) is { } refusal)
+            {
+                slot.Status = PluginStatus.Failed;
+                slot.Error = refusal;
+                _log.Write(LogSource, "warn", $"{manifest.Id} was not started. {refusal}");
+                return;
+            }
+
             slot.Factory ??= _loader(manifest, slot.Directory);
             slot.Host = new PluginHost(
                 manifest, slot.Directory, Path.Combine(_dataDirectory, manifest.Id), _activities, _cards, Pages, Themes, ShellState, Bus, _log);
@@ -364,6 +387,180 @@ public sealed class PluginManager : IDisposable
             slot.Error = cause.Message;
             _log.Write(LogSource, "error", $"{manifest.Id} failed to start.", cause);
         }
+    }
+
+    /// <summary>Why a plugin must not be started now, or null when it may be.</summary>
+    private string? Refusal(Slot slot, PluginManifest manifest)
+    {
+        if (_checks is null)
+        {
+            return null;
+        }
+
+        string hash = PluginTrustStore.TreeHash(slot.Directory);
+        if (_checks.Revocations is { } revocations
+            && PluginRevocations.Find(revocations(), manifest.Id, hash) is { } revoked)
+        {
+            _checks.Audit.Record(manifest.Id, PluginAuditKinds.Revoked, revoked.Reason);
+            return "Withdrawn by the plugin list" + (revoked.Reason.Length > 0 ? ": " + revoked.Reason : ".");
+        }
+
+        ScanReport scan = PluginScanner.Scan(slot.Directory);
+        if (scan.Blocked)
+        {
+            _checks.Audit.Record(manifest.Id, PluginAuditKinds.Blocked, string.Join("; ", scan.Findings.Where(f => f.Severity == ScanSeverity.Block).Select(f => f.Detail)));
+            return scan.BlockReason;
+        }
+
+        // A plugin run with --plugin= is the developer's own build, which changes all the time.
+        if (!slot.Pinned && _checks.Trust is { } trust && !trust.IsApproved(manifest.Id, hash))
+        {
+            _checks.Audit.Record(manifest.Id, PluginAuditKinds.Quarantined, trust.HasRecord(manifest.Id) ? "files changed" : "not approved");
+            return trust.HasRecord(manifest.Id)
+                ? "Its files changed since you approved it. Switch it off and on again to review it."
+                : "Not approved yet. Switch it on in Settings to review and approve it.";
+        }
+
+        _checks.Audit.Record(manifest.Id, PluginAuditKinds.Started, scan.Findings.Count == 0 ? "no findings" : $"{scan.Findings.Count} findings");
+        return null;
+    }
+
+    /// <summary>What the user is shown before switching a plugin on. Null when there is no plugin with this id.</summary>
+    public PluginReview? Review(string pluginId)
+    {
+        Slot? slot;
+        lock (_gate)
+        {
+            slot = _slots.FirstOrDefault(s => s.Manifest?.Id == pluginId);
+        }
+
+        if (slot?.Manifest is not { } manifest)
+        {
+            return null;
+        }
+
+        string hash = PluginTrustStore.TreeHash(slot.Directory);
+        bool approved = _checks?.Trust?.IsApproved(pluginId, hash) ?? true;
+        return new PluginReview(
+            slot.ToInfo(),
+            manifest.Permissions,
+            PluginScanner.Scan(slot.Directory),
+            approved,
+            !approved && (_checks?.Trust?.HasRecord(pluginId) ?? false),
+            _checks?.Revocations is { } revocations ? PluginRevocations.Find(revocations(), pluginId, hash) : null);
+    }
+
+    /// <summary>Records that the user approved the plugin's files as they are now. False when there is no such plugin.</summary>
+    public bool Approve(string pluginId, string detail = "approved by the user")
+    {
+        Slot? slot;
+        lock (_gate)
+        {
+            slot = _slots.FirstOrDefault(s => s.Manifest?.Id == pluginId);
+        }
+
+        if (slot?.Manifest is null || _checks?.Trust is not { } trust)
+        {
+            return false;
+        }
+
+        trust.Approve(pluginId, PluginTrustStore.TreeHash(slot.Directory));
+        _checks.Audit.Record(pluginId, PluginAuditKinds.Approved, detail);
+        return true;
+    }
+
+    /// <summary>
+    /// Records that the user approved the files in <paramref name="directory"/> for a plugin, e.g. an
+    /// update that waits for a restart. Moving the folder does not change what is approved: the
+    /// record is of the files' names and contents.
+    /// </summary>
+    public bool ApproveFiles(string pluginId, string directory, string detail)
+    {
+        if (_checks?.Trust is not { } trust || !Directory.Exists(directory))
+        {
+            return false;
+        }
+
+        trust.Approve(pluginId, PluginTrustStore.TreeHash(directory));
+        _checks.Audit.Record(pluginId, PluginAuditKinds.Approved, detail);
+        return true;
+    }
+
+    /// <summary>
+    /// Stops running plugins that the registry has withdrawn since they started. Call after the
+    /// registry was loaded. Returns the ids of the plugins that were stopped.
+    /// </summary>
+    public IReadOnlyList<string> EnforceRevocations()
+    {
+        if (_checks?.Revocations is not { } revocations)
+        {
+            return [];
+        }
+
+        IReadOnlyList<Revocation> list = revocations();
+        List<string> stopped = [];
+        lock (_gate)
+        {
+            foreach (Slot slot in _slots.Where(s => s.Status == PluginStatus.Running && s.Manifest is not null).ToList())
+            {
+                if (PluginRevocations.Find(list, slot.Manifest!.Id, PluginTrustStore.TreeHash(slot.Directory)) is not { } revoked)
+                {
+                    continue;
+                }
+
+                stopped.Add(slot.Manifest.Id);
+                _checks.Audit.Record(slot.Manifest.Id, PluginAuditKinds.Revoked, revoked.Reason);
+                Stop(slot);
+                slot.Status = PluginStatus.Failed;
+                slot.Error = "Withdrawn by the plugin list" + (revoked.Reason.Length > 0 ? ": " + revoked.Reason : ".");
+            }
+        }
+
+        if (stopped.Count > 0)
+        {
+            Changed?.Invoke(this, EventArgs.Empty);
+        }
+
+        return stopped;
+    }
+
+    /// <summary>
+    /// Approves plugins that were switched on before approval existed, so updating Notch does not
+    /// switch them off. Plugins that already have a record are left alone.
+    /// </summary>
+    public void ApproveExisting(IEnumerable<string> pluginIds)
+    {
+        foreach (string id in pluginIds)
+        {
+            if (_checks?.Trust is { } trust && !trust.HasRecord(id))
+            {
+                Approve(id, "carried over from an earlier version of Notch");
+            }
+        }
+    }
+
+    /// <summary>
+    /// The kill switch: stops every running plugin and leaves them switched off. A plugin runs
+    /// inside Notch, so one that ignores <see cref="INotchPlugin.Stop"/> cannot be interrupted;
+    /// everything it was showing is removed regardless, and it is left switched off.
+    /// Returns the ids of the plugins that were running.
+    /// </summary>
+    public IReadOnlyList<string> KillAll(string reason)
+    {
+        List<string> stopped = [];
+        lock (_gate)
+        {
+            foreach (Slot slot in _slots.Where(s => s.Status == PluginStatus.Running && s.Manifest is not null))
+            {
+                stopped.Add(slot.Manifest!.Id);
+                _checks?.Audit.Record(slot.Manifest.Id, PluginAuditKinds.Killed, reason);
+                Stop(slot);
+            }
+        }
+
+        _log.Write(LogSource, "warn", $"All plugins were stopped: {reason}");
+        Changed?.Invoke(this, EventArgs.Empty);
+        return stopped;
     }
 
     private void Stop(Slot slot)
@@ -416,6 +613,7 @@ public sealed class PluginManager : IDisposable
             Pinned,
             PluginOrigin.SourceOf(Directory, Manifest)?.ToString(),
             PluginOrigin.Read(Directory)?.Tag,
-            Manifest?.Settings);
+            Manifest?.Settings,
+            Manifest?.Permissions);
     }
 }
