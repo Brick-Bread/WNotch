@@ -6,9 +6,11 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using Notch.App.Agents;
 using Notch.App.Plugins;
 using Notch.App.Shell;
 using Notch.Core.Activities;
+using Notch.Core.Agents;
 using Notch.Core.Automation;
 using Notch.Core.Plugins;
 using Notch.Core.Settings;
@@ -132,6 +134,20 @@ public partial class SettingsWindow : Window
         CheckPluginUpdates.Click += (_, _) => _ = CheckPluginUpdatesAsync(userInitiated: true);
         UpdateNotch.Click += (_, _) => OnUpdateNotch();
         BrowsePlugins.Click += (_, _) => OnBrowsePlugins();
+
+        DetectAgents.IsChecked = settings.DetectAgents;
+        foreach (AgentDefinition agent in AgentCatalog.All)
+        {
+            AgentToggles.Children.Add(new CheckBox
+            {
+                Content = agent.DisplayName,
+                Tag = agent.Id,
+                IsChecked = !settings.HiddenAgents.Contains(agent.Id),
+            });
+        }
+
+        // What the files say now, not what the setting remembers: the user may have edited them.
+        GlobalAgentHooks.IsChecked = AgentHookFiles.IsInstalled();
 
         _webhookToken = settings.WebhookToken;
         WebhookEnabled.IsChecked = settings.WebhookEnabled;
@@ -312,6 +328,13 @@ public partial class SettingsWindow : Window
             return;
         }
 
+        _settings.DetectAgents = DetectAgents.IsChecked == true;
+        _settings.HiddenAgents = [.. AgentToggles.Children.OfType<CheckBox>().Where(c => c.IsChecked != true).Select(c => (string)c.Tag)];
+        if (!TryApplyAgentHooks())
+        {
+            return;
+        }
+
         _settings.WebhookEnabled = WebhookEnabled.IsChecked == true;
         _settings.WebhookPort = webhookPort;
         _settings.WebhookToken = _webhookToken;
@@ -372,6 +395,61 @@ public partial class SettingsWindow : Window
 
         Saved?.Invoke(this, EventArgs.Empty);
         Close();
+    }
+
+    /// <summary>
+    /// Puts Notch's hooks into the agents' settings files, or takes them out, when the box changed.
+    /// Says exactly which files first. Returns false when saving should stop (the user changed their mind).
+    /// </summary>
+    private bool TryApplyAgentHooks()
+    {
+        const string NL = "\n";
+        const string NL2 = "\n\n";
+
+        bool want = GlobalAgentHooks.IsChecked == true;
+        if (want == AgentHookFiles.IsInstalled())
+        {
+            _settings.GlobalAgentHooks = want;
+            return true;
+        }
+
+        AgentHookFiles.Plan plan = AgentHookFiles.PlanFor(want);
+        string problems = plan.Problems.Count == 0 ? "" : NL2 + string.Join(NL, plan.Problems);
+        if (!plan.Changes)
+        {
+            if (problems.Length > 0)
+            {
+                MessageBox.Show(this, problems.Trim(), "Notch", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+
+            GlobalAgentHooks.IsChecked = AgentHookFiles.IsInstalled();
+            _settings.GlobalAgentHooks = GlobalAgentHooks.IsChecked == true;
+            return true;
+        }
+
+        string list = string.Join(NL, plan.Files.Select(f => $"•  {f.Path}: {f.What}"));
+        string question = want
+            ? $"Notch will change:{NL2}{list}{NL2}A backup of each file is saved next to it (ending in {AgentHookFiles.BackupSuffix}). Untick the box later to remove the lines again.{problems}{NL2}Continue?"
+            : $"Notch will change:{NL2}{list}{problems}{NL2}Continue?";
+        if (MessageBox.Show(this, question, "Notch", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+        {
+            GlobalAgentHooks.IsChecked = !want;
+            return false;
+        }
+
+        try
+        {
+            AgentHookFiles.Apply(want);
+        }
+        catch (Exception e) when (e is System.IO.IOException or UnauthorizedAccessException)
+        {
+            MessageBox.Show(this, "The agents' settings could not be changed: " + e.Message, "Notch", MessageBoxButton.OK, MessageBoxImage.Warning);
+            GlobalAgentHooks.IsChecked = AgentHookFiles.IsInstalled();
+            return false;
+        }
+
+        _settings.GlobalAgentHooks = want;
+        return true;
     }
 
     /// <summary>Reads the terminal buttons box. Says which line is wrong, and returns false, when one cannot be read.</summary>

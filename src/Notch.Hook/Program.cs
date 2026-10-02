@@ -2,16 +2,22 @@ using System.IO.Pipes;
 using System.Text;
 using Notch.Core.Agents;
 
-// Run by the Claude and Codex CLIs when something happens in a session that Notch started.
-// It forwards the event to the app and must never get in the CLI's way: it prints nothing
-// (Claude adds hook output to the conversation) and always exits 0.
+// Run by the Claude and Codex CLIs when something happens in a session. It forwards the event to
+// the app and must never get in the CLI's way: it prints nothing (Claude adds hook output to the
+// conversation) and always exits 0.
+//
+// A session Notch's own terminal started names its pipe and session in the environment. An agent
+// started anywhere else (a hook in the user's own settings) does not, so the event goes to the
+// pipe every Notch listens on, tagged with this program's process id so the app can tell which
+// agent it came from.
 try
 {
     string? pipeName = Environment.GetEnvironmentVariable(AgentHooks.PipeVariable);
     string? session = Environment.GetEnvironmentVariable(AgentHooks.SessionVariable);
     if (string.IsNullOrEmpty(pipeName) || string.IsNullOrEmpty(session))
     {
-        return 0;
+        pipeName = AgentHooks.SharedPipeName;
+        session = "";
     }
 
     string payload = ReadPayload(args);
@@ -22,7 +28,7 @@ try
 
     using var pipe = new NamedPipeClientStream(".", pipeName, PipeDirection.Out);
     pipe.Connect(timeout: 1000);
-    byte[] line = Encoding.UTF8.GetBytes(AgentHooks.FormatMessage(session, payload) + "\n");
+    byte[] line = Encoding.UTF8.GetBytes(AgentHooks.FormatMessage(session, payload, Environment.ProcessId) + "\n");
     pipe.Write(line);
     pipe.Flush();
 }

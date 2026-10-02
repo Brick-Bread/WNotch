@@ -4,7 +4,11 @@ using Notch.Core.Agents;
 
 namespace Notch.Platform.Agents;
 
-/// <summary>Listens on a named pipe for the events Notch.Hook.exe forwards from agent CLIs.</summary>
+/// <summary>
+/// Listens on named pipes for the events Notch.Hook.exe forwards from agent CLIs. One pipe is
+/// private to this process, for sessions Notch's own terminal started; the other is shared by
+/// every Notch of this user, for agents that were started anywhere else.
+/// </summary>
 public sealed class AgentHookServer : IDisposable
 {
     private readonly CancellationTokenSource _stop = new();
@@ -13,13 +17,17 @@ public sealed class AgentHookServer : IDisposable
     {
         // Unique per process so two copies of the app (e.g. a dev build) never cross wires.
         PipeName = $"notch-agent-{Environment.ProcessId}";
-        _ = Task.Run(ListenAsync);
+        _ = Task.Run(() => ListenAsync(PipeName));
+        _ = Task.Run(() => ListenAsync(AgentHooks.SharedPipeName));
     }
 
     public string PipeName { get; }
 
-    /// <summary>Raised on a background thread with the session id and the event name.</summary>
+    /// <summary>Raised on a background thread with the session id and the event name, for sessions Notch's terminal started.</summary>
     public event Action<string, string>? EventReceived;
+
+    /// <summary>Raised on a background thread for every event, including those from agents Notch did not start.</summary>
+    public event Action<AgentHooks.HookMessage>? MessageReceived;
 
     public void Dispose()
     {
@@ -27,7 +35,7 @@ public sealed class AgentHookServer : IDisposable
         _stop.Dispose();
     }
 
-    private async Task ListenAsync()
+    private async Task ListenAsync(string pipeName)
     {
         CancellationToken token = _stop.Token;
         while (!token.IsCancellationRequested)
@@ -36,7 +44,7 @@ public sealed class AgentHookServer : IDisposable
             try
             {
                 pipe = new NamedPipeServerStream(
-                    PipeName,
+                    pipeName,
                     PipeDirection.In,
                     NamedPipeServerStream.MaxAllowedServerInstances,
                     PipeTransmissionMode.Byte,
@@ -75,9 +83,13 @@ public sealed class AgentHookServer : IDisposable
                 timeout.CancelAfter(TimeSpan.FromSeconds(5));
 
                 string? line = await reader.ReadLineAsync(timeout.Token);
-                if (line is not null && AgentHooks.TryParseMessage(line, out string session, out string eventName))
+                if (line is not null && line.Length <= 256 * 1024 && AgentHooks.TryParseHookMessage(line, out AgentHooks.HookMessage? message))
                 {
-                    EventReceived?.Invoke(session, eventName);
+                    MessageReceived?.Invoke(message!);
+                    if (message!.Session.Length > 0)
+                    {
+                        EventReceived?.Invoke(message.Session, message.EventName);
+                    }
                 }
             }
         }

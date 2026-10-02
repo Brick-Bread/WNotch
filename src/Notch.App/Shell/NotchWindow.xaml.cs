@@ -5,6 +5,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using Notch.Core.Activities;
+using Notch.Core.Agents;
 using Notch.App.Terminal;
 using Notch.Core.Media;
 using Notch.Core.Plugins;
@@ -80,9 +81,13 @@ public partial class NotchWindow : Window
         PluginShellState shellState,
         FileShelf shelf,
         SettingsStore settingsStore,
-        AppSettings settings)
+        AppSettings settings,
+        AgentBoard agents,
+        Func<AgentEntry, bool> focusDetectedAgent)
     {
         InitializeComponent();
+        _agents = agents;
+        _focusDetectedAgent = focusDetectedAgent;
 
         _activities = activities;
         _activities.Changed += OnActivitiesChanged;
@@ -102,6 +107,7 @@ public partial class NotchWindow : Window
         InitializePages();
         InitializeShelf();
         InitializeKeyboard();
+        InitializeAgents();
 
         Shape idle = ShapeFor(NotchMode.Idle);
         _animator = new NotchAnimator(idle.Width, idle.Height, idle.Radius);
@@ -160,8 +166,8 @@ public partial class NotchWindow : Window
         NotchMode.Expanded when _tab == NotchTab.Plugins => new Shape(640, PluginsTabHeight, 30),
         NotchMode.Expanded when _tab == NotchTab.Page => new Shape(920, 540, 30),
 
-        // Home is taller while the media card is showing.
-        NotchMode.Expanded => new Shape(640, _media.Current is null ? 236 : 364, 30),
+        // Home is taller while the media card or the agents card is showing.
+        NotchMode.Expanded => new Shape(640, (_media.Current is null ? 236 : 364) + AgentCardExtra, 30),
         _ => new Shape(180, 32, 16),
     };
 

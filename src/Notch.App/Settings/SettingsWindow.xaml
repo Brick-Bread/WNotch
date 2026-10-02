@@ -107,6 +107,17 @@
         <CheckBox x:Name="ShowBluetooth" Content="Bluetooth devices connecting" />
         <CheckBox x:Name="ShowCapsLock" Content="Caps Lock switching on or off" />
 
+        <TextBlock Text="Agents" Style="{StaticResource Heading}" Margin="0,22,0,4" />
+        <TextBlock TextWrapping="Wrap" Opacity="0.7" Margin="0,0,0,8"
+                   Text="Notch lists coding agents running anywhere on this PC, not only those started from its terminal. Clicking one brings its window to the front. Whether an agent is working, waiting for you or done is known only for agents that report it through hooks." />
+        <CheckBox x:Name="DetectAgents" Content="Show agents running outside Notch's terminal"
+                  ToolTip="Looks at the running programs every few seconds for Claude Code, Codex, Gemini CLI and Aider. Sessions that only run in the background of a desktop app are left out." />
+        <StackPanel x:Name="AgentToggles" Margin="28,2,0,0" IsEnabled="{Binding IsChecked, ElementName=DetectAgents}" />
+        <CheckBox x:Name="GlobalAgentHooks" Margin="0,8,0,0" Content="Let agents report what they are doing, wherever they run"
+                  ToolTip="Adds Notch's hooks to Claude Code's settings.json and Codex's config.toml. Notch keeps a backup of each file and takes its lines out again when you untick this." />
+        <TextBlock TextWrapping="Wrap" Opacity="0.7" Margin="28,2,0,0" FontSize="12"
+                   Text="Edits ~\.claude\settings.json and ~\.codex\config.toml after asking, with a backup next to each. Codex runs only one notify command, so an existing one is never replaced." />
+
         <TextBlock Text="Terminal buttons" Style="{StaticResource Heading}" Margin="0,22,0,4" />
         <TextBlock TextWrapping="Wrap" Opacity="0.7" Margin="0,0,0,8"
                    Text="One per line, up to six: Name = command arguments. Put NAME=value pairs before the command to set environment variables for that button only, for example &quot;Work Claude = CLAUDE_CONFIG_DIR=C:\work claude&quot; or &quot;Codex fork = my-codex --model o3&quot;. A command with claude or codex in its name gets the agent status in the pill." />

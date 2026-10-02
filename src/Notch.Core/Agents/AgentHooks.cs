@@ -48,9 +48,58 @@ public static class AgentHooks
         _ => [],
     };
 
+    /// <summary>
+    /// The pipe every Notch of this user listens on for agents that were not started from Notch's
+    /// terminal, whose hooks do not know the per-process pipe. Debug builds use their own.
+    /// </summary>
+#if DEBUG
+    public const string SharedPipeName = "notch-agent-shared-debug";
+#else
+    public const string SharedPipeName = "notch-agent-shared";
+#endif
+
     /// <summary>Formats the line the hook executable writes to the pipe.</summary>
-    public static string FormatMessage(string sessionId, string payload) =>
-        JsonSerializer.Serialize(new JsonObject { ["session"] = sessionId, ["payload"] = payload });
+    /// <param name="hookPid">The hook program's own process id, so the app can find which agent started it.</param>
+    public static string FormatMessage(string sessionId, string payload, int hookPid = 0) =>
+        JsonSerializer.Serialize(new JsonObject { ["session"] = sessionId, ["payload"] = payload, ["pid"] = hookPid });
+
+    /// <summary>What a hook reported.</summary>
+    /// <param name="Session">The Notch terminal session, or empty for an agent started elsewhere.</param>
+    /// <param name="HookPid">The hook program's process id; 0 when it did not say.</param>
+    /// <param name="Folder">The folder the agent works in, when it said.</param>
+    public sealed record HookMessage(string Session, string EventName, int HookPid, string? Folder);
+
+    /// <summary>Reads a line written by the hook executable, including agents that were not started by Notch.</summary>
+    public static bool TryParseHookMessage(string line, out HookMessage? message)
+    {
+        message = null;
+        try
+        {
+            JsonNode? node = JsonNode.Parse(line);
+            string session = (string?)node?["session"] ?? "";
+            string? payloadText = (string?)node?["payload"];
+            if (string.IsNullOrWhiteSpace(payloadText))
+            {
+                return false;
+            }
+
+            JsonNode? payload = JsonNode.Parse(payloadText);
+            string? name = (string?)payload?["hook_event_name"] ?? (string?)payload?["type"];
+            if (string.IsNullOrEmpty(name))
+            {
+                return false;
+            }
+
+            int pid = node?["pid"] is JsonValue value && value.TryGetValue(out int parsed) ? parsed : 0;
+            string? folder = (string?)payload?["cwd"];
+            message = new HookMessage(session, name, pid, string.IsNullOrWhiteSpace(folder) ? null : folder);
+            return true;
+        }
+        catch (Exception e) when (e is JsonException or InvalidOperationException or FormatException)
+        {
+            return false;
+        }
+    }
 
     /// <summary>Reads a line written by the hook executable.</summary>
     /// <param name="eventName">Claude's <c>hook_event_name</c> or Codex's notification <c>type</c>.</param>

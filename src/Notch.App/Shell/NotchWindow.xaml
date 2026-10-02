@@ -123,6 +123,38 @@
                         </Grid>
                     </Grid>
 
+                    <!-- Coding agents, in Notch's terminal or running anywhere else. Only shown while there are any. -->
+                    <Border x:Name="AgentsCard" Style="{DynamicResource Card}" Margin="0,0,0,14" Visibility="Collapsed">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Top" Text="Agents" Style="{DynamicResource CardLabel}" />
+                            <ItemsControl x:Name="AgentList" Margin="0,6,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="Transparent" Cursor="Hand" Height="24" Tag="{Binding}"
+                                                MouseLeftButtonDown="OnAgentRowClicked" ToolTip="{Binding Tip}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="16" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Ellipse Width="8" Height="8" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                         Fill="{Binding Brush}" />
+                                                <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="12" FontWeight="SemiBold"
+                                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="260" />
+                                                <TextBlock Grid.Column="2" Text="{Binding Where}" FontSize="12" Opacity="0.55"
+                                                           Margin="10,0,10,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Grid.Column="3" Text="{Binding StateText}" FontSize="12" Opacity="0.8"
+                                                           VerticalAlignment="Center" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </DockPanel>
+                    </Border>
+
                     <Grid Height="150">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />

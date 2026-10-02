@@ -6,6 +6,12 @@ public enum AgentKind
     None,
     Claude,
     Codex,
+
+    /// <summary>Found running, but reports nothing about what it is doing.</summary>
+    Gemini,
+
+    /// <summary>Found running, but reports nothing about what it is doing.</summary>
+    Aider,
 }
 
 public enum AgentState

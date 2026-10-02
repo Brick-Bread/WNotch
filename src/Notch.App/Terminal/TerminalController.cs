@@ -3,7 +3,6 @@ using System.ComponentModel;
 using System.IO;
 using System.Text;
 using System.Windows.Threading;
-using Notch.Core.Activities;
 using Notch.Core.Agents;
 using Notch.Core.Terminal;
 using Notch.Platform.Agents;
@@ -19,7 +18,7 @@ internal sealed class TerminalController : IDisposable
 {
     private static readonly TimeSpan QuietThreshold = TimeSpan.FromSeconds(15);
 
-    private readonly ActivityManager _activities;
+    private readonly AgentBoard _board;
     private readonly Dispatcher _dispatcher;
     private readonly AgentHookServer _hookServer = new();
     private readonly DispatcherTimer _quietTimer = new() { Interval = TimeSpan.FromSeconds(5) };
@@ -28,9 +27,9 @@ internal sealed class TerminalController : IDisposable
     private readonly string _claudeSettingsFile;
     private bool _isViewing;
 
-    public TerminalController(ActivityManager activities, Dispatcher dispatcher)
+    public TerminalController(AgentBoard board, Dispatcher dispatcher)
     {
-        _activities = activities;
+        _board = board;
         _dispatcher = dispatcher;
 
         Bridge.Created += OnTerminalCreated;
@@ -49,6 +48,9 @@ internal sealed class TerminalController : IDisposable
     }
 
     public TerminalBridge Bridge { get; } = new();
+
+    /// <summary>The listener agent hooks report to; the tracker of agents found elsewhere shares it.</summary>
+    public AgentHookServer HookServer => _hookServer;
 
     public ObservableCollection<TerminalSession> Sessions { get; } = [];
 
@@ -76,6 +78,7 @@ internal sealed class TerminalController : IDisposable
         session.Agent.Changed += () => OnAgentChanged(session);
         Sessions.Add(session);
         SetActive(session);
+        PublishAgents();
 
         // The page answers with the terminal's size, which is when the process starts.
         Bridge.Create(session.Id);
@@ -95,7 +98,7 @@ internal sealed class TerminalController : IDisposable
     {
         session.Process?.Dispose();
         session.Process = null;
-        _activities.Remove(AgentActivities.IdFor(session.Id));
+        _board.Remove(session.Id);
         Bridge.Close(session.Id);
         lock (_pendingOutput)
         {
@@ -289,24 +292,26 @@ internal sealed class TerminalController : IDisposable
     }
 
     /// <summary>
-    /// Puts every session's state in the pill. All of them, not just the one that changed: each
-    /// says how many others have something to report, since the pill only shows one.
+    /// Puts every agent session's state on the board, which shows it in the pill and on the Home tab.
+    /// Plain shells have no state to report and are not listed.
     /// </summary>
     private void PublishAgents()
     {
-        int reporting = Sessions.Count(session => session.Agent.State != AgentState.Idle);
         foreach (TerminalSession session in Sessions)
         {
-            Activity? activity = AgentActivities.For(
-                session.Id, session.Profile.DisplayName, session.Profile.Glyph, session.Agent.State, session.FolderName, reporting - 1);
-            if (activity is null)
+            if (session.Profile.Agent == AgentKind.None)
             {
-                _activities.Remove(AgentActivities.IdFor(session.Id));
+                continue;
             }
-            else
-            {
-                _activities.Publish(activity);
-            }
+
+            _board.Set(new AgentEntry(
+                session.Id,
+                AgentCatalog.ForKind(session.Profile.Agent)?.Id ?? session.Profile.Id,
+                session.Profile.DisplayName,
+                session.Profile.Glyph,
+                session.Agent.State,
+                session.FolderName,
+                AgentSource.Notch));
         }
     }
 

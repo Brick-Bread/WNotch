@@ -6,6 +6,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
 using H.NotifyIcon;
+using Notch.App.Agents;
 using Notch.App.Automation;
 using Notch.App.Plugins;
 using Notch.App.Settings;
@@ -13,6 +14,7 @@ using Notch.App.Shell;
 using Notch.App.Terminal;
 using Notch.App.Updates;
 using Notch.Core.Activities;
+using Notch.Core.Agents;
 using Notch.Core.Automation;
 using Notch.Core.Media;
 using Notch.Core.Plugins;
@@ -54,6 +56,9 @@ public partial class App : Application
     private CommandDispatcher? _commands;
     private CommandPipe? _commandPipe;
     private WebhookService? _webhook;
+    private AgentBoard? _agentBoard;
+    private AgentPublisher? _agentPublisher;
+    private AgentTracker? _agentTracker;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -118,7 +123,9 @@ public partial class App : Application
         }
 
         _mediaPublisher = new MediaActivityPublisher(media, _activities);
-        _terminal = new TerminalController(_activities, Dispatcher);
+        _agentBoard = new AgentBoard();
+        _agentPublisher = new AgentPublisher(_activities, _agentBoard);
+        _terminal = new TerminalController(_agentBoard, Dispatcher);
 
         var pluginCards = new PluginCardBoard();
         string appData = Path.GetDirectoryName(settingsStore.FilePath)!;
@@ -169,7 +176,7 @@ public partial class App : Application
 
         // Before any window exists, so nothing is ever drawn without its colours.
         ThemeManager.Apply(settings);
-        var window = new NotchWindow(_activities, media, _terminal, pluginCards, _plugins.Pages, _plugins.ShellState, shelf, settingsStore, settings)
+        var window = new NotchWindow(_activities, media, _terminal, pluginCards, _plugins.Pages, _plugins.ShellState, shelf, settingsStore, settings, _agentBoard, entry => _agentTracker?.Focus(entry) ?? false)
         {
             ShelfKeepsMissingFiles = demo,
         };
@@ -184,6 +191,17 @@ public partial class App : Application
         window.UseAppearance(
             Enum.TryParse(Option(e, "--style="), ignoreCase: true, out NotchStyle style) ? style : null,
             Enum.TryParse(Option(e, "--position="), ignoreCase: true, out NotchPosition position) ? position : null);
+
+        // Not under --demo: the screenshots must not show whatever the developer happens to be running.
+        if (!demo)
+        {
+            _agentTracker = new AgentTracker(Dispatcher, _agentBoard, settings, _terminal.HookServer);
+            if (settings.GlobalAgentHooks)
+            {
+                // The hooks must name this copy of the hook program, wherever Notch is installed now.
+                _ = Task.Run(AgentHookFiles.RefreshPaths);
+            }
+        }
 
         window.Show();
         if (HasFlag(e, "--pin-open"))
@@ -304,6 +322,8 @@ public partial class App : Application
     {
         _demo?.Dispose();
         _webhook?.Dispose();
+        _agentTracker?.Dispose();
+        _agentPublisher?.Dispose();
         _commandPipe?.Dispose();
         _plugins?.Dispose();
         _updates?.Dispose();
@@ -341,6 +361,7 @@ public partial class App : Application
             _updates?.CheckSoon();
 
             _webhook?.Apply();
+            _agentTracker?.ScanSoon();
             if (_webhook?.Problem is { } webhookProblem)
             {
                 MessageBox.Show(webhookProblem, "Notch", MessageBoxButton.OK, MessageBoxImage.Warning);
