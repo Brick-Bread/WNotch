@@ -120,7 +120,6 @@ public partial class NotchWindow
     private void SelectTab(NotchTab tab)
     {
         _tab = tab;
-        App.Usage.Record("tab_opened", new Dictionary<string, string> { ["tab"] = tab.ToString() });
         HomePanel.Visibility = tab == NotchTab.Home ? Visibility.Visible : Visibility.Collapsed;
         TerminalPanel.Visibility = tab == NotchTab.Terminal ? Visibility.Visible : Visibility.Collapsed;
         StatsPanel.Visibility = tab == NotchTab.Stats ? Visibility.Visible : Visibility.Collapsed;

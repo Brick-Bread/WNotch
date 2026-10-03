@@ -163,9 +163,6 @@ public sealed class AppSettings
     /// <summary>Keep a history of what was copied, in the Clipboard tab. Off until the user turns it on.</summary>
     public bool ClipboardHistory { get; set; }
 
-    /// <summary>Record anonymous usage events to a file on this computer (nothing is uploaded). Off until the user turns it on.</summary>
-    public bool UsageStats { get; set; }
-
     /// <summary>Show Windows notifications in the pill. Off until the user turns it on.</summary>
     public bool MirrorNotifications { get; set; }
 

@@ -22,7 +22,6 @@ using Notch.Core.Plugins;
 using Notch.Core.Plugins.Checks;
 using Notch.Core.Settings;
 using Notch.Core.Shelf;
-using Notch.Core.Telemetry;
 using Notch.Core.Terminal;
 using Notch.Platform.Hud;
 using Notch.Platform.Media;
@@ -64,10 +63,6 @@ public partial class App : Application
     private AgentPublisher? _agentPublisher;
     private AgentTracker? _agentTracker;
     private NotificationService? _notifications;
-
-    /// <summary>The opt-in usage record; see <see cref="UsageLog"/>.</summary>
-    internal static UsageLog Usage { get; } = new(Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Notch", "usage.jsonl"));
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -118,12 +113,6 @@ public partial class App : Application
         var settingsStore = new SettingsStore(Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Notch", "settings.json"));
         AppSettings settings = settingsStore.Load();
-        Usage.Enabled = settings.UsageStats;
-        Usage.Record("app_start", new Dictionary<string, string>
-        {
-            ["version"] = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "unknown",
-            ["os"] = Environment.OSVersion.Version.ToString(),
-        });
 
         _activities = new ActivityManager();
         IMediaService media;
@@ -536,7 +525,6 @@ public partial class App : Application
         _settingsWindow.Saved += (_, _) =>
         {
             _activities?.SetSuppressed(settings.SuppressedActivityIds());
-            Usage.Enabled = settings.UsageStats;
             notch.ApplySettings();
             _updates?.CheckSoon();
 

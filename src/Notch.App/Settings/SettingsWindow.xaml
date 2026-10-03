@@ -131,11 +131,6 @@
         <TextBox x:Name="MirroredApps" AcceptsReturn="True" Height="56" Margin="28,0,0,0" TextWrapping="NoWrap"
                  VerticalScrollBarVisibility="Auto" IsEnabled="{Binding IsChecked, ElementName=MirrorNotifications}" />
 
-        <TextBlock Text="Usage statistics" Style="{StaticResource Heading}" Margin="0,22,0,4" />
-        <CheckBox x:Name="UsageStats" Content="Record how I use Notch, on this computer only" />
-        <TextBlock TextWrapping="Wrap" Opacity="0.7" Margin="28,2,0,0" FontSize="12"
-                   Text="Off by default. Writes event names and counts (the app starting, which tab opens) to usage.jsonl in %LocalAppData%\Notch, ready to chart. Nothing is sent anywhere, and no text you type, files or window titles are recorded." />
-
         <TextBlock Text="Clipboard" Style="{StaticResource Heading}" Margin="0,22,0,4" />
         <CheckBox x:Name="ClipboardHistory" Content="Keep a history of what I copy (adds a Clipboard tab)" />
         <TextBlock TextWrapping="Wrap" Opacity="0.7" Margin="28,2,0,0" FontSize="12"
