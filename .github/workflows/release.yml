@@ -70,6 +70,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $installer = Get-Item artifacts/Notch-Setup-*.exe
+          # The app updates from its own copy of the installer, so the download count on the site
+          # (Notch-Setup-*.exe only) is people choosing to download, not updates. Same bytes, so
+          # the signature carries over.
+          $update = Join-Path artifacts ($installer.Name -replace '^Notch-Setup-', 'Notch-Update-')
+          Copy-Item $installer.FullName $update
+          $updateFiles = @((Resolve-Path $update).Path)
+          if (Test-Path "$($installer.FullName).sig") {
+              Copy-Item "$($installer.FullName).sig" "$update.sig"
+              $updateFiles += (Resolve-Path "$update.sig").Path
+          }
           # The signature, when there is one, goes on the same release: the app looks for <installer>.sig.
           $signatures = @(Get-ChildItem artifacts/Notch-Setup-*.exe.sig -ErrorAction SilentlyContinue | ForEach-Object FullName)
-          gh release create $env:GITHUB_REF_NAME $installer.FullName @signatures artifacts/BreakReminder-plugin.zip --title "Notch ${{ steps.version.outputs.version }}" --generate-notes
+          gh release create $env:GITHUB_REF_NAME $installer.FullName @signatures @updateFiles artifacts/BreakReminder-plugin.zip --title "Notch ${{ steps.version.outputs.version }}" --generate-notes

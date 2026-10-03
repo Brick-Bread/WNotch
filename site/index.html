@@ -102,7 +102,7 @@
 <script>
 fetch("https://api.github.com/repos/Brick-Bread/WNotch/releases?per_page=100").then(function(r){return r.ok?r.json():null}).then(function(list){
  if(!list)return;
- var n=0;list.forEach(function(r){(r.assets||[]).forEach(function(a){if(/\.exe$/i.test(a.name))n+=a.download_count})});
+ var n=0;list.forEach(function(r){(r.assets||[]).forEach(function(a){if(/^Notch-Setup-.*\.exe$/i.test(a.name))n+=a.download_count})});
  if(n>0){document.getElementById("total").textContent=n.toLocaleString();document.getElementById("count").hidden=false}
 }).catch(function(){});
 fetch("https://api.github.com/repos/Brick-Bread/WNotch/releases/latest").then(function(r){return r.ok?r.json():null}).then(function(r){

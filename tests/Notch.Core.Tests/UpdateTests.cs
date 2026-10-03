@@ -38,6 +38,15 @@ public class UpdateTests
         Assert.False(ReleaseFeed.TryParseVersion("nightly", out _));
 
     [Fact]
+    public void Release_prefers_the_update_copy_so_updates_do_not_count_as_downloads()
+    {
+        const string update = "https://github.com/Brick-Bread/WNotch/releases/download/v0.2.0/Notch-Update-0.2.0.exe";
+        string json = ReleaseJson().Replace("\"assets\": [", "\"assets\": [ { \"name\": \"Notch-Update-0.2.0.exe\", \"browser_download_url\": \"" + update + "\", \"size\": 5 },");
+
+        Assert.Equal(update, ReleaseFeed.Parse(json)!.InstallerUrl);
+    }
+
+    [Fact]
     public void Release_picks_the_installer_asset()
     {
         ReleaseInfo release = ReleaseFeed.Parse(ReleaseJson(digest: "sha256:ABCDEF"))!;

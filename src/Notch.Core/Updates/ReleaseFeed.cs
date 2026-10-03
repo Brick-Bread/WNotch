@@ -18,6 +18,11 @@ public static class ReleaseFeed
     // An update is an executable that gets run unattended, so it is only ever taken from
     // this repository's own release downloads.
     private const string TrustedDownloadPrefix = "https://github.com/" + Repository + "/releases/download/";
+
+    // The release carries the same installer twice. People download Notch-Setup-*, which the
+    // site's download counter counts; the app downloads Notch-Update-*, so that updates do not
+    // count as new downloads. Releases before the second file existed only have Notch-Setup-*.
+    private const string UpdatePrefix = "Notch-Update-";
     private const string InstallerPrefix = "Notch-Setup-";
 
     /// <summary>Parses a GitHub release object. Null when it has no version or no installer to offer.</summary>
@@ -32,11 +37,12 @@ public static class ReleaseFeed
                 return null;
             }
 
+            foreach (string prefix in new[] { UpdatePrefix, InstallerPrefix })
             foreach (JsonNode? asset in assets)
             {
                 string name = (string?)asset?["name"] ?? "";
                 string url = (string?)asset?["browser_download_url"] ?? "";
-                if (!name.StartsWith(InstallerPrefix, StringComparison.OrdinalIgnoreCase)
+                if (!name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
                     || !name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
                     || !url.StartsWith(TrustedDownloadPrefix, StringComparison.Ordinal))
                 {
