@@ -142,6 +142,7 @@ public partial class SettingsWindow : Window
         MirrorNotifications.IsChecked = settings.MirrorNotifications;
         MirroredApps.Text = string.Join(Environment.NewLine, settings.MirroredApps);
         ClipboardHistory.IsChecked = settings.ClipboardHistory;
+        UsageStats.IsChecked = settings.UsageStats;
         ClearClipboard.Click += (_, _) =>
         {
             clearClipboard();
@@ -374,6 +375,7 @@ public partial class SettingsWindow : Window
 
         _settings.DetectAgents = DetectAgents.IsChecked == true;
         _settings.ClipboardHistory = ClipboardHistory.IsChecked == true;
+        _settings.UsageStats = UsageStats.IsChecked == true;
         _settings.MirrorNotifications = MirrorNotifications.IsChecked == true;
         _settings.MirroredApps = [.. MirroredApps.Text
             .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
