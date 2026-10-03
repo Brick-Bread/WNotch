@@ -4,6 +4,37 @@ Notch is being rewritten in Rust (Tauri v2) so Linux is native. The C# app in `s
 reference for behaviour; it is deleted when the Rust app reaches the core slice. Work happens on
 the `rust` branch. Version of the Rust app: 0.9.0.
 
+## Running and checking the rewrite
+
+From the repository root, with Rust and the platform's Tauri prerequisites installed:
+
+```sh
+cargo test
+cargo run -p notch
+```
+
+The frontend is embedded directly from `ui/`; no bundler or frontend dev server is needed.
+On Windows the debug executable is `target/debug/notch.exe`.
+
+Browser regression tests use Playwright and a temporary local server that closes after the tests:
+
+```sh
+npm install --prefix tests
+npx --prefix tests playwright install chromium
+npm test --prefix tests
+```
+
+Set `PLAYWRIGHT_CHANNEL=msedge` to test with an installed Edge browser instead of downloading
+Chromium. The tests cover backend expansion events, tray settings, terminal selection, and output.
+They simulate the Tauri bridge; native PTY, global hotkey registration, and tray interactions
+still need to be exercised in the app.
+
+Current slice: settings, activity arbitration/glow, agent hooks, PTY terminals, tray, global
+hotkey, and display placement. Media, system HUDs, shelf, widgets, plugins, automatic updates,
+fullscreen detection, and taskbar placement have not yet been ported. Keep the C# implementation
+as the reference until that work is complete. Windows builds/tests have been checked locally;
+Linux runtime behavior is not yet verified.
+
 ## Layout
 
 ```
@@ -75,6 +106,8 @@ Commands (JS: `window.__TAURI__.core.invoke(name, args)`), all camelCase args:
 Events (JS: `window.__TAURI__.event.listen(name, cb)`), payload in `event.payload`:
 - `activities` : `Activity[]` (snapshot, sorted, whenever it changes)
 - `settings` : `{ settings, profiles }`
+- `expanded` : `{ expanded }` (hotkey, tray, or second-instance window request)
+- `open-settings` : no payload (tray settings request)
 - `session-opened` : `{ id, profileId, displayName, glyph, folder, folderName, agent }`
 - `session-output` : `{ id, data }` where data is base64 of the raw bytes
 - `session-state` : `{ id, state }` (agent state: idle|working|needsInput|done)

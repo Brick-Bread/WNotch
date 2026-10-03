@@ -1,0 +1,3 @@
+.updates-row { display: flex; align-items: center; gap: 12px; }
+.updates-row .version { flex: none; }
+.update-status { margin-top: 6px; }

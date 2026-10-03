@@ -4,8 +4,12 @@ import { $ } from './dom.js';
 import { initTheme } from './theme.js';
 import { initIsland, keepOpenWhile } from './island.js';
 import { initHome } from './home.js';
+import { initMedia } from './media.js';
 import { initTerminalTab, terminalHasFocus } from './terminal-tab.js';
 import { initSettingsPanel } from './settings-panel.js';
+import { applyStartupOptions } from './startup.js';
+import { initShelf } from './shelf.js';
+import { initDemoCapture } from './demo-capture.js';
 
 const expandedView = $('#expanded');
 const tabButtons = [...document.querySelectorAll('.tab')];
@@ -23,22 +27,25 @@ function renderView() {
 
 const initial = await invoke('get_state');
 Object.assign(state, initial);
-listen('activities', activities => {
+await listen('activities', activities => {
   state.activities = activities;
   emit('activities');
 });
-listen('settings', applySettings);
-listen('open-settings', () => {
+await listen('settings', applySettings);
+await listen('open-settings', () => {
   state.settingsOpen = true;
   emit('ui');
 });
 
 initTheme();
 initHome($('#pane-home'));
-initTerminalTab($('#pane-terminal'));
+$('#pane-home').prepend(initMedia());
+await initTerminalTab($('#pane-terminal'));
+initShelf($('#pane-shelf'));
 initSettingsPanel($('#pane-settings'));
 keepOpenWhile(terminalHasFocus);
-initIsland();
+await initIsland();
+initDemoCapture();
 
 for (const button of tabButtons) {
   button.addEventListener('click', () => {
@@ -53,3 +60,4 @@ $('#gear').addEventListener('click', () => {
 });
 on('ui', renderView);
 renderView();
+await applyStartupOptions();

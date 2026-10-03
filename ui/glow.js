@@ -39,7 +39,16 @@ function wave(seconds, period) {
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
-/** Brightness (0..1) of `glow` this many seconds after it started; audio is treated as steady. */
+// The smoothed output loudness (0..1) the backend reports while something plays; null on a
+// system without a meter, where the audio glow stays steady.
+let audioLevel = null;
+
+/** Records the latest output loudness for the `audio` glow pattern. */
+export function setAudioLevel(level) {
+  audioLevel = level;
+}
+
+/** Brightness (0..1) of `glow` this many seconds after it started; audio follows the output loudness. */
 export function intensityAt(glow, seconds) {
   seconds = Math.max(0, seconds);
   let intensity;
@@ -47,13 +56,14 @@ export function intensityAt(glow, seconds) {
     case 'breathe': intensity = 0.45 + 0.55 * wave(seconds, BREATHE_PERIOD); break;
     case 'pulse': intensity = 0.25 + 0.75 * wave(seconds, PULSE_PERIOD); break;
     case 'flash': intensity = 0.35 + 0.65 * Math.max(0, 1 - seconds / FLASH_DECAY); break;
+    case 'audio': intensity = audioLevel === null ? 0.8 : 0.2 + 0.8 * clamp(audioLevel, 0, 1); break;
     default: intensity = 0.8;
   }
   return clamp(intensity * (glow.strength ?? 1), 0, 1);
 }
 
 /** True when the brightness changes over time and needs a per-frame update. */
-export const isAnimated = glow => glow.pattern === 'breathe' || glow.pattern === 'pulse' || glow.pattern === 'flash';
+export const isAnimated = glow => glow.pattern !== 'steady';
 
 /** The user's brightness percentage as a multiplier. */
 export const gain = percent => clamp(percent, 25, 200) / 100;

@@ -1,0 +1,10 @@
+{
+  "name": "notch-ui-tests",
+  "private": true,
+  "scripts": {
+    "test": "node --test ui-bridge.test.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

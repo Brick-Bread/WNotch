@@ -53,10 +53,12 @@ h3 { margin: 0; font-size: 13px; font-weight: 600; }
 /* The island ------------------------------------------------------------- */
 
 .island {
-  --top: 0px;
+  /* Set by island.js from the backend's placement: the gap to the screen edge and the inset from the left one. */
+  --edge-gap: 0px;
+  --side-inset: 0px;
   --radius: 16px;
   position: fixed;
-  top: var(--top);
+  top: var(--edge-gap);
   left: 50%;
   width: 180px;
   height: 32px;
@@ -66,14 +68,23 @@ h3 { margin: 0; font-size: 13px; font-weight: 600; }
   background: var(--island);
   border-radius: 0 0 var(--radius) var(--radius);
   transition: width var(--duration) var(--ease), height var(--duration) var(--ease),
-    border-radius var(--duration) var(--ease), top var(--duration) var(--ease);
+    border-radius var(--duration) var(--ease);
 }
 
 .island[data-state="compact"] { width: 360px; }
 .island[data-state="expanded"] { --radius: 28px; width: 600px; height: 372px; }
 
-.island[data-style="island"] { --top: 6px; border-radius: var(--radius); }
+.island[data-style="island"] { border-radius: var(--radius); }
 .island[data-style="island"][data-state="expanded"] { --radius: 26px; }
+
+/* In a corner the island hangs from the left edge; at the bottom (over the taskbar) it grows upwards. */
+.island[data-anchor="topLeft"], .island[data-anchor="bottomLeft"] { left: var(--side-inset); translate: none; }
+.island[data-anchor="bottomLeft"] { top: auto; bottom: var(--edge-gap); border-radius: var(--radius) var(--radius) 0 0; }
+.island[data-anchor="bottomLeft"][data-style="island"] { border-radius: var(--radius); }
+
+/* The strip between a floating island and the screen edge counts as the island, so pushing the pointer against the edge reaches it. */
+.island[data-style="island"]::before { content: ""; position: absolute; left: 0; right: 0; top: calc(-1 * var(--edge-gap)); height: var(--edge-gap); }
+.island[data-style="island"][data-anchor="bottomLeft"]::before { top: auto; bottom: calc(-1 * var(--edge-gap)); }
 
 .clip {
   position: absolute;

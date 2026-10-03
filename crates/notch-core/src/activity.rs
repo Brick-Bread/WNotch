@@ -4,7 +4,9 @@ use std::collections::HashMap;
 use std::sync::{Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 
-use serde::{Deserialize, Serialize};
+use base64::engine::general_purpose::STANDARD as BASE64;
+use base64::Engine;
+use serde::{Deserialize, Serialize, Serializer};
 
 use crate::glow::Glow;
 
@@ -32,8 +34,13 @@ pub struct Activity {
     pub detail: Option<String>,
     /// An emoji or short symbol shown before the title.
     pub glyph: Option<String>,
-    /// Encoded image bytes (PNG or JPEG) shown in place of the glyph, e.g. album art.
-    #[serde(skip)]
+    /// Encoded image bytes (PNG or JPEG) shown in place of the glyph, e.g. album art. The UI
+    /// receives it as a `data:` URI string.
+    #[serde(
+        serialize_with = "serialize_image",
+        skip_deserializing,
+        skip_serializing_if = "Option::is_none"
+    )]
     pub image: Option<Vec<u8>>,
     /// 0..1, or `None` when the activity has no meaningful progress.
     pub progress: Option<f64>,
@@ -42,6 +49,28 @@ pub struct Activity {
     /// Only used by [`ActivityTier::Transient`]; defaults to [`DEFAULT_TRANSIENT_LIFETIME`].
     #[serde(skip)]
     pub lifetime: Option<Duration>,
+}
+
+/// Wraps encoded image bytes (PNG, JPEG, GIF or WebP, told apart by their first bytes) in a
+/// `data:` URI an `<img>` can show. Anything unrecognised is labelled PNG.
+pub fn image_data_uri(bytes: &[u8]) -> String {
+    let mime = if bytes.starts_with(&[0xFF, 0xD8]) {
+        "image/jpeg"
+    } else if bytes.starts_with(b"GIF8") {
+        "image/gif"
+    } else if bytes.len() > 12 && &bytes[..4] == b"RIFF" && &bytes[8..12] == b"WEBP" {
+        "image/webp"
+    } else {
+        "image/png"
+    };
+    format!("data:{mime};base64,{}", BASE64.encode(bytes))
+}
+
+fn serialize_image<S: Serializer>(image: &Option<Vec<u8>>, serializer: S) -> Result<S::Ok, S::Error> {
+    match image {
+        Some(bytes) => serializer.serialize_str(&image_data_uri(bytes)),
+        None => serializer.serialize_none(),
+    }
 }
 
 /// How long a transient activity stays when it does not say.
@@ -262,7 +291,7 @@ mod tests {
     fn activities_serialise_for_the_ui() {
         let activity = Activity {
             glyph: Some("✳".into()),
-            image: Some(vec![1, 2]),
+            image: Some(vec![0xFF, 0xD8, 1]),
             lifetime: Some(Duration::from_secs(1)),
             ..make("agent.1", ActivityTier::Attention)
         };
@@ -270,6 +299,20 @@ mod tests {
 
         assert_eq!(value["tier"], "attention");
         assert_eq!(value["glyph"], "✳");
-        assert!(value.get("image").is_none() && value.get("lifetime").is_none());
+        assert_eq!(value["image"], "data:image/jpeg;base64,/9gB");
+        assert!(value.get("lifetime").is_none());
+    }
+
+    #[test]
+    fn an_activity_without_an_image_omits_the_field() {
+        let value = serde_json::to_value(make("agent.1", ActivityTier::Ongoing)).unwrap();
+        assert!(value.get("image").is_none());
+    }
+
+    #[test]
+    fn data_uris_name_the_image_type() {
+        assert!(image_data_uri(&[0x89, b'P', b'N', b'G']).starts_with("data:image/png;base64,"));
+        assert!(image_data_uri(b"GIF89a").starts_with("data:image/gif;base64,"));
+        assert!(image_data_uri(b"RIFF\0\0\0\0WEBPVP8 ").starts_with("data:image/webp;base64,"));
     }
 }

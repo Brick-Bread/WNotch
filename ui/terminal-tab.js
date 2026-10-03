@@ -24,7 +24,7 @@ export function terminalHasFocus() {
 /** Switches to the Terminal tab and shows a session. Set up by initTerminalTab. */
 export let showSession = () => {};
 
-export function initTerminalTab(pane) {
+export async function initTerminalTab(pane) {
   currentFolder = state.folder;
 
   const folderLabel = h('span', { class: 'folder-label' });
@@ -141,8 +141,11 @@ export function initTerminalTab(pane) {
   /** The user is looking at the active session: clears its Done badge. */
   function markViewed() {
     const session = state.sessions.find(item => item.id === state.activeSessionId);
-    if (session?.state === 'done') {
-      invoke('session_viewed', { id: session.id });
+    if (!session) {
+      return;
+    }
+    invoke('session_viewed', { id: session.id });
+    if (session.state === 'done') {
       session.state = 'idle';
       renderSessionTabs();
       emit('sessions');
@@ -163,7 +166,7 @@ export function initTerminalTab(pane) {
     }
   }
 
-  listen('session-opened', info => {
+  await listen('session-opened', info => {
     const id = info.id;
     state.sessions.push({ ...info, state: 'idle', exited: false });
     views.set(id, new TerminalView(host, isLight(), {
@@ -174,9 +177,9 @@ export function initTerminalTab(pane) {
     activate(id);
   });
 
-  listen('session-output', ({ id, data }) => views.get(id)?.write(data));
+  await listen('session-output', ({ id, data }) => views.get(id)?.write(data));
 
-  listen('session-state', ({ id, state: agentState }) => {
+  await listen('session-state', ({ id, state: agentState }) => {
     const session = state.sessions.find(item => item.id === id);
     if (!session) {
       return;
@@ -189,7 +192,7 @@ export function initTerminalTab(pane) {
     }
   });
 
-  listen('session-exited', ({ id, code }) => {
+  await listen('session-exited', ({ id, code }) => {
     const session = state.sessions.find(item => item.id === id);
     if (session) {
       session.exited = true;

@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "plugins": [
+    {
+      "id": "notch.break-reminder",
+      "name": "Break reminder",
+      "repository": "Brick-Bread/WNotch",
+      "author": "Notch contributors",
+      "description": "Counts how long you have been at the screen and nudges you to take a break with a notice in the pill.",
+      "tags": ["health", "sample"],
+      "permissions": [],
+      "apiVersion": 1,
+      "verified": true
+    },
+    {
+      "id": "brick-bread.calagopus",
+      "name": "Calagopus servers",
+      "repository": "Brick-Bread/wnotchcalagopus",
+      "author": "Brick_Bread",
+      "description": "Watches the servers on a Calagopus panel: an overview card, alerts in the pill, and a tab to browse your servers, see their live stats, send console commands and start, stop, restart or kill them.",
+      "tags": ["servers", "dev"],
+      "permissions": ["network"],
+      "apiVersion": 5,
+      "verified": true
+    },
+    {
+      "id": "brick-bread.catppuccin",
+      "name": "Notch Catppuccin",
+      "repository": "Brick-Bread/wnotch-catppuccin",
+      "author": "Brick_Bread",
+      "description": "Catppuccin Latte, Frappe, Macchiato and Mocha themes for the whole notch, including matching controls, fonts and terminal palettes.",
+      "tags": ["theme"],
+      "permissions": [],
+      "apiVersion": 6,
+      "verified": true
+    },
+    {
+      "id": "brick-bread.glass",
+      "name": "Notch Glass",
+      "repository": "Brick-Bread/wnotch-glass",
+      "author": "Brick_Bread",
+      "description": "Smoked and frosted glass themes for the whole notch, with translucent surfaces, fine borders and a matching terminal.",
+      "tags": ["theme"],
+      "permissions": [],
+      "apiVersion": 6,
+      "verified": true
+    },
+    {
+      "id": "agentstats.agent-usage",
+      "name": "WNotch-AgentStats",
+      "repository": "tinywifi/WNotch-AgentStats",
+      "author": "tinywifi",
+      "description": "Coding-agent accounts and usage in the notch.",
+      "tags": ["dev", "ai"],
+      "permissions": [],
+      "apiVersion": 5,
+      "verified": true
+    }
+  ]
+}

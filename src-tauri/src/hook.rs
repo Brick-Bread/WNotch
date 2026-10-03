@@ -6,13 +6,16 @@
 use std::io::{IsTerminal, Read, Write};
 use std::sync::mpsc;
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use interprocess::local_socket::{prelude::*, GenericNamespaced, Stream};
 use notch_core::agents::hooks::{format_message, PIPE_VARIABLE, SESSION_VARIABLE};
 
 /// How long Claude may take to write its event to stdin before the hook gives up.
 const STDIN_TIMEOUT: Duration = Duration::from_secs(2);
+
+/// How long the hook keeps trying to reach the app.
+const CONNECT_TIMEOUT: Duration = Duration::from_secs(1);
 
 /// Runs the hook. Every failure is swallowed: the CLI carries on whether or not the app heard it.
 pub fn run() {
@@ -25,11 +28,24 @@ fn forward() -> Option<()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let payload = read_payload(&args)?;
 
-    let name = pipe.to_ns_name::<GenericNamespaced>().ok()?;
-    let mut stream = Stream::connect(name).ok()?;
+    let mut stream = connect(&pipe)?;
     let line = format!("{}\n", format_message(&session, &payload));
     stream.write_all(line.as_bytes()).ok()?;
     stream.flush().ok()
+}
+
+/// Connects to the app, trying for a moment: a busy socket (the app is handling another hook)
+/// frees up almost at once.
+fn connect(pipe: &str) -> Option<Stream> {
+    let deadline = Instant::now() + CONNECT_TIMEOUT;
+    loop {
+        let name = pipe.to_ns_name::<GenericNamespaced>().ok()?;
+        match Stream::connect(name) {
+            Ok(stream) => return Some(stream),
+            Err(_) if Instant::now() < deadline => thread::sleep(Duration::from_millis(20)),
+            Err(_) => return None,
+        }
+    }
 }
 
 /// Codex passes its notification as the last argument; Claude writes the event to stdin.

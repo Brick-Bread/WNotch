@@ -121,29 +121,6 @@ pub fn base_arguments(profile: &TerminalProfile) -> Vec<String> {
     }
 }
 
-fn is_batch(path: &Path) -> bool {
-    path.extension()
-        .and_then(OsStr::to_str)
-        .is_some_and(|e| e.eq_ignore_ascii_case("cmd") || e.eq_ignore_ascii_case("bat"))
-}
-
-/// How to start `executable`. Batch files cannot be started directly on Windows, so they run
-/// through `cmd.exe`.
-///
-/// Limitation: the pseudo terminal library quotes arguments with the C runtime rules, which
-/// `cmd.exe /s` cannot undo, so a batch file whose path or arguments contain spaces fails.
-/// The npm shims the agent CLIs install live in a folder without spaces in the usual case.
-pub fn launch_command(executable: &Path, args: &[String]) -> Launch {
-    let path = executable.to_string_lossy().into_owned();
-    if cfg!(windows) && is_batch(executable) {
-        let mut full = vec!["/d".to_owned(), "/s".to_owned(), "/c".to_owned(), path];
-        full.extend_from_slice(args);
-        Launch { program: "cmd.exe".to_owned(), args: full }
-    } else {
-        Launch { program: path, args: args.to_vec() }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -201,20 +178,41 @@ mod tests {
         assert_eq!(found, Some(root));
     }
 
-    #[test]
-    fn batch_files_run_through_cmd() {
-        let launch = launch_command(Path::new(r"C:\npm\claude.cmd"), &["--x".to_owned()]);
-        if cfg!(windows) {
-            assert_eq!(launch.program, "cmd.exe");
-            assert_eq!(launch.args, ["/d", "/s", "/c", r"C:\npm\claude.cmd", "--x"]);
-        } else {
-            assert_eq!(launch.program, r"C:\npm\claude.cmd");
+    fn profile(command: &str, arguments: &[&str], agent: AgentKind) -> TerminalProfile {
+        TerminalProfile {
+            id: "p".into(),
+            display_name: "P".into(),
+            command: command.into(),
+            glyph: String::new(),
+            agent,
+            install_hint: String::new(),
+            arguments: arguments.iter().map(|a| (*a).to_owned()).collect(),
+            environment: Default::default(),
         }
     }
 
     #[test]
-    fn executables_start_directly() {
-        let launch = launch_command(Path::new("/usr/bin/bash"), &["-l".to_owned()]);
-        assert_eq!(launch, Launch { program: "/usr/bin/bash".to_owned(), args: vec!["-l".to_owned()] });
+    fn a_plain_powershell_loses_its_banner() {
+        assert_eq!(base_arguments(&profile("powershell", &[], AgentKind::None)), ["-NoLogo"]);
+        assert_eq!(base_arguments(&profile("PowerShell", &[], AgentKind::None)), ["-NoLogo"]);
+        assert_eq!(base_arguments(&profile("shell", &[], AgentKind::None)).is_empty(), !cfg!(windows));
+    }
+
+    #[test]
+    fn other_profiles_run_as_written() {
+        assert_eq!(base_arguments(&profile("powershell", &["-Command", "x"], AgentKind::None)), ["-Command", "x"]);
+        assert_eq!(base_arguments(&profile("claude", &["--x"], AgentKind::Claude)), ["--x"]);
+        assert!(base_arguments(&profile("bash", &[], AgentKind::None)).is_empty());
+    }
+
+    #[test]
+    fn the_shell_word_is_the_platform_shell() {
+        let word = command_word(&profile("Shell", &[], AgentKind::None));
+        if cfg!(windows) {
+            assert_eq!(word, "powershell");
+        } else {
+            assert!(!word.is_empty());
+        }
+        assert_eq!(command_word(&profile("claude", &[], AgentKind::Claude)), "claude");
     }
 }

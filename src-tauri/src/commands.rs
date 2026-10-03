@@ -8,7 +8,9 @@ use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
 
 use crate::hotkey;
+use crate::options::StartupOptions;
 use crate::state::Backend;
+use crate::window::Placement;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -18,6 +20,12 @@ pub struct Snapshot {
     folder: String,
     activities: Vec<Activity>,
     version: &'static str,
+    /// The command-line switches this run was started with.
+    startup_options: StartupOptions,
+    /// How the island meets the screen edge.
+    placement: Placement,
+    /// `windows`, `linux` or `macos`, for wording that names the system.
+    platform: &'static str,
 }
 
 #[derive(Serialize, Clone)]
@@ -26,13 +34,19 @@ pub struct SettingsChanged {
     profiles: Vec<TerminalProfile>,
 }
 
+impl SettingsChanged {
+    pub fn new(settings: AppSettings) -> Self {
+        Self { profiles: settings.profiles(), settings }
+    }
+}
+
 #[derive(Serialize)]
 pub struct Opened {
     id: String,
 }
 
 #[tauri::command]
-pub fn get_state(backend: State<'_, Backend>) -> Snapshot {
+pub fn get_state(backend: State<'_, Backend>, options: State<'_, StartupOptions>) -> Snapshot {
     let settings = backend.settings().clone();
     Snapshot {
         profiles: settings.profiles(),
@@ -40,6 +54,9 @@ pub fn get_state(backend: State<'_, Backend>) -> Snapshot {
         folder: backend.default_folder(),
         activities: backend.hub.snapshot(),
         version: env!("CARGO_PKG_VERSION"),
+        startup_options: options.inner().clone(),
+        placement: backend.window.placement(),
+        platform: std::env::consts::OS,
     }
 }
 
@@ -58,7 +75,8 @@ pub fn save_settings(app: AppHandle, backend: State<'_, Backend>, settings: AppS
     backend.store.save(&saved);
 
     hotkey::apply(&app, &backend.hotkey, &saved.open_hotkey);
-    backend.window.set_display(saved.display_index);
+    backend.window.apply_settings(&saved);
+    backend.hub.set_suppressed(&saved.suppressed_activity_ids());
 
     let changed = SettingsChanged { profiles: saved.profiles(), settings: saved };
     if let Err(e) = app.emit("settings", &changed) {

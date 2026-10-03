@@ -5,7 +5,7 @@ const prefersLight = matchMedia('(prefers-color-scheme: light)');
 
 /** Whether the light theme is in effect (settings.theme, with `system` following the OS). */
 export function isLight() {
-  const theme = state.settings?.theme;
+  const theme = state.startupOptions?.theme ?? state.settings?.theme;
   return theme === 'light' || (theme === 'system' && prefersLight.matches);
 }
 

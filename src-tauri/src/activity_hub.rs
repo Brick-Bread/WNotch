@@ -38,6 +38,13 @@ impl ActivityHub {
         }
     }
 
+    /// Turns sources off by id (the "show in the pill" settings); what is showing from them goes away.
+    pub fn set_suppressed(&self, ids: &[String]) {
+        if self.manager.set_suppressed(ids) {
+            self.wake();
+        }
+    }
+
     /// What the UI should show right now, most important first.
     pub fn snapshot(&self) -> Vec<Activity> {
         self.manager.snapshot(Instant::now())

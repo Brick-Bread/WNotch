@@ -74,6 +74,27 @@ pub struct AppSettings {
     pub terminal_presets: Vec<String>,
     /// Folders terminal sessions were started in, most recent first.
     pub recent_folders: Vec<String>,
+    /// Open the notch on its Shelf tab when files are dragged onto the pill.
+    pub shelf_opens_on_drag: bool,
+    pub show_media: bool,
+    pub show_volume: bool,
+    pub show_brightness: bool,
+    pub show_power: bool,
+    pub show_bluetooth: bool,
+    pub show_caps_lock: bool,
+    pub pomodoro_focus_minutes: i32,
+    pub pomodoro_short_break_minutes: i32,
+    pub pomodoro_long_break_minutes: i32,
+    /// The one-click timers, one per line, for example `Tea 3m` or `15m`. The widgets module reads them.
+    pub timer_presets: Vec<String>,
+    /// iCalendar (.ics) links shown on the Home tab's calendar card.
+    pub calendar_feeds: Vec<String>,
+    /// Ids of the plugins the user has switched on.
+    pub enabled_plugins: Vec<String>,
+    /// The release tag the updater last tried to install, so a failing release is not retried in a loop.
+    pub last_update_attempt_tag: Option<String>,
+    /// When that was, as seconds since the Unix epoch.
+    pub last_update_attempt_at: Option<i64>,
 }
 
 impl Default for AppSettings {
@@ -92,6 +113,21 @@ impl Default for AppSettings {
             auto_update: true,
             terminal_presets: DEFAULT_PRESETS.iter().map(|l| (*l).to_owned()).collect(),
             recent_folders: Vec::new(),
+            shelf_opens_on_drag: true,
+            show_media: true,
+            show_volume: true,
+            show_brightness: true,
+            show_power: true,
+            show_bluetooth: true,
+            show_caps_lock: true,
+            pomodoro_focus_minutes: 25,
+            pomodoro_short_break_minutes: 5,
+            pomodoro_long_break_minutes: 15,
+            timer_presets: ["5m", "15m", "30m", "1h"].iter().map(|l| (*l).to_owned()).collect(),
+            calendar_feeds: Vec::new(),
+            enabled_plugins: Vec::new(),
+            last_update_attempt_tag: None,
+            last_update_attempt_at: None,
         }
     }
 }
@@ -100,6 +136,22 @@ impl AppSettings {
     /// The launcher buttons the terminal presets describe.
     pub fn profiles(&self) -> Vec<TerminalProfile> {
         profiles_from_lines(&self.terminal_presets)
+    }
+
+    /// The activity ids the user has switched off in the settings.
+    pub fn suppressed_activity_ids(&self) -> Vec<String> {
+        [
+            (self.show_media, &["media"][..]),
+            (self.show_volume, &["hud.volume", "hud.audio-output"][..]),
+            (self.show_brightness, &["hud.brightness"][..]),
+            (self.show_power, &["hud.power"][..]),
+            (self.show_bluetooth, &["hud.bluetooth"][..]),
+            (self.show_caps_lock, &["hud.caps-lock"][..]),
+        ]
+        .into_iter()
+        .filter(|(shown, _)| !shown)
+        .flat_map(|(_, ids)| ids.iter().map(|id| (*id).to_owned()))
+        .collect()
     }
 
     /// Puts `folder` first in the recent folders, dropping an earlier spelling of it and anything past the eighth.
@@ -215,7 +267,7 @@ mod tests {
     #[test]
     fn partial_files_load_with_defaults_and_unknown_fields_are_ignored() {
         let s: AppSettings = serde_json::from_str(
-            r#"{"theme":"light","position":"taskbarLeft","displayIndex":1,"showMedia":false,"timerPresets":[1]}"#,
+            r#"{"theme":"light","position":"taskbarLeft","displayIndex":1,"showMedia":false,"someFutureField":[1]}"#,
         )
         .expect("loads");
         assert_eq!((s.theme, s.position, s.display_index), (NotchTheme::Light, NotchPosition::TaskbarLeft, Some(1)));
