@@ -243,6 +243,56 @@ public sealed class PluginApiTests : IDisposable
         Assert.Equal("Done", notice.Title);
     }
 
+    [Fact]
+    public void A_plugin_can_draw_the_glow_and_stopping_it_takes_the_light_away()
+    {
+        using PluginManager manager = Manager();
+        manager.Discover();
+        manager.SetEnabled(["a"]);
+
+        _probes["a"].Host!.Glow.Set(new GlowFrame { Color = GlowColor.Violet, Intensity = 0.5 });
+        Assert.Equal(GlowColor.Violet, manager.Glow.Current!.Color);
+
+        manager.SetEnabled([]);
+        Assert.Null(manager.Glow.Current);
+
+        // A host that was closed draws nothing, even from a timer tick that was already running.
+        _probes["a"].Host!.Glow.Set(new GlowFrame());
+        Assert.Null(manager.Glow.Current);
+    }
+
+    [Fact]
+    public void Reading_the_audio_starts_the_listening_and_stopping_the_plugin_ends_it()
+    {
+        using PluginManager manager = Manager();
+        int running = 0;
+        manager.Audio.Starter = publish =>
+        {
+            running++;
+            publish(new AudioFrame(0.7, 0.7, 0, 0, new float[PluginAudio.BandCount]));
+            return new Stopper(() => running--);
+        };
+        manager.Discover();
+        manager.SetEnabled(["a", "b"]);
+        Assert.Equal(0, running);
+
+        Assert.Equal(0.7, _probes["a"].Host!.Audio.Latest.Level);
+        _ = _probes["b"].Host!.Audio.Latest;
+        Assert.Equal(1, running);
+
+        manager.SetEnabled(["b"]);
+        Assert.Equal(1, running);
+        manager.SetEnabled([]);
+        Assert.Equal(0, running);
+        Assert.Same(AudioFrame.Silent, _probes["b"].Host!.Audio.Latest);
+        Assert.Equal(0, running);
+    }
+
+    private sealed class Stopper(Action stop) : IDisposable
+    {
+        public void Dispose() => stop();
+    }
+
     private sealed class Probe(bool listen) : INotchPlugin
     {
         public IPluginHost? Host { get; private set; }

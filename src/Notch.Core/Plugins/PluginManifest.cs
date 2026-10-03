@@ -65,6 +65,7 @@ public sealed partial record PluginManifest
         ["shell"] = "Runs other programs",
         ["notifications"] = "Reads your notifications",
         ["clipboard"] = "Reads or writes the clipboard",
+        ["audio"] = "Listens to the loudness of what your PC is playing (levels only, never the sound)",
     };
 
     /// <summary>A short description of a permission as declared, or the word itself when it is not a known one.</summary>

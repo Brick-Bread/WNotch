@@ -47,6 +47,8 @@ public partial class NotchWindow : Window
     private readonly PluginCardBoard _pluginCards;
     private readonly PluginPageBoard _pluginPages;
     private readonly PluginShellState _shellState;
+    private readonly PluginGlowBoard _pluginGlow;
+    private bool _pluginGlowAllowed;
     private readonly FileShelf _shelf;
     private readonly SettingsStore _settingsStore;
     private readonly AppSettings _settings;
@@ -81,6 +83,7 @@ public partial class NotchWindow : Window
         PluginCardBoard pluginCards,
         PluginPageBoard pluginPages,
         PluginShellState shellState,
+        PluginGlowBoard pluginGlow,
         FileShelf shelf,
         SettingsStore settingsStore,
         AppSettings settings,
@@ -98,14 +101,16 @@ public partial class NotchWindow : Window
         _pluginCards = pluginCards;
         _pluginPages = pluginPages;
         _shellState = shellState;
+        _pluginGlow = pluginGlow;
         _shelf = shelf;
         _settingsStore = settingsStore;
         _settings = settings;
-        _glow = new GlowController(GlowLayer, GlowCore) { Gain = GlowOutput.Gain(settings.GlowIntensity) };
+        _glow = new GlowController(GlowLayer, GlowCore, GlowSpectrum) { Gain = GlowOutput.Gain(settings.GlowIntensity) };
         InitializeMedia();
         InitializeTerminal();
         InitializeWidgets();
         InitializePlugins();
+        _pluginGlow.ActiveChanged += OnPluginGlowActiveChanged;
         InitializePages();
         InitializeShelf();
         InitializeKeyboard();
@@ -215,6 +220,7 @@ public partial class NotchWindow : Window
         _media.Changed -= OnMediaChanged;
         _pluginCards.Changed -= OnPluginCardsChanged;
         _pluginPages.Changed -= OnPluginPagesChanged;
+        _pluginGlow.ActiveChanged -= OnPluginGlowActiveChanged;
         _shelf.Changed -= OnShelfChanged;
         ThemeManager.Changed -= OnThemeChanged;
         _mediaTimer.Stop();
@@ -389,7 +395,7 @@ public partial class NotchWindow : Window
         bool bottom = _placement.AtBottom;
         HorizontalAlignment horizontal = bottom ? HorizontalAlignment.Left : HorizontalAlignment.Center;
         VerticalAlignment vertical = bottom ? VerticalAlignment.Bottom : VerticalAlignment.Top;
-        foreach (FrameworkElement element in new FrameworkElement[] { Island, EdgeBridge, GlowLayer, GlowCore })
+        foreach (FrameworkElement element in new FrameworkElement[] { Island, EdgeBridge, GlowSpectrum, GlowLayer, GlowCore })
         {
             element.HorizontalAlignment = horizontal;
             element.VerticalAlignment = vertical;
@@ -729,13 +735,22 @@ public partial class NotchWindow : Window
 
         // No glow while expanded: the halo around the large panel would swallow clicks meant
         // for the windows next to it, including the click that closes the notch.
-        Activity? lit = mode is NotchMode.Compact or NotchMode.Peek && _settings.GlowEffects ? activities[0] : null;
+        bool glowing = mode is NotchMode.Compact or NotchMode.Peek && _settings.GlowEffects;
+        Activity? lit = glowing ? activities[0] : null;
+
+        // A plugin may also light the plain pill, which no activity does.
+        _pluginGlowAllowed = mode is not NotchMode.Expanded && _settings.GlowEffects;
+        _glow.Allow(_pluginGlowAllowed ? _pluginGlow : null);
         _glow.Show(lit?.Glow, lit?.Id == MediaActivityPublisher.ActivityId && lit.Image is not null ? _artAccent : null);
 
         Fade(CompactLayer, mode is NotchMode.Compact or NotchMode.Peek);
         Fade(ExpandedLayer, mode is NotchMode.Expanded);
         ExpandedLayer.IsHitTestVisible = mode is NotchMode.Expanded;
     }
+
+    // A plugin started or stopped drawing the glow; the controller only looks for its frames while it runs.
+    private void OnPluginGlowActiveChanged(object? sender, EventArgs e) =>
+        Dispatcher.BeginInvoke(() => _glow.Allow(_pluginGlowAllowed ? _pluginGlow : null));
 
     private static void Fade(UIElement element, bool visible) =>
         element.BeginAnimation(OpacityProperty, new DoubleAnimation(visible ? 1 : 0, FadeDuration));
@@ -764,9 +779,24 @@ public partial class NotchWindow : Window
             ? new CornerRadius(outer, outer, away, away)
             : new CornerRadius(away, away, outer, outer);
 
+        // A plugin's segmented glow is a blurred layer, which unlike a shadow does not bleed past its own
+        // edge: the layer itself reaches out as far as the light should.
+        double pad = _glow.SpectrumReach;
+        double padOuter = radius + pad;
+        double padAway = floating ? padOuter : 0;
+        GlowSpectrum.Width = width + (2 * pad);
+        GlowSpectrum.Height = height + (floating ? 2 * pad : pad);
+        GlowSpectrum.CornerRadius = bottom
+            ? new CornerRadius(padOuter, padOuter, padAway, padAway)
+            : new CornerRadius(padAway, padAway, padOuter, padOuter);
+
         double edge = _placement.EdgeGap - (floating ? spread : 0);
         double side = bottom ? IslandPlacement.SideInset - spread : 0;
         GlowLayer.Margin = GlowCore.Margin = bottom ? new Thickness(side, 0, 0, edge) : new Thickness(0, edge, 0, 0);
+
+        double padEdge = _placement.EdgeGap - (floating ? pad : 0);
+        double padSide = bottom ? IslandPlacement.SideInset - pad : 0;
+        GlowSpectrum.Margin = bottom ? new Thickness(padSide, 0, 0, padEdge) : new Thickness(0, padEdge, 0, 0);
 
         // A notch's rounded rectangle reaches one radius past the screen edge, so the corners
         // on that side fall outside the island and it sits flush against the edge.

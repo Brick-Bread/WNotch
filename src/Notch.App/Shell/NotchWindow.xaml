@@ -12,7 +12,10 @@
     <!-- The window is as large as the notch ever gets. Everything outside the island is
          transparent, and transparent pixels of a layered window pass clicks through. -->
     <Grid x:Name="Root">
-        <!-- Behind the island and slightly larger: a lit rim and its glow show. Sized and shaped in code. -->
+        <!-- Behind the island and slightly larger: a lit rim and its glow show. Sized and shaped in code.
+             The first is only lit while a plugin draws the glow in segments (IPluginGlow). -->
+        <Border x:Name="GlowSpectrum" Width="180" Height="32" HorizontalAlignment="Center" VerticalAlignment="Top"
+                IsHitTestVisible="False" Visibility="Collapsed" />
         <Border x:Name="GlowLayer" Width="180" Height="32" HorizontalAlignment="Center" VerticalAlignment="Top"
                 IsHitTestVisible="False" />
         <Border x:Name="GlowCore" Width="180" Height="32" HorizontalAlignment="Center" VerticalAlignment="Top"

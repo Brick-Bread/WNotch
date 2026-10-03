@@ -5,10 +5,11 @@ A plugin is a small .NET library that Notch loads at start. It can:
 - show **activities** in the pill, with a glyph or image, text, a progress bar and a glow;
 - show **cards** on a Plugins tab in the expanded notch, which can react to clicks;
 - show **pages**: tabs of their own with figures, buttons, an interactive console or free-form content (text, tables, charts, switches, sliders, text boxes);
+- draw the **glow** around the pill themselves, for example as a music visualiser, and read how loud the PC's sound is;
 - add **options** that users change in Notch's Settings, react to what the notch is doing, and talk to other plugins;
 - keep **settings** and files between runs, and write to a log.
 
-This guide walks through a first plugin, then documents every part of the API. A complete working example is in [`samples/BreakReminder`](../samples/BreakReminder); [`samples/NeonTheme`](../samples/NeonTheme) is a theme.
+This guide walks through a first plugin, then documents every part of the API. A complete working example is in [`samples/BreakReminder`](../samples/BreakReminder); [`samples/NeonTheme`](../samples/NeonTheme) is a theme and [Glow visualizer](https://github.com/Brick-Bread/wnotch-glow-visualizer) (its own repository) turns the glow into a music visualiser.
 
 - [Before you start](#before-you-start)
 - [Your first plugin](#your-first-plugin)
@@ -20,6 +21,7 @@ This guide walks through a first plugin, then documents every part of the API. A
 - [Pages: tabs with a console](#pages-tabs-with-a-console)
 - [The notch's state, notices and messages between plugins](#the-notchs-state-notices-and-messages-between-plugins)
 - [Themes: restyling the whole notch](#themes-restyling-the-whole-notch)
+- [The glow and the sound: visualisers](#the-glow-and-the-sound-visualisers)
 - [Settings and files](#settings-and-files)
 - [Logging](#logging)
 - [Threading and errors](#threading-and-errors)
@@ -176,13 +178,13 @@ Notch reads the manifest to list a plugin in Settings before running any of its 
 | `id` | yes | Unique, permanent identifier. Lowercase letters and digits in groups separated by `.` or `-`, at most 64 characters, e.g. `yourname.build-status`. Prefix it with your name to avoid clashes. It names the plugin's data folder, so changing it loses the plugin's settings. |
 | `name` | yes | Shown in Settings. |
 | `assembly` | yes | File name of the plugin's `.dll`, in the same folder. No paths. |
-| `apiVersion` | yes | The plugin API version the plugin was written for. Currently `6`. See [Compatibility](#compatibility). |
+| `apiVersion` | yes | The plugin API version the plugin was written for. Currently `7`. See [Compatibility](#compatibility). |
 | `version` | no | The plugin's own version, shown in Settings. |
 | `author` | no | Shown in the plugin's tooltip in Settings. |
 | `description` | no | Shown in the plugin's tooltip in Settings. |
 | `repository` | no | Where the plugin is published, as `owner/name`. Lets Notch look for updates to a copy that was not installed from GitHub. A plugin installed from GitHub is checked without it. |
 | `settings` | no | Options the user can change in Notch's Settings window; see [Settings and files](#settings-and-files). |
-| `permissions` | no | What the plugin uses, as a list of words: `network`, `filesystem`, `terminal`, `shell`, `notifications`, `clipboard`. Shown to the user before the plugin is installed from the plugin list. See below. |
+| `permissions` | no | What the plugin uses, as a list of words: `network`, `filesystem`, `terminal`, `shell`, `notifications`, `clipboard`, `audio`. Shown to the user before the plugin is installed from the plugin list. See below. |
 
 **`permissions` is disclosure, not a limit.** (Notch does look inside your plugin before it runs; see [Plugin checks](#plugin-checks).) A plugin is .NET code running as the user, so Notch cannot stop it doing anything the user can. The list lets people see what you say the plugin does before they install it, and a plugin that lists nothing is shown as "does not say what it uses". Be honest: list what your plugin really does. Adding the property needs no new `apiVersion`; older Notch versions ignore it.
 
@@ -226,6 +228,8 @@ Things to know:
 | `Shell` | [The notch's state, notices and messages between plugins](#the-notchs-state-notices-and-messages-between-plugins) |
 | `Bus` | [The notch's state, notices and messages between plugins](#the-notchs-state-notices-and-messages-between-plugins) |
 | `Themes` | [Themes: restyling the whole notch](#themes-restyling-the-whole-notch) |
+| `Glow` | [The glow and the sound: visualisers](#the-glow-and-the-sound-visualisers) |
+| `Audio` | [The glow and the sound: visualisers](#the-glow-and-the-sound-visualisers) |
 | `Settings` | [Settings and files](#settings-and-files) |
 | `Log` | [Logging](#logging) |
 
@@ -458,6 +462,45 @@ Things to know:
 - The theme file is read again whenever it changes on disk and `Themes.Set` is called, or the user opens Settings and saves. While writing one, run `--plugin=<build output> --plugin-theme=<plugin id>/<theme id>` to start with it applied, and call `Set` again after saving the file.
 - The user's choice is kept by `plugin-id/theme-id`. If the plugin is switched off or its theme is removed, Notch shows the normal theme, and the theme comes back when the plugin does.
 - `Remove(id)` and `Clear()` take themes away; Notch removes them when the plugin stops. `Set` throws `ArgumentException` for a blank id or name, an id with a slash, or a `File` that is not a relative path to a `.xaml` file inside the plugin's folder.
+
+## The glow and the sound: visualisers
+
+Two parts of the API (API 7) are made to work together: `host.Audio` says how loud the PC's sound is, and `host.Glow` lets a plugin draw the light around the pill. A plugin that reads one and writes the other is a music visualiser; the [Glow visualizer](https://github.com/Brick-Bread/wnotch-glow-visualizer) plugin is one, with eight animations.
+
+```csharp
+// Called about 30 times a second, for example from a Timer.
+AudioFrame audio = host.Audio.Latest;
+host.Glow.Set(new GlowFrame
+{
+    Color = GlowColor.Violet,
+    Intensity = 0.15 + (0.85 * audio.Bass),
+    Reach = 0.8 + audio.Level,
+});
+```
+
+### Audio
+
+`host.Audio.Latest` is the newest `AudioFrame`: `Level` (overall loudness), `Bass`, `Mid`, `Treble`, and `Bands`, `PluginAudio.BandCount` (16) values from the lowest pitch to the highest, each covering the same musical interval. Everything is 0 to 1 and already scaled to a useful range, so a normal song moves most of them. When nothing is playing, or the sound output cannot be read, the frame is `AudioFrame.Silent`.
+
+- It is **levels only**: a plugin never receives the sound, only these numbers.
+- Notch listens to the sound output (what the PC plays, not the microphone) **only while a running plugin has read `Latest`**, and stops when the last such plugin stops. The first read starts the listening, so poll it on a timer; do not read it once.
+- List `"audio"` under `permissions` in the manifest. It is disclosure, like the others.
+- A silent output delivers nothing, so `Latest` turns into `Silent` a moment after the sound stops. Beat detection, smoothing and anything else that moves like light are yours to do; that plugin's `Signal` class shows one way.
+
+### Glow
+
+`host.Glow.Set(frame)` shows a `GlowFrame` in place of the glow of the activity that is showing:
+
+| `GlowFrame` property | Meaning |
+|---|---|
+| `Color`, `Intensity` | One uniform glow: its colour and brightness, 0 to 1. |
+| `Reach` | How far the light spreads, as a multiple of the usual size (0.25 to 3, default 1). |
+| `Segments` | Colours and brightnesses (`GlowSegment(Color, Intensity)`) laid out evenly from the left edge of the pill to the right and blended into each other, up to 64. A spectrum, a travelling wave, a flame. When set, `Color` and `Intensity` are ignored. |
+
+- **Resend it.** A frame is shown until the next one arrives, `host.Glow.Clear()` is called, or about a second passes, so a plugin that crashes or hangs cannot leave the pill lit. A steady glow still has to be resent at least once a second. The notch redraws about 25 times a second; sending faster is wasted.
+- **Step aside.** Call `Clear()` when you have nothing to show (the Glow visualizer does it after a second of silence) and the glow goes back to the activities: the media activity's own audio glow, a timer's breathing, and so on. If several plugins set frames, the most recent one wins.
+- It is drawn whenever the notch is not expanded, including on the plain pill that has no activity, and respects the user's glow brightness and the "glow effects" switch. While the notch is expanded nothing is drawn, so skip the work: `host.Shell.IsExpanded` tells you.
+- Numbers out of range are pulled back in; `NaN` counts as 0.
 
 ## Settings and files
 
@@ -702,6 +745,7 @@ The plugin API is `Notch.Core.Plugins` plus the types in `Notch.Core.Activities`
 | 4 | Pages: `Back` and `Choices`. |
 | 5 | Pages: `Actions` and `Blocks`. `IPluginHost.Shell` (notch state, `Notify`), `IPluginBus` (messages between plugins), options listed in the manifest with `IPluginSettings.Changed`, and `repository` in the manifest. |
 | 6 | `IPluginHost.Themes`: themes that restyle the whole notch. |
+| 7 | `IPluginHost.Glow` (draw the light around the pill, in segments if you like) and `IPluginHost.Audio` (loudness of the PC's sound by pitch). The `audio` permission. |
 
 ## Troubleshooting
 

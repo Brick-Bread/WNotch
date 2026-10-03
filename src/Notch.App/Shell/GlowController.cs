@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 using Notch.Core.Activities;
+using Notch.Core.Plugins;
 using Notch.Platform.Media;
 
 namespace Notch.App.Shell;
@@ -23,11 +24,16 @@ internal sealed class GlowController : IDisposable
     // letting it peek out puts a rim of full-strength light around the pill.
     private const double BaseSpread = 2.5;
 
+    private const double SpectrumPad = 9;
+
     // A soft glow looks the same at 24 fps, and every frame redraws the whole transparent window.
     private static readonly TimeSpan MinFrameInterval = TimeSpan.FromMilliseconds(40);
 
     private readonly Border _halo;
     private readonly Border _core;
+    private readonly Border _spectrum;
+    private readonly BlurEffect _spectrumBlur = new() { RenderingBias = RenderingBias.Performance, KernelType = KernelType.Gaussian };
+    private readonly LinearGradientBrush _spectrumBrush = new() { StartPoint = new Point(0, 0.5), EndPoint = new Point(1, 0.5) };
     private readonly DropShadowEffect _haloShadow = CreateShadow(HaloBlur);
     private readonly DropShadowEffect _coreShadow = CreateShadow(CoreBlur);
     private readonly SolidColorBrush _rim = new(Colors.Transparent);
@@ -41,6 +47,7 @@ internal sealed class GlowController : IDisposable
     private double _intensity;
     private double _audioLevel;
     private bool _running;
+    private PluginGlowBoard? _plugin;
 
     /// <summary>The user's brightness setting as a multiplier; see <see cref="GlowOutput.Gain"/>.</summary>
     public double Gain { get; set; } = 1;
@@ -48,10 +55,16 @@ internal sealed class GlowController : IDisposable
     /// <summary>How far, in DIPs, the glow layers must extend past the island's sides and bottom.</summary>
     public double Spread => BaseSpread * Gain;
 
-    public GlowController(Border halo, Border core)
+    /// <summary>How far, in DIPs, a plugin's segmented glow layer reaches past the island: the light's own extent, since a blur does not spill past its layer.</summary>
+    public double SpectrumReach => SpectrumPad * Math.Sqrt(Gain);
+
+    public GlowController(Border halo, Border core, Border spectrum)
     {
         _halo = halo;
         _core = core;
+        _spectrum = spectrum;
+        _spectrum.Background = _spectrumBrush;
+        _spectrum.Effect = _spectrumBlur;
         _halo.Background = _rim;
         _core.Background = _rim;
         _halo.Effect = _haloShadow;
@@ -89,6 +102,19 @@ internal sealed class GlowController : IDisposable
         Start();
     }
 
+    /// <summary>
+    /// Lets the frames plugins set draw the glow in place of the activity's, or stops doing so when null.
+    /// Called when the notch's mode changes; plugins draw nothing while it is expanded.
+    /// </summary>
+    public void Allow(PluginGlowBoard? plugin)
+    {
+        _plugin = plugin;
+        if (plugin?.Current is not null)
+        {
+            Start();
+        }
+    }
+
     public void Dispose()
     {
         Stop();
@@ -113,6 +139,10 @@ internal sealed class GlowController : IDisposable
         Visibility visibility = visible ? Visibility.Visible : Visibility.Collapsed;
         _halo.Visibility = visibility;
         _core.Visibility = visibility;
+        if (!visible)
+        {
+            _spectrum.Visibility = Visibility.Collapsed;
+        }
     }
 
     private void Start()
@@ -151,8 +181,16 @@ internal sealed class GlowController : IDisposable
         double dt = _lastFrame is { } last ? Math.Clamp((now - last).TotalSeconds, 0, 0.1) : 0;
         _lastFrame = now;
 
+        GlowFrame? frame = _plugin?.Current;
         double target = 0;
-        if (_glow is { } glow)
+        if (frame is not null)
+        {
+            // A plugin that draws the glow has already shaped the motion; easing it would only smear it.
+            target = frame.Segments is { Count: > 0 } segments ? segments.Max(s => s.Intensity) : frame.Intensity;
+            _intensity = target;
+            _color = _targetColor = frame.Color;
+        }
+        else if (_glow is { } glow)
         {
             if (glow.Pattern == GlowPattern.Audio)
             {
@@ -167,13 +205,28 @@ internal sealed class GlowController : IDisposable
         }
 
         // Ease towards the target so pattern changes and fade-outs never jump.
-        _intensity += (target - _intensity) * Math.Min(1, dt * 14);
-        _color = _color.Lerp(_targetColor, Math.Min(1, dt * 6));
+        if (frame is null)
+        {
+            _intensity += (target - _intensity) * Math.Min(1, dt * 14);
+            _color = _color.Lerp(_targetColor, Math.Min(1, dt * 6));
+        }
 
         // Opacity tops out at 1, so brightness beyond that is spent on a wider halo.
         double level = GlowOutput.Level(_intensity, Gain);
         double opacity = Math.Min(1, level);
-        double reach = Math.Sqrt(Gain);
+        double reach = Math.Sqrt(Gain) * (frame?.Reach ?? 1);
+
+        if (frame?.Segments is { Count: > 0 } lit)
+        {
+            // The halo and core would only add one colour over the segments' own.
+            DrawSegments(lit, reach);
+            opacity = 0;
+            level = 0;
+        }
+        else
+        {
+            _spectrum.Visibility = Visibility.Collapsed;
+        }
 
         var color = Color.FromRgb(_color.R, _color.G, _color.B);
         _haloShadow.Color = color;
@@ -184,10 +237,35 @@ internal sealed class GlowController : IDisposable
         _coreShadow.BlurRadius = CoreBlur * reach;
         _rim.Color = Color.FromArgb((byte)(255 * opacity), color.R, color.G, color.B);
 
-        if (_glow is null && _intensity < 0.001)
+        if (_glow is null && frame is null && _intensity < 0.001)
         {
             _intensity = 0;
             Stop();
         }
+    }
+
+    /// <summary>Paints the segments as a gradient from the left of the pill to the right, which the blur softens into light.</summary>
+    private void DrawSegments(IReadOnlyList<GlowSegment> segments, double reach)
+    {
+        GradientStopCollection stops = _spectrumBrush.GradientStops;
+        int count = segments.Count;
+        if (stops.Count != count)
+        {
+            stops.Clear();
+            for (int i = 0; i < count; i++)
+            {
+                stops.Add(new GradientStop(Colors.Transparent, count == 1 ? 0.5 : (double)i / (count - 1)));
+            }
+        }
+
+        for (int i = 0; i < count; i++)
+        {
+            GlowSegment segment = segments[i];
+            double alpha = Math.Min(1, GlowOutput.Level(segment.Intensity, Gain));
+            stops[i].Color = Color.FromArgb((byte)(255 * alpha), segment.Color.R, segment.Color.G, segment.Color.B);
+        }
+
+        _spectrumBlur.Radius = SpectrumPad * 1.6 * reach;
+        _spectrum.Visibility = Visibility.Visible;
     }
 }

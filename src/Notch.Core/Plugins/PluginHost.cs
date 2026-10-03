@@ -14,6 +14,8 @@ internal sealed class PluginHost : IPluginHost
     private readonly ScopedCards _cards;
     private readonly ScopedPages _pages;
     private readonly ScopedThemes _themes;
+    private readonly ScopedGlow _glow;
+    private readonly ScopedAudio _audio;
     private readonly ScopedShell _shell;
     private readonly ScopedBus _bus;
 
@@ -25,6 +27,8 @@ internal sealed class PluginHost : IPluginHost
         PluginCardBoard cards,
         PluginPageBoard pages,
         PluginThemeBoard themes,
+        PluginGlowBoard glow,
+        PluginAudioHub audio,
         PluginShellState shell,
         PluginBus bus,
         PluginLog log)
@@ -39,6 +43,8 @@ internal sealed class PluginHost : IPluginHost
         Cards = _cards = new ScopedCards(manifest.Id, cards, scopedLog);
         Pages = _pages = new ScopedPages(manifest.Id, pages, scopedLog);
         Themes = _themes = new ScopedThemes(manifest.Id, pluginDirectory, themes);
+        Glow = _glow = new ScopedGlow(manifest.Id, glow);
+        Audio = _audio = new ScopedAudio(audio);
         Shell = _shell = new ScopedShell(manifest.Id, shell, Activities);
         Bus = _bus = new ScopedBus(manifest.Id, bus, scopedLog);
         Settings = SettingsStore = new PluginSettingsStore(Path.Combine(dataDirectory, "settings.json"));
@@ -65,6 +71,10 @@ internal sealed class PluginHost : IPluginHost
 
     public IPluginThemes Themes { get; }
 
+    public IPluginGlow Glow { get; }
+
+    public IPluginAudio Audio { get; }
+
     public IPluginShell Shell { get; }
 
     public IPluginBus Bus { get; }
@@ -83,6 +93,8 @@ internal sealed class PluginHost : IPluginHost
         _cards.Close();
         _pages.Close();
         _themes.Close();
+        _glow.Close();
+        _audio.Close();
         _bus.Close();
         _shell.Close();
     }
@@ -253,6 +265,72 @@ internal sealed class PluginHost : IPluginHost
             }
 
             return full;
+        }
+    }
+
+    private sealed class ScopedGlow(string pluginId, PluginGlowBoard board) : IPluginGlow
+    {
+        private readonly Lock _gate = new();
+        private bool _closed;
+
+        public void Set(GlowFrame frame)
+        {
+            ArgumentNullException.ThrowIfNull(frame);
+
+            lock (_gate)
+            {
+                if (!_closed)
+                {
+                    board.Set(pluginId, frame);
+                }
+            }
+        }
+
+        public void Clear() => board.Remove(pluginId);
+
+        public void Close()
+        {
+            lock (_gate)
+            {
+                _closed = true;
+                Clear();
+            }
+        }
+    }
+
+    private sealed class ScopedAudio(PluginAudioHub hub) : IPluginAudio
+    {
+        private readonly Lock _gate = new();
+        private IDisposable? _reader;
+        private bool _closed;
+
+        public AudioFrame Latest
+        {
+            get
+            {
+                lock (_gate)
+                {
+                    if (_closed)
+                    {
+                        return AudioFrame.Silent;
+                    }
+
+                    // The first read is what starts the listening.
+                    _reader ??= hub.Acquire();
+                }
+
+                return hub.Latest;
+            }
+        }
+
+        public void Close()
+        {
+            lock (_gate)
+            {
+                _closed = true;
+                _reader?.Dispose();
+                _reader = null;
+            }
         }
     }
 

@@ -13,7 +13,7 @@ public static class PluginApi
     /// its manifest (<c>apiVersion</c>); Notch runs plugins written for this version or an older
     /// one, and refuses those that need a newer one.
     /// </summary>
-    public const int Version = 6;
+    public const int Version = 7;
 }
 
 /// <summary>
@@ -69,6 +69,12 @@ public interface IPluginHost
 
     /// <summary>Looks for the whole notch that the user can pick in Settings. API version 6.</summary>
     IPluginThemes Themes { get; }
+
+    /// <summary>Draws the light around the pill in place of the current activity's glow. API version 7.</summary>
+    IPluginGlow Glow { get; }
+
+    /// <summary>How loud the PC's sound output is, in total and by pitch. API version 7.</summary>
+    IPluginAudio Audio { get; }
 
     /// <summary>The notch's state (expanded, which page is showing, theme) and short notices. API version 5.</summary>
     IPluginShell Shell { get; }
