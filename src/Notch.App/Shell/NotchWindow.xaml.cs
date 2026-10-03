@@ -63,6 +63,7 @@ public partial class NotchWindow : Window
     private DisplayInfo? _display;
     private bool _expanded;
     private bool _hoverWantsExpanded;
+    private bool _mouseWasDown;
     private bool _pinnedOpen;
     private int? _displayOverride;
     private NotchStyle? _styleOverride;
@@ -496,8 +497,23 @@ public partial class NotchWindow : Window
     /// </summary>
     private void WatchPointer()
     {
+        // A press, not a held button, so a button already down when the notch opened does not count.
+        bool buttonDown = OverlayWindow.IsAnyMouseButtonDown();
+        bool pressed = buttonDown && !_mouseWasDown;
+        _mouseWasDown = buttonDown;
+
         bool closePending = _hoverTimer.IsEnabled && !_hoverWantsExpanded;
-        if (PointerOverIsland())
+        bool over = PointerOverIsland();
+        if (!over && pressed && !_pinnedOpen && (_hotkeyHold || KeyboardInUse))
+        {
+            // The notch never saw this click, so no Deactivated either: it was opened without the
+            // keyboard, or the window clicked does not take focus.
+            HoverTrace.Write("watch: clicked elsewhere");
+            CloseForClickAway();
+            return;
+        }
+
+        if (over)
         {
             // From here on the pointer is in charge again: leaving closes the notch as usual.
             _hotkeyHold = false;
@@ -550,7 +566,21 @@ public partial class NotchWindow : Window
     /// Something keeps the notch open although the pointer is not on it: it has the keyboard, a
     /// file is being dragged out of it, a menu of its own is showing, or the hotkey opened it.
     /// </summary>
-    private bool HoldOpen => KeyboardInUse || _dragOutActive || _shelfMenuOpen || _hotkeyHold;
+    private bool HoldOpen => KeyboardInUse || _dragOutActive || _shelfMenuOpen || _folderMenuOpen || _hotkeyHold;
+
+    /// <summary>Closes the notch because the user clicked another window, unless a menu or drag of its own is what they are using.</summary>
+    private void CloseForClickAway()
+    {
+        if (PointerOverIsland() || _dragOutActive || _shelfMenuOpen || _folderMenuOpen)
+        {
+            return;
+        }
+
+        // A pending open from a pass over the island must not bring it back.
+        _hoverTimer.Stop();
+        _hotkeyHold = false;
+        SetExpanded(false);
+    }
 
     private void ScheduleExpanded(bool expanded, TimeSpan delay)
     {
@@ -608,6 +638,7 @@ public partial class NotchWindow : Window
             {
                 UpdateCalendar();
                 PruneShelf();
+                _mouseWasDown = OverlayWindow.IsAnyMouseButtonDown();
                 _pointerWatch.Start();
             }
             else

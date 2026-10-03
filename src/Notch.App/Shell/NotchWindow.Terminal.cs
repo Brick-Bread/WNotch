@@ -92,13 +92,7 @@ public partial class NotchWindow
         UpdateFolderButton();
 
         // Clicking another window is how the user leaves a focused terminal.
-        Deactivated += (_, _) =>
-        {
-            if (!PointerOverIsland() && !_dragOutActive && !_shelfMenuOpen)
-            {
-                SetExpanded(false);
-            }
-        };
+        Deactivated += (_, _) => CloseForClickAway();
     }
 
     /// <summary>The presets from the settings, which the launcher buttons and <c>--open=</c> start.</summary>
@@ -246,8 +240,22 @@ public partial class NotchWindow
         var browse = new MenuItem { Header = "Browse…" };
         browse.Click += (_, _) => BrowseForFolder();
         menu.Items.Add(browse);
+
+        // The menu reaches outside the island, and opening it must not read as clicking away.
+        menu.Closed += (_, _) =>
+        {
+            _folderMenuOpen = false;
+            if (!PointerOverIsland())
+            {
+                ScheduleExpanded(false, CloseDelay);
+            }
+        };
+        _folderMenuOpen = true;
         menu.IsOpen = true;
     }
+
+    /// <summary>Set while the terminal folder menu is showing, which reaches outside the island.</summary>
+    private bool _folderMenuOpen;
 
     private void BrowseForFolder()
     {

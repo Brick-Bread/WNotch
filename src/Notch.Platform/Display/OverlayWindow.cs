@@ -43,6 +43,12 @@ public static class OverlayWindow
     public static (int X, int Y)? GetCursorPosition() =>
         NativeMethods.GetCursorPos(out POINT point) ? (point.X, point.Y) : null;
 
+    /// <summary>Whether the left, right or middle mouse button is down, wherever the pointer is.</summary>
+    public static bool IsAnyMouseButtonDown() =>
+        (NativeMethods.GetAsyncKeyState(0x01) & 0x8000) != 0
+        || (NativeMethods.GetAsyncKeyState(0x02) & 0x8000) != 0
+        || (NativeMethods.GetAsyncKeyState(0x04) & 0x8000) != 0;
+
     /// <summary>Other topmost windows can end up above the notch; this puts it back on top.</summary>
     public static void BringToTop(nint hwnd) =>
         NativeMethods.SetWindowPos(
