@@ -40,7 +40,7 @@
 <script>
 (() => {
   const list = document.getElementById('list'), q = document.getElementById('q'), chipBox = document.getElementById('chips'), count = document.getElementById('count');
-  const PERM = {network:'Connects to the internet', filesystem:'Reads or writes your files', terminal:'Starts or reads terminal sessions', shell:'Runs other programs', notifications:'Reads your notifications', clipboard:'Reads or writes the clipboard'};
+  const PERM = {network:'Connects to the internet', filesystem:'Reads or writes your files', terminal:'Starts or reads terminal sessions', shell:'Runs other programs', notifications:'Reads your notifications', clipboard:'Reads or writes the clipboard', audio:'Listens to how loud your PC’s sound is (levels only, never the sound)'};
   let plugins = [], tag = '';
 
   const el = (name, props = {}, ...kids) => {

@@ -47,6 +47,17 @@
       "verified": true
     },
     {
+      "id": "brick-bread.glow-visualizer",
+      "name": "Glow visualizer",
+      "repository": "Brick-Bread/wnotch-glow-visualizer",
+      "author": "Brick_Bread",
+      "description": "Turns the glow around the pill into a music visualiser that follows what your PC plays, with eight animations: pulse, spectrum, mirror, wave, comet, fire, strobe and aurora.",
+      "tags": ["music", "glow"],
+      "permissions": ["audio"],
+      "apiVersion": 7,
+      "verified": true
+    },
+    {
       "id": "agentstats.agent-usage",
       "name": "WNotch-AgentStats",
       "repository": "tinywifi/WNotch-AgentStats",
