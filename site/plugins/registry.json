@@ -64,7 +64,7 @@
       "author": "tinywifi",
       "description": "Coding-agent accounts and usage in the notch.",
       "tags": ["dev", "ai"],
-      "permissions": [],
+      "permissions": ["network", "filesystem", "terminal", "shell", "clipboard"],
       "apiVersion": 5,
       "verified": true
     }
