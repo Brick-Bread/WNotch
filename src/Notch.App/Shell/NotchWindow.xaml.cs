@@ -136,7 +136,14 @@ public partial class NotchWindow : Window
                 return;
             }
 
+            // The notch may have the keyboard (terminal, clipboard search, timer box); it goes back to
+            // the window that had it, as when the hotkey closes the notch.
+            bool handBack = !_hoverWantsExpanded && _expanded && IsActive && _lastOtherWindow != 0;
             SetExpanded(_hoverWantsExpanded);
+            if (handBack)
+            {
+                OverlayWindow.SetForeground(_lastOtherWindow);
+            }
         };
         _pointerWatch.Tick += (_, _) => WatchPointer();
         _housekeepingTimer.Tick += (_, _) => Housekeeping();
@@ -563,10 +570,11 @@ public partial class NotchWindow : Window
     }
 
     /// <summary>
-    /// Something keeps the notch open although the pointer is not on it: it has the keyboard, a
-    /// file is being dragged out of it, a menu of its own is showing, or the hotkey opened it.
+    /// Something keeps the notch open although the pointer is not on it: a file is being dragged
+    /// out of it, a menu of its own is showing, or a hotkey opened it. Having the keyboard does
+    /// not: the notch closes when the pointer leaves, and gives the keyboard back.
     /// </summary>
-    private bool HoldOpen => KeyboardInUse || _dragOutActive || _shelfMenuOpen || _folderMenuOpen || _hotkeyHold;
+    private bool HoldOpen => _dragOutActive || _shelfMenuOpen || _folderMenuOpen || _hotkeyHold;
 
     /// <summary>Closes the notch because the user clicked another window, unless a menu or drag of its own is what they are using.</summary>
     private void CloseForClickAway()
