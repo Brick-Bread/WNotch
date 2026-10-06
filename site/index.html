@@ -12,74 +12,104 @@
 </head>
 <body>
 <div class="wrap">
-<nav><b>Notch</b><div><a href="#features">Features</a><a href="#install">Install</a><a href="plugins.html">Plugins</a><a href="https://github.com/Brick-Bread/WNotch">GitHub</a><a class="count" id="count" href="https://github.com/Brick-Bread/WNotch/releases" title="Total downloads" hidden><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8M4.5 6.8 8 10.3l3.5-3.5M2.5 13.5h11"/></svg><span id="total"></span></a></div></nav>
+<nav><b><a href="./">Notch</a></b><div><a href="#features">Features</a><a href="#themes">Themes</a><a href="#install">Install</a><a href="plugins.html">Plugins</a><a href="https://github.com/Brick-Bread/WNotch">GitHub</a><a class="count" id="count" href="https://github.com/Brick-Bread/WNotch/releases" title="Total downloads" hidden><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8M4.5 6.8 8 10.3l3.5-3.5M2.5 13.5h11"/></svg><span id="total"></span></a></div></nav>
 
 <header class="hero">
-<div class="screen" id="screen">
- <img class="on" src="shots/pill-media.png" alt="The notch showing the song that is playing">
- <img src="shots/pill-agent-working.png" alt="The notch while Claude is working">
- <img src="shots/pill-agent-needs-input.png" alt="The notch when Claude needs input">
- <img src="shots/pill-agent-done.png" alt="The notch when Claude is done">
- <img src="shots/pill-volume.png" alt="The notch showing the volume">
-</div>
-<div class="cap" id="cap" aria-live="off"></div>
-<h1>A dynamic notch for Windows 11</h1>
+<h1>The notch Windows <em>never had.</em></h1>
 <p>A small black pill at the top of your screen that grows to show what is happening: music, volume, timers, and your coding agents.</p>
+<div class="cta">
 <a class="btn" id="dl" href="https://github.com/Brick-Bread/WNotch/releases/latest">Download for Windows</a>
 <a class="btn alt" href="https://github.com/Brick-Bread/WNotch">View source</a>
 <div class="small" id="ver">Free and open source. Windows 10 2004 or later, Windows 11 recommended.</div>
+</div>
+
+<div class="desk" id="desk" aria-label="An animated demonstration of the notch">
+ <div class="win"></div><div class="bar"><i style="left:44%"></i><i style="left:48%"></i><i style="left:52%"></i></div>
+ <div class="sim is-compact" id="sim" role="img" aria-label="The notch changing between what is playing, an agent working, volume and its expanded view">
+  <div class="compact" id="compact"></div>
+  <div class="full" id="full"></div>
+ </div>
+</div>
+<p class="cap" id="cap" aria-live="off"></p>
+<div class="steps" id="steps"></div>
+<div class="chips" id="heroChips" role="group" aria-label="Try a theme"></div>
+<p class="small">Hover the pill above to hold it open. These are the real themes, drawn by the real app.</p>
 </header>
 
 <section id="features">
+<span class="eyebrow">Features</span>
 <h2>What it does</h2>
 <p class="lead">Always on top, never takes focus, and gets out of the way of fullscreen games.</p>
-<div class="grid">
-<div class="card"><h3>Media</h3><p>Whatever is playing shows with its artwork, with play/pause, skip and click-to-seek when expanded.</p></div>
-<div class="card"><h3>System HUDs</h3><p>Volume, audio output, brightness, charger, low battery, Bluetooth devices connecting and Caps Lock.</p></div>
-<div class="card"><h3>Shelf</h3><p>Drag files onto the pill to put them aside, then drag them out into any app or folder when you need them.</p></div>
-<div class="card"><h3>Terminal for Claude Code, Codex and opencode</h3><p>A real terminal in the notch. The pill shows whether an agent is working, needs input, or is done.</p></div>
-<div class="card"><h3>Agents anywhere</h3><p>Claude Code, Codex, opencode, Gemini CLI and Aider are found wherever they run, in Windows Terminal, VS Code or any other shell. Click one to bring its window forward.</p></div>
-<div class="card"><h3>Command palette</h3><p>One hotkey and a search box: start a timer, jump to a tab or an agent, open a terminal, switch a plugin on.</p></div>
-<div class="card"><h3>Clipboard history</h3><p>Optional. Search what you copied, pin what you need, copy it again. Kept in memory, and password managers' copies are never kept.</p></div>
-<div class="card"><h3>Scriptable</h3><p>notch:// links, a notchctl command and a local webhook let scripts and CI show things in the pill.</p></div>
-<div class="card"><h3>Widgets</h3><p>Timer with Pomodoro mode, upcoming events from .ics feeds, and live CPU, memory, GPU, network and battery stats.</p></div>
-<div class="card"><h3>Notch or island</h3><p>Grow out of the screen edge or float as a Dynamic Island, at the top or in the taskbar.</p></div>
-<div class="card"><h3>Themes</h3><p>Dark, light or follow Windows, with your own accent colour.</p></div>
+<div class="bento">
+<div class="card w4"><span class="k"><svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13M9 18a3 3 0 1 1-3-3 3 3 0 0 1 3 3Zm11-2a3 3 0 1 1-3-3 3 3 0 0 1 3 3Z"/></svg></span><h3>Media</h3><p>Whatever is playing shows with its artwork, with play/pause, skip and click-to-seek when expanded.</p></div>
+<div class="card"><span class="k"><svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4V5Zm5 3a5 5 0 0 1 0 8"/></svg></span><h3>System HUDs</h3><p>Volume, audio output, brightness, charger, low battery, Bluetooth and Caps Lock.</p></div>
+<div class="card"><span class="k"><svg viewBox="0 0 24 24"><path d="M4 7h16v12H4zM8 7V4h8v3"/></svg></span><h3>Shelf</h3><p>Drag files onto the pill to put them aside, then drag them out into any app or folder.</p></div>
+<div class="card w4"><span class="k"><svg viewBox="0 0 24 24"><path d="m5 8 4 4-4 4M12 17h7M3 4h18v16H3z"/></svg></span><h3>Terminal for Claude Code, Codex and opencode</h3><p>A real terminal in the notch. The pill shows whether an agent is working, needs input, or is done.</p></div>
+<div class="card w3"><span class="k"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><h3>Agents anywhere</h3><p>Claude Code, Codex, opencode, Gemini CLI and Aider are found wherever they run. Click one to bring its window forward.</p></div>
+<div class="card w3"><span class="k"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg></span><h3>Command palette</h3><p>One hotkey and a search box: start a timer, jump to a tab or an agent, open a terminal, switch a plugin on.</p></div>
+<div class="card"><span class="k"><svg viewBox="0 0 24 24"><path d="M9 4h6v3H9zM6 6h12v15H6z"/></svg></span><h3>Clipboard history</h3><p>Optional. Search, pin and copy again. Kept in memory, and password managers' copies are never kept.</p></div>
+<div class="card"><span class="k"><svg viewBox="0 0 24 24"><path d="m8 7-5 5 5 5M16 7l5 5-5 5"/></svg></span><h3>Scriptable</h3><p>notch:// links, a notchctl command and a local webhook let scripts and CI show things in the pill.</p></div>
+<div class="card"><span class="k"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg></span><h3>Widgets</h3><p>Timer with Pomodoro mode, .ics events, and live CPU, memory, GPU, network and battery stats.</p></div>
+<div class="card w3"><span class="k"><svg viewBox="0 0 24 24"><path d="M3 4h18v6a9 9 0 0 1-18 0V4Z"/></svg></span><h3>Notch or island</h3><p>Grow out of the screen edge or float as a Dynamic Island, at the top or in the taskbar.</p></div>
+<div class="card w3"><span class="k"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M12 12l6-6"/></svg></span><h3>Themes</h3><p>Dark, light or follow Windows, with your own accent colour. Plugins add whole new looks.</p></div>
+</div>
+</section>
+
+<section id="themes" class="themes">
+<span class="eyebrow">Themes</span>
+<h2>Make it yours</h2>
+<p class="lead">Dark and light are built in. Theme plugins restyle every surface, font and corner. Every picture below is the real app, rendered with each theme.</p>
+<div class="picker">
+ <div class="row"><span class="lab">Built in</span><div class="chips" id="gBuilt"></div></div>
+ <div class="row"><span class="lab">Plugins</span><div class="chips" id="gPlug"></div></div>
+</div>
+<div class="gallery" id="gallery">
+ <div class="name"><b id="gName"></b><span id="gNote"></span></div>
+ <div class="big">
+  <img id="gHome" alt="The Home tab in this theme">
+  <div class="col">
+   <img id="gStats" alt="The Stats tab in this theme">
+   <div class="pills"><img id="gMedia" alt="The compact pill showing music"><img id="gAgent" alt="The compact pill when an agent needs input"></div>
+  </div>
+ </div>
 </div>
 </section>
 
 <section>
-<h2>Inside</h2>
-<p class="lead">Hover the pill, or press a hotkey, and it opens. Home has what is playing, a timer and your calendar; Stats shows the machine; the Shelf holds files for later.</p>
-<div class="grid">
-<div class="stage"><img class="shot" src="shots/home.png" alt="The Home tab with media controls, a timer and a calendar"></div>
-<div class="stage"><img class="shot" src="shots/stats.png" alt="The Stats tab with CPU, memory, GPU, network and battery"></div>
-<div class="stage"><img class="shot" src="shots/shelf.png" alt="The Shelf tab holding five files and folders"></div>
-<div class="stage"><img class="shot" src="shots/home-agents.png" alt="The Home tab listing three coding agents with their state and where they run"></div>
-<div class="stage"><img class="shot" src="shots/palette-search.png" alt="The command palette showing timers for the search tim"></div>
-<div class="stage"><img class="shot" src="shots/clipboard.png" alt="The Clipboard tab with copied text and files, one of them pinned"></div>
+<span class="eyebrow">Inside</span>
+<h2>Hover, and it opens</h2>
+<p class="lead">Home has what is playing, a timer and your calendar; Stats shows the machine; the Shelf holds files for later.</p>
+<div class="inside">
+<div class="stage"><img class="shot" src="shots/home.png" alt="The Home tab with media controls, a timer and a calendar" loading="lazy"></div>
+<div class="stage"><img class="shot" src="shots/stats.png" alt="The Stats tab with CPU, memory, GPU, network and battery" loading="lazy"></div>
+<div class="stage"><img class="shot" src="shots/shelf.png" alt="The Shelf tab holding five files and folders" loading="lazy"></div>
+<div class="stage"><img class="shot" src="shots/home-agents.png" alt="The Home tab listing three coding agents with their state and where they run" loading="lazy"></div>
+<div class="stage"><img class="shot" src="shots/palette-search.png" alt="The command palette showing timers for the search tim" loading="lazy"></div>
+<div class="stage"><img class="shot" src="shots/clipboard.png" alt="The Clipboard tab with copied text and files, one of them pinned" loading="lazy"></div>
 </div>
 </section>
 
 <section>
+<span class="eyebrow">Glow</span>
 <h2>Glow that means something</h2>
 <p class="lead">The pill lights up in a colour and rhythm that matches the moment.</p>
 <div class="states">
-<div class="state"><img src="shots/pill-agent-working.png" alt=""><span>An agent is working</span></div>
-<div class="state"><img src="shots/pill-agent-needs-input.png" alt=""><span>An agent needs you</span></div>
-<div class="state"><img src="shots/pill-agent-done.png" alt=""><span>It is done</span></div>
-<div class="state"><img src="shots/pill-volume.png" alt=""><span>Volume</span></div>
-<div class="state"><img src="shots/pill-charging.png" alt=""><span>Charger connected</span></div>
-<div class="state"><img src="shots/pill-bluetooth.png" alt=""><span>Bluetooth device</span></div>
-<div class="state"><img src="shots/pill-low-battery.png" alt=""><span>Low battery</span></div>
-<div class="state"><img src="shots/pill-caps-lock.png" alt=""><span>Caps Lock</span></div>
-<div class="state"><img src="shots/pill-media.png" alt=""><span>Music, in the artwork's colour</span></div>
+<div class="state" style="--c:#4a9eff"><img src="shots/pill-agent-working.png" alt=""><span>An agent is working</span></div>
+<div class="state flash" style="--c:#fbbf24"><img src="shots/pill-agent-needs-input.png" alt=""><span>An agent needs you</span></div>
+<div class="state flash" style="--c:#4ade80"><img src="shots/pill-agent-done.png" alt=""><span>It is done</span></div>
+<div class="state steady" style="--c:#e8e8f2"><img src="shots/pill-volume.png" alt=""><span>Volume</span></div>
+<div class="state" style="--c:#4ade80"><img src="shots/pill-charging.png" alt=""><span>Charger connected</span></div>
+<div class="state" style="--c:#4a9eff"><img src="shots/pill-bluetooth.png" alt=""><span>Bluetooth device</span></div>
+<div class="state flash" style="--c:#f87171"><img src="shots/pill-low-battery.png" alt=""><span>Low battery</span></div>
+<div class="state flash" style="--c:#fbbf24"><img src="shots/pill-caps-lock.png" alt=""><span>Caps Lock</span></div>
+<div class="state" style="--c:#c77dff"><img src="shots/pill-media.png" alt=""><span>Music, in the artwork's colour</span></div>
 </div>
 </section>
 
 <section id="install">
-<h2>Install</h2>
-<ol>
+<span class="eyebrow">Install</span>
+<h2>Up in a minute</h2>
+<ol class="install">
 <li>Download <code>Notch-Setup-&lt;version&gt;.exe</code> from the <a href="https://github.com/Brick-Bread/WNotch/releases/latest">latest release</a>.</li>
 <li>Run it. It installs for your user, with no admin rights.</li>
 <li>The installer is not code-signed, so SmartScreen will ask you to confirm.</li>
@@ -88,14 +118,15 @@
 </section>
 
 <section id="plugins">
-<h2>Plugins</h2>
-<p class="lead">Small .NET libraries can add their own activities to the pill, cards to a Plugins tab, and whole themes. Browse the list and press Install: Notch opens, shows what the plugin is, and installs it only if you say yes. Or type a GitHub repository into the Plugins box in Settings.</p>
-<pre>Brick-Bread/WNotch</pre>
-<p><a class="btn" href="plugins.html">Browse plugins</a> &nbsp; <a href="https://github.com/Brick-Bread/WNotch/blob/main/docs/plugins.md">Read the plugin guide</a> · <a href="https://github.com/Brick-Bread/WNotch/tree/main/samples/BreakReminder">Sample plugin</a></p>
-<h3 class="sub">Notch Glass: Smoked</h3>
-<p class="lead">A theme plugin that restyles the pill, cards, buttons, tabs and terminal as translucent charcoal glass with mint highlights. Install it with <code>Brick-Bread/wnotch-glass</code>, then pick <b>Glass / Smoked</b> under Plugin theme.</p>
-<div class="stage glass"><img class="shot" src="media/glass-smoked.png" width="820" height="756" loading="lazy" alt="The Glass / Smoked theme: a compact pill with a focus timer, a Stats tab of six cards, and a terminal with launcher buttons, all in translucent charcoal glass"></div>
-<p class="small">Preview rendered from the theme's real styles in a sample layout. <a href="https://github.com/Brick-Bread/wnotch-glass">Source and frosted variant</a></p>
+<div class="plug">
+<div>
+<span class="eyebrow">Plugins</span>
+<h2>Add your own activities, cards and themes</h2>
+<p class="lead">Small .NET libraries can add their own activities to the pill, cards to a Plugins tab, and whole themes. Press Install on the list: Notch opens, shows what the plugin is, and installs it only if you say yes. Or type a GitHub repository into the Plugins box in Settings.</p>
+<a class="btn" href="plugins.html">Browse plugins</a>
+<a class="btn alt" href="https://github.com/Brick-Bread/WNotch/blob/main/docs/plugins.md">Plugin guide</a>
+</div>
+</div>
 </section>
 </div>
 <footer>Notch is open source. <a href="https://github.com/Brick-Bread/WNotch/blob/main/LICENSE">Licence</a> · <a href="https://github.com/Brick-Bread/WNotch">GitHub</a></footer>
@@ -111,12 +142,109 @@ fetch("https://api.github.com/repos/Brick-Bread/WNotch/releases/latest").then(fu
  if(a)document.getElementById("dl").href=a.browser_download_url;
  document.getElementById("ver").textContent="Version "+r.tag_name.replace(/^v/,"")+" · free and open source · Windows 10 2004 or later";
 }).catch(function(){});
+
 (function(){
- var imgs=document.querySelectorAll("#screen img"),cap=document.getElementById("cap"),i=0;
- var names=["Playing music","An agent is working","An agent needs you","An agent is done","Volume"];
- function show(n){imgs.forEach(function(m,k){m.classList.toggle("on",k===n)});cap.textContent=names[n]}
- show(0);
- if(!matchMedia("(prefers-reduced-motion:reduce)").matches)setInterval(function(){i=(i+1)%imgs.length;show(i)},2800);
+ var THEMES=[
+  {id:"dark",name:"Dark",group:0,bg:"#000",fg:"#fff",ac:"#4a9eff",g1:"#0c0d14",g2:"#26325a",gf:"#fff",note:"Built in"},
+  {id:"light",name:"Light",group:0,bg:"#f3f3f5",fg:"#16161c",ac:"#2b6fe0",g1:"#e4e5ec",g2:"#fff",gf:"#16161c",note:"Built in"},
+  {id:"glass-smoked",name:"Glass / Smoked",group:1,bg:"#181d20",fg:"#eef2f1",ac:"#9fe8c8",g1:"#11181a",g2:"#2c4a43",gf:"#fff",note:"Plugin: Notch Glass",href:"https://github.com/Brick-Bread/wnotch-glass"},
+  {id:"glass-frosted",name:"Glass / Frosted",group:1,bg:"#e4ecea",fg:"#1b2a27",ac:"#2f8f78",g1:"#c9d8d4",g2:"#f2fbf8",gf:"#16221f",note:"Plugin: Notch Glass",href:"https://github.com/Brick-Bread/wnotch-glass"},
+  {id:"catppuccin-latte",name:"Catppuccin Latte",group:1,bg:"#dfe2ec",fg:"#4c4f69",ac:"#8839ef",g1:"#d6d9e6",g2:"#f3e8ff",gf:"#4c4f69",note:"Plugin: Notch Catppuccin",href:"https://github.com/Brick-Bread/wnotch-catppuccin"},
+  {id:"catppuccin-frappe",name:"Catppuccin Frappé",group:1,bg:"#262633",fg:"#c6d0f5",ac:"#ca9ee6",g1:"#1e1f2b",g2:"#40354f",gf:"#fff",note:"Plugin: Notch Catppuccin",href:"https://github.com/Brick-Bread/wnotch-catppuccin"},
+  {id:"catppuccin-macchiato",name:"Catppuccin Macchiato",group:1,bg:"#1e2333",fg:"#cad3f5",ac:"#c6a0f6",g1:"#181a28",g2:"#363060",gf:"#fff",note:"Plugin: Notch Catppuccin",href:"https://github.com/Brick-Bread/wnotch-catppuccin"},
+  {id:"catppuccin-mocha",name:"Catppuccin Mocha",group:1,bg:"#14141e",fg:"#cdd6f4",ac:"#cba6f7",g1:"#0e0e16",g2:"#2c2347",gf:"#fff",note:"Plugin: Notch Catppuccin",href:"https://github.com/Brick-Bread/wnotch-catppuccin"},
+  {id:"neon",name:"Neon",group:1,bg:"#210840",fg:"#f4e8ff",ac:"#ff3ddc",g1:"#12041f",g2:"#6a1a8a",gf:"#fff",note:"Sample plugin: purple and pink, square corners",href:"https://github.com/Brick-Bread/WNotch/tree/main/samples/NeonTheme"}
+ ];
+ var $=function(id){return document.getElementById(id)};
+ var reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+ var desk=$("desk"),sim=$("sim"),compact=$("compact"),full=$("full"),cap=$("cap"),steps=$("steps");
+ var cur=0,pickedByUser=false;
+
+ // ---- the pictures used by the expanded pill, one pair per theme
+ full.innerHTML='<img id="fHome" alt=""><img id="fStats" alt="">';
+ var fHome=$("fHome"),fStats=$("fStats");
+ THEMES.forEach(function(t){["home","stats"].forEach(function(n){var i=new Image();i.src="themes/"+t.id+"/"+n+".png"})});
+
+ // ---- theme chips (hero + gallery share one state)
+ var chipEls=[];
+ function chip(t,box){
+  var b=document.createElement("button");b.type="button";b.className="chip";b.style.setProperty("--sw",t.bg);
+  b.innerHTML="<i></i>"+t.name;b.setAttribute("aria-pressed","false");
+  b.onclick=function(){pickedByUser=true;setTheme(THEMES.indexOf(t),true)};
+  box.appendChild(b);chipEls.push({t:t,b:b});
+ }
+ THEMES.forEach(function(t){chip(t,$("heroChips"));chip(t,t.group?$("gPlug"):$("gBuilt"))});
+
+ var gal=$("gallery");
+ function setTheme(i,swap){
+  cur=i;var t=THEMES[i];
+  chipEls.forEach(function(c){c.b.setAttribute("aria-pressed",c.t===t?"true":"false")});
+  sim.style.setProperty("--s-bg",t.bg);sim.style.setProperty("--s-fg",t.fg);sim.style.setProperty("--s-ac",t.ac);
+  fHome.src="themes/"+t.id+"/home.png";fStats.src="themes/"+t.id+"/stats.png";
+  gal.style.setProperty("--g1",t.g1);gal.style.setProperty("--g2",t.g2);gal.style.setProperty("--g-fg",t.gf);
+  $("gName").textContent=t.name;
+  $("gNote").innerHTML=t.href?'<a href="'+t.href+'">'+t.note+"</a>":t.note;
+  [["gHome","home"],["gStats","stats"],["gMedia","pill-media"],["gAgent","pill-agent-needs-input"]].forEach(function(p){
+   var im=$(p[0]);im.src="themes/"+t.id+"/"+p[1]+".png";
+   if(swap&&!reduce){im.classList.remove("swap");void im.offsetWidth;im.classList.add("swap")}
+  });
+ }
+
+ // ---- the animated notch
+ var ICON={
+  bolt:'<svg class="ico" viewBox="0 0 16 16"><path d="M9 1 3 9h4l-1 6 6-8H8l1-6Z"/></svg>',
+  check:'<svg class="ico" viewBox="0 0 16 16"><path d="m3 8.5 3.2 3L13 4.5"/></svg>',
+  speaker:'<svg class="ico" viewBox="0 0 16 16"><path d="M2 6h3l4-3v10l-4-3H2V6Zm9 0a3 3 0 0 1 0 4"/></svg>',
+  alert:'<svg class="ico" viewBox="0 0 16 16"><path d="M8 3v6M8 12v.5"/></svg>'
+ };
+ var STATES=[
+  {n:"Idle",c:"A quiet pill, tucked into the top of the screen.",w:150,h:30,html:"",glow:null},
+  {n:"Playing music",c:"<b>Music</b> shows with its artwork, and glows in its colour.",w:290,h:40,html:'<span class="art"></span><span class="tx">Breaking the Habit<small>Linkin Park</small></span><span class="eq"><i></i><i></i><i></i><i></i></span>',glow:["#c77dff","breathe"]},
+  {n:"An agent is working",c:"<b>Claude</b> is working. A steady blue pulse while it thinks.",w:290,h:40,html:'<span class="spin"></span><span class="tx">Claude<small>Working…</small></span>',glow:["#4a9eff","pulse"]},
+  {n:"An agent needs you",c:"<b>Claude</b> needs input. Amber, and it flashes so you see it.",w:290,h:40,html:'<span class="dot" style="--c:#fbbf24"></span><span class="tx">Claude<small>Needs your input</small></span>'+ICON.alert,glow:["#fbbf24","flash"]},
+  {n:"It is done",c:"<b>Done.</b> A green flash and it tucks itself away.",w:250,h:40,html:'<span class="dot" style="--c:#4ade80"></span><span class="tx">Claude<small>Done</small></span>'+ICON.check,glow:["#4ade80","flash"]},
+  {n:"Volume",c:"<b>Volume</b> HUD, in place of the one Windows draws.",w:290,h:40,html:ICON.speaker+'<span class="vol"><i></i></span><span class="tx" style="flex:none">62%</span>',glow:["#e8e8f2","steady"]},
+  {n:"Charger",c:"<b>Charger</b> connected, with the battery level.",w:240,h:40,html:ICON.bolt+'<span class="tx">Charging<small>82%</small></span>',glow:["#4ade80","breathe"]},
+  {n:"Home",c:"Hover and it opens: <b>media, a timer, your calendar.</b>",full:"home",dur:3600},
+  {n:"Stats",c:"…and <b>Stats</b> for CPU, memory, GPU and network.",full:"stats",dur:3600}
+ ];
+ steps.innerHTML="";
+ var stepEls=STATES.map(function(s,i){var b=document.createElement("button");b.type="button";b.setAttribute("aria-label",s.n);b.onclick=function(){hold=false;go(i,true)};steps.appendChild(b);return b});
+
+ var at=-1,timer=0,hold=false;
+ function k(){return desk.clientWidth/940}
+ function go(i,manual){
+  clearTimeout(timer);at=i;var s=STATES[i],K=k();
+  stepEls.forEach(function(b,j){b.setAttribute("aria-current",j===i?"true":"false")});
+  cap.innerHTML=s.c;
+  if(s.full){
+   var w=Math.min(640,880)*K,hgt=w*(s.full==="home"?728:580)/1280;
+   sim.classList.remove("is-compact");sim.classList.add("is-full");
+   sim.style.width=w+"px";sim.style.height=hgt+"px";sim.style.borderRadius="0 0 "+(26*K)+"px "+(26*K)+"px";
+   fHome.classList.toggle("on",s.full==="home");fStats.classList.toggle("on",s.full==="stats");
+   sim.removeAttribute("data-glow");sim.style.removeProperty("--glow");
+  }else{
+   sim.classList.remove("is-full");sim.classList.add("is-compact");
+   sim.style.width=s.w*K+"px";sim.style.height=s.h*K+"px";sim.style.borderRadius="0 0 "+(s.h*K/2)+"px "+(s.h*K/2)+"px";
+   compact.innerHTML="";requestAnimationFrame(function(){compact.innerHTML=s.html});
+   compact.style.fontSize=Math.max(11,13*K)+"px";
+   if(s.glow){sim.style.setProperty("--glow",s.glow[0]);sim.setAttribute("data-glow",s.glow[1])}
+   else{sim.removeAttribute("data-glow");sim.style.removeProperty("--glow")}
+  }
+  if(!reduce)timer=setTimeout(next,s.dur||(s.glow?2600:1600));
+ }
+ function next(){if(hold)return;go((at+1)%STATES.length)}
+ sim.addEventListener("mouseenter",function(){if(reduce)return;hold=true;clearTimeout(timer);go(7,true);clearTimeout(timer)});
+ sim.addEventListener("mouseleave",function(){if(!hold)return;hold=false;go(0)});
+ sim.addEventListener("click",function(){go(at===7?8:7,true)});
+ addEventListener("resize",function(){if(at>=0)go(at,true)});
+
+ // the theme gallery turns by itself until someone picks one
+ function turn(){if(!pickedByUser&&!reduce){setTheme((cur+1)%THEMES.length,true);setTimeout(turn,4200)}}
+
+ setTheme(0,false);
+ go(reduce?7:0);
+ if(!reduce)setTimeout(turn,5200);
 })();
 </script>
 </body>
