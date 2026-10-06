@@ -66,10 +66,10 @@
 <div class="gallery" id="gallery">
  <div class="name"><b id="gName"></b><span id="gNote"></span></div>
  <div class="big">
-  <img id="gHome" alt="The Home tab in this theme">
+  <img id="gHome" width="1280" height="728" decoding="async" alt="The Home tab in this theme">
   <div class="col">
-   <img id="gStats" alt="The Stats tab in this theme">
-   <div class="pills"><img id="gMedia" alt="The compact pill showing music"><img id="gAgent" alt="The compact pill when an agent needs input"></div>
+   <img id="gStats" width="1280" height="580" decoding="async" alt="The Stats tab in this theme">
+   <div class="pills"><img id="gMedia" width="668" height="82" decoding="async" alt="The compact pill showing music"><img id="gAgent" width="718" height="109" decoding="async" alt="The compact pill when an agent needs input"></div>
   </div>
  </div>
 </div>
@@ -80,8 +80,8 @@
 <h2>Hover, and it opens</h2>
 <p class="lead">Home has what is playing, a timer and your calendar; Stats shows the machine; the Shelf holds files for later.</p>
 <div class="inside">
-<div class="stage"><img class="shot" src="shots/home.png" alt="The Home tab with media controls, a timer and a calendar" loading="lazy"></div>
-<div class="stage"><img class="shot" src="shots/stats.png" alt="The Stats tab with CPU, memory, GPU, network and battery" loading="lazy"></div>
+<div class="stage"><img class="shot" src="shots/home.webp" alt="The Home tab with media controls, a timer and a calendar" loading="lazy"></div>
+<div class="stage"><img class="shot" src="shots/stats.webp" alt="The Stats tab with CPU, memory, GPU, network and battery" loading="lazy"></div>
 <div class="stage"><img class="shot" src="shots/shelf.png" alt="The Shelf tab holding five files and folders" loading="lazy"></div>
 <div class="stage"><img class="shot" src="shots/home-agents.png" alt="The Home tab listing three coding agents with their state and where they run" loading="lazy"></div>
 <div class="stage"><img class="shot" src="shots/palette-search.png" alt="The command palette showing timers for the search tim" loading="lazy"></div>
@@ -94,15 +94,15 @@
 <h2>Glow that means something</h2>
 <p class="lead">The pill lights up in a colour and rhythm that matches the moment.</p>
 <div class="states">
-<div class="state" style="--c:#4a9eff"><img src="shots/pill-agent-working.png" alt=""><span>An agent is working</span></div>
-<div class="state flash" style="--c:#fbbf24"><img src="shots/pill-agent-needs-input.png" alt=""><span>An agent needs you</span></div>
-<div class="state flash" style="--c:#4ade80"><img src="shots/pill-agent-done.png" alt=""><span>It is done</span></div>
-<div class="state steady" style="--c:#e8e8f2"><img src="shots/pill-volume.png" alt=""><span>Volume</span></div>
-<div class="state" style="--c:#4ade80"><img src="shots/pill-charging.png" alt=""><span>Charger connected</span></div>
-<div class="state" style="--c:#4a9eff"><img src="shots/pill-bluetooth.png" alt=""><span>Bluetooth device</span></div>
-<div class="state flash" style="--c:#f87171"><img src="shots/pill-low-battery.png" alt=""><span>Low battery</span></div>
-<div class="state flash" style="--c:#fbbf24"><img src="shots/pill-caps-lock.png" alt=""><span>Caps Lock</span></div>
-<div class="state" style="--c:#c77dff"><img src="shots/pill-media.png" alt=""><span>Music, in the artwork's colour</span></div>
+<div class="state" style="--c:#4a9eff"><img loading="lazy" decoding="async" src="shots/pill-agent-working.png" alt=""><span>An agent is working</span></div>
+<div class="state flash" style="--c:#fbbf24"><img loading="lazy" decoding="async" src="shots/pill-agent-needs-input.png" alt=""><span>An agent needs you</span></div>
+<div class="state flash" style="--c:#4ade80"><img loading="lazy" decoding="async" src="shots/pill-agent-done.png" alt=""><span>It is done</span></div>
+<div class="state steady" style="--c:#e8e8f2"><img loading="lazy" decoding="async" src="shots/pill-volume.png" alt=""><span>Volume</span></div>
+<div class="state" style="--c:#4ade80"><img loading="lazy" decoding="async" src="shots/pill-charging.png" alt=""><span>Charger connected</span></div>
+<div class="state" style="--c:#4a9eff"><img loading="lazy" decoding="async" src="shots/pill-bluetooth.png" alt=""><span>Bluetooth device</span></div>
+<div class="state flash" style="--c:#f87171"><img loading="lazy" decoding="async" src="shots/pill-low-battery.png" alt=""><span>Low battery</span></div>
+<div class="state flash" style="--c:#fbbf24"><img loading="lazy" decoding="async" src="shots/pill-caps-lock.png" alt=""><span>Caps Lock</span></div>
+<div class="state" style="--c:#c77dff"><img loading="lazy" decoding="async" src="shots/pill-media.png" alt=""><span>Music, in the artwork's colour</span></div>
 </div>
 </section>
 
@@ -131,17 +131,27 @@
 </div>
 <footer>Notch is open source. <a href="https://github.com/Brick-Bread/WNotch/blob/main/LICENSE">Licence</a> · <a href="https://github.com/Brick-Bread/WNotch">GitHub</a></footer>
 <script>
-fetch("https://api.github.com/repos/Brick-Bread/WNotch/releases?per_page=100").then(function(r){return r.ok?r.json():null}).then(function(list){
- if(!list)return;
- var n=0;list.forEach(function(r){(r.assets||[]).forEach(function(a){if(/^Notch-Setup-.*\.exe$/i.test(a.name))n+=a.download_count})});
- if(n>0){document.getElementById("total").textContent=n.toLocaleString();document.getElementById("count").hidden=false}
-}).catch(function(){});
-fetch("https://api.github.com/repos/Brick-Bread/WNotch/releases/latest").then(function(r){return r.ok?r.json():null}).then(function(r){
- if(!r)return;
+function later(fn){addEventListener("load",function(){(window.requestIdleCallback||setTimeout)(fn,{timeout:2500})})}
+function showTotal(n){if(n>0){document.getElementById("total").textContent=n.toLocaleString();document.getElementById("count").hidden=false}}
+function showLatest(r){
  var a=(r.assets||[]).find(function(x){return /\.exe$/i.test(x.name)});
  if(a)document.getElementById("dl").href=a.browser_download_url;
  document.getElementById("ver").textContent="Version "+r.tag_name.replace(/^v/,"")+" · free and open source · Windows 10 2004 or later";
-}).catch(function(){});
+}
+later(function(){
+ // Answers are kept for ten minutes, so moving between pages does not ask GitHub again.
+ var saved=null;try{saved=JSON.parse(sessionStorage.getItem("notch.api"))}catch(e){}
+ if(saved&&Date.now()-saved.t<6e5){showLatest(saved.latest);showTotal(saved.total);return}
+ Promise.all([
+  fetch("https://api.github.com/repos/Brick-Bread/WNotch/releases/latest").then(function(r){return r.ok?r.json():null}),
+  fetch("https://api.github.com/repos/Brick-Bread/WNotch/releases?per_page=100").then(function(r){return r.ok?r.json():null})
+ ]).then(function(v){
+  var latest=v[0],list=v[1],n=0;
+  if(latest)showLatest(latest);
+  if(list){list.forEach(function(r){(r.assets||[]).forEach(function(a){if(/^Notch-Setup-.*\.exe$/i.test(a.name))n+=a.download_count})});showTotal(n)}
+  if(latest&&list)try{sessionStorage.setItem("notch.api",JSON.stringify({t:Date.now(),latest:{tag_name:latest.tag_name,assets:(latest.assets||[]).filter(function(x){return /\.exe$/i.test(x.name)}).map(function(x){return{name:x.name,browser_download_url:x.browser_download_url}})},total:n}))}catch(e){}
+ }).catch(function(){});
+});
 
 (function(){
  var THEMES=[
@@ -163,7 +173,6 @@ fetch("https://api.github.com/repos/Brick-Bread/WNotch/releases/latest").then(fu
  // ---- the pictures used by the expanded pill, one pair per theme
  full.innerHTML='<img id="fHome" alt=""><img id="fStats" alt="">';
  var fHome=$("fHome"),fStats=$("fStats");
- THEMES.forEach(function(t){["home","stats"].forEach(function(n){var i=new Image();i.src="themes/"+t.id+"/"+n+".png"})});
 
  // ---- theme chips (hero + gallery share one state)
  var chipEls=[];
@@ -175,17 +184,21 @@ fetch("https://api.github.com/repos/Brick-Bread/WNotch/releases/latest").then(fu
  }
  THEMES.forEach(function(t){chip(t,$("heroChips"));chip(t,t.group?$("gPlug"):$("gBuilt"))});
 
- var gal=$("gallery");
+ var gal=$("gallery"),galSeen=false;
+ function preload(t){["home","stats"].forEach(function(n){var i=new Image();i.src="themes/"+t.id+"/"+n+".webp"})}
+ // The expanded pictures are fetched only once the pill first opens.
+ function syncFull(){var t=THEMES[cur];[[fHome,"home"],[fStats,"stats"]].forEach(function(p){var u="themes/"+t.id+"/"+p[1]+".webp";if(p[0].getAttribute("src")!==u)p[0].src=u})}
  function setTheme(i,swap){
   cur=i;var t=THEMES[i];
   chipEls.forEach(function(c){c.b.setAttribute("aria-pressed",c.t===t?"true":"false")});
   sim.style.setProperty("--s-bg",t.bg);sim.style.setProperty("--s-fg",t.fg);sim.style.setProperty("--s-ac",t.ac);
-  fHome.src="themes/"+t.id+"/home.png";fStats.src="themes/"+t.id+"/stats.png";
+  if(sim.classList.contains("is-full"))syncFull();
   gal.style.setProperty("--g1",t.g1);gal.style.setProperty("--g2",t.g2);gal.style.setProperty("--g-fg",t.gf);
   $("gName").textContent=t.name;
   $("gNote").innerHTML=t.href?'<a href="'+t.href+'">'+t.note+"</a>":t.note;
+  if(!galSeen)return;
   [["gHome","home"],["gStats","stats"],["gMedia","pill-media"],["gAgent","pill-agent-needs-input"]].forEach(function(p){
-   var im=$(p[0]);im.src="themes/"+t.id+"/"+p[1]+".png";
+   var im=$(p[0]);im.src="themes/"+t.id+"/"+p[1]+".webp";
    if(swap&&!reduce){im.classList.remove("swap");void im.offsetWidth;im.classList.add("swap")}
   });
  }
@@ -219,7 +232,7 @@ fetch("https://api.github.com/repos/Brick-Bread/WNotch/releases/latest").then(fu
   cap.innerHTML=s.c;
   if(s.full){
    var w=Math.min(640,880)*K,hgt=w*(s.full==="home"?728:580)/1280;
-   sim.classList.remove("is-compact");sim.classList.add("is-full");
+   sim.classList.remove("is-compact");sim.classList.add("is-full");syncFull();
    sim.style.width=w+"px";sim.style.height=hgt+"px";sim.style.borderRadius="0 0 "+(26*K)+"px "+(26*K)+"px";
    fHome.classList.toggle("on",s.full==="home");fStats.classList.toggle("on",s.full==="stats");
    sim.removeAttribute("data-glow");sim.style.removeProperty("--glow");
@@ -240,9 +253,12 @@ fetch("https://api.github.com/repos/Brick-Bread/WNotch/releases/latest").then(fu
  addEventListener("resize",function(){if(at>=0)go(at,true)});
 
  // the theme gallery turns by itself until someone picks one
- function turn(){if(!pickedByUser&&!reduce){setTheme((cur+1)%THEMES.length,true);setTimeout(turn,4200)}}
+ function turn(){if(!pickedByUser&&!reduce){var n=(cur+1)%THEMES.length;if(galSeen)preload(THEMES[(n+1)%THEMES.length]);setTheme(n,true);setTimeout(turn,4200)}}
 
+ if("IntersectionObserver"in window)new IntersectionObserver(function(e,o){if(e[0].isIntersecting){galSeen=true;o.disconnect();setTheme(cur,false)}},{rootMargin:"500px"}).observe(gal);else galSeen=true;
  setTheme(0,false);
+ // If the observer never reports (or the page is already idle), fetch the gallery anyway after load.
+ later(function(){if(!galSeen){galSeen=true;setTheme(cur,false)}});
  go(reduce?7:0);
  if(!reduce)setTimeout(turn,5200);
 })();
