@@ -1,7 +1,9 @@
 using System.IO;
 using System.Windows;
+using System.Windows.Input;
 using Notch.App.Agents;
 using Notch.Core.Agents;
+using Notch.Core.Terminal;
 
 namespace Notch.App.Shell;
 
@@ -51,12 +53,37 @@ public partial class NotchWindow
         LibraryEmpty.Visibility = items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
+    /// <summary>
+    /// Launches an agent row in its own Claude session: a new Terminal session in the folder the agent
+    /// was found under, started as that subagent (<c>--agent</c>) with permission prompts bypassed.
+    /// </summary>
+    private void OnLibraryAgentClicked(object sender, MouseButtonEventArgs e)
+    {
+        if (((FrameworkElement)sender).Tag is not LibraryRow { Name.Length: > 0 } row)
+        {
+            return;
+        }
+
+        var profile = TerminalProfile.Claude with
+        {
+            DisplayName = row.Name,
+            Arguments = ["--agent", row.Name, "--dangerously-skip-permissions"],
+        };
+
+        string folder = Directory.Exists(row.Root) ? row.Root : _terminalFolder;
+        SetTerminalFolder(folder);
+        OpenSession(profile, folder);
+    }
+
     /// <summary>One row of the skills or agents list.</summary>
     private sealed class LibraryRow(LibraryItem item)
     {
         public string Name { get; } = item.Name;
 
         public string Scope { get; } = item.Scope;
+
+        /// <summary>The folder the agent is launched in, where its <c>.claude</c> lives.</summary>
+        public string Root { get; } = item.Root;
 
         /// <summary>The description, shown on hover; null leaves the row without a tooltip.</summary>
         public string? Tip { get; } = item.Description.Length > 0 ? item.Description : null;

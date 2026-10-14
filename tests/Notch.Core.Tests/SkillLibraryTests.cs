@@ -60,6 +60,16 @@ public class SkillLibraryTests : IDisposable
     }
 
     [Fact]
+    public void Root_is_the_folder_that_holds_the_claude_directory()
+    {
+        string user = Claude("user");
+        WriteAgent(user, "reviewer.md", "---\nname: reviewer\n---");
+
+        LibraryItem agent = Assert.Single(SkillLibrary.Discover([(user, "User")]));
+        Assert.Equal(Path.Combine(_root, "user"), agent.Root);
+    }
+
+    [Fact]
     public void Falls_back_to_the_folder_or_file_name_when_front_matter_has_none()
     {
         string user = Claude("user");

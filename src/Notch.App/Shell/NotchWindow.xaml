@@ -321,10 +321,26 @@
                                         <ItemsControl x:Name="LibraryAgentList">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Border Background="Transparent" Padding="0,3" ToolTip="{Binding Tip}">
+                                                    <!-- Click starts a Claude session as this subagent, with permissions bypassed. -->
+                                                    <Border Padding="4,3" Margin="-4,0" Cursor="Hand" Tag="{Binding}"
+                                                            CornerRadius="{DynamicResource ControlRadius}"
+                                                            MouseLeftButtonDown="OnLibraryAgentClicked"
+                                                            ToolTip="{Binding Tip}">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Background" Value="Transparent" />
+                                                                <Style.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+                                                                    </Trigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
                                                         <DockPanel>
                                                             <TextBlock DockPanel.Dock="Right" Text="{Binding Scope}" FontSize="10" Opacity="0.4"
                                                                        VerticalAlignment="Center" Margin="8,0,0,0" />
+                                                            <TextBlock DockPanel.Dock="Left" Text="&#xE768;" FontFamily="{DynamicResource IconFont}"
+                                                                       FontSize="9" Opacity="0.5" VerticalAlignment="Center" Margin="0,0,6,0" />
                                                             <TextBlock Text="{Binding Name}" FontSize="12" VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis" />
                                                         </DockPanel>

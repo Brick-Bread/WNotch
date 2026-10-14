@@ -184,14 +184,16 @@ public partial class NotchWindow
         _terminal.Bridge.Focus();
     }
 
-    private async void OpenSession(TerminalProfile profile)
+    private void OpenSession(TerminalProfile profile) => OpenSession(profile, _terminalFolder);
+
+    private async void OpenSession(TerminalProfile profile, string folder)
     {
-        _settings.RememberFolder(_terminalFolder);
+        _settings.RememberFolder(folder);
         _settingsStore.Save(_settings);
 
         try
         {
-            await _terminal.OpenAsync(profile, _terminalFolder);
+            await _terminal.OpenAsync(profile, folder);
             FocusTerminal();
         }
         catch (Exception e)

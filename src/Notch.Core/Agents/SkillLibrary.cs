@@ -13,7 +13,8 @@ public enum LibraryItemKind
 /// A skill or subagent available to the coding agents, as read from a <c>.claude</c> folder.
 /// </summary>
 /// <param name="Scope">Where it was found: "User" for the home folder, else the project folder's name.</param>
-public sealed record LibraryItem(LibraryItemKind Kind, string Name, string Description, string Scope);
+/// <param name="Root">The folder that holds the <c>.claude</c> this came from: where a session for it should start.</param>
+public sealed record LibraryItem(LibraryItemKind Kind, string Name, string Description, string Scope, string Root);
 
 /// <summary>
 /// Finds the skills and subagents the coding agents (Claude Code and the like) would load, by
@@ -34,12 +35,14 @@ public static class SkillLibrary
         var byKey = new Dictionary<(LibraryItemKind, string), LibraryItem>();
         foreach ((string dir, string scope) in claudeDirs)
         {
-            foreach (LibraryItem item in ReadSkills(Path.Combine(dir, "skills"), scope))
+            // The folder that owns the .claude is where a session launched for one of its entries runs.
+            string root = Path.GetDirectoryName(dir.TrimEnd('\\', '/')) ?? dir;
+            foreach (LibraryItem item in ReadSkills(Path.Combine(dir, "skills"), scope, root))
             {
                 byKey[(item.Kind, item.Name)] = item;
             }
 
-            foreach (LibraryItem item in ReadAgents(Path.Combine(dir, "agents"), scope))
+            foreach (LibraryItem item in ReadAgents(Path.Combine(dir, "agents"), scope, root))
             {
                 byKey[(item.Kind, item.Name)] = item;
             }
@@ -51,7 +54,7 @@ public static class SkillLibrary
     }
 
     /// <summary>One skill per sub-folder, named by its <c>SKILL.md</c> or, failing that, the folder.</summary>
-    private static IEnumerable<LibraryItem> ReadSkills(string skillsDir, string scope)
+    private static IEnumerable<LibraryItem> ReadSkills(string skillsDir, string scope, string root)
     {
         foreach (string folder in SafeEntries(skillsDir, Directory.EnumerateDirectories))
         {
@@ -66,12 +69,13 @@ public static class SkillLibrary
                 LibraryItemKind.Skill,
                 string.IsNullOrWhiteSpace(name) ? Path.GetFileName(folder) : name,
                 description ?? "",
-                scope);
+                scope,
+                root);
         }
     }
 
     /// <summary>One subagent per <c>.md</c> file, named by its front matter or, failing that, the file.</summary>
-    private static IEnumerable<LibraryItem> ReadAgents(string agentsDir, string scope)
+    private static IEnumerable<LibraryItem> ReadAgents(string agentsDir, string scope, string root)
     {
         foreach (string file in SafeEntries(agentsDir, dir => Directory.EnumerateFiles(dir, "*.md")))
         {
@@ -80,7 +84,8 @@ public static class SkillLibrary
                 LibraryItemKind.Agent,
                 string.IsNullOrWhiteSpace(name) ? Path.GetFileNameWithoutExtension(file) : name,
                 description ?? "",
-                scope);
+                scope,
+                root);
         }
     }
 
