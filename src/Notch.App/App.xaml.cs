@@ -250,6 +250,15 @@ public partial class App : Application
         }
 
         window.Show();
+
+        // --dev-reload (or NOTCH_DEV_RELOAD) watches the app's own XAML and restyles the notch the moment
+        // a look file changes, so it can be edited live. Development only: it needs the source on disk, so
+        // an installed copy without --reload-from=<source folder> simply finds nothing and does nothing.
+        if (HasFlag(e, "--dev-reload") || Environment.GetEnvironmentVariable("NOTCH_DEV_RELOAD") is { Length: > 0 })
+        {
+            LiveXamlReload.Start(Option(e, "--reload-from="), _activities);
+        }
+
         if (HasFlag(e, "--pin-open"))
         {
             window.PinOpen();

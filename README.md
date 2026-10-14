@@ -102,6 +102,22 @@ Development flags for `Notch.exe`:
 | `--plugin=<folder>` | Load a plugin from its build output and run it whether or not it is enabled; can be repeated |
 | `--trace-hover` | Log pointer enter/leave, opening, closing, window resizes and the hotkey to `%LocalAppData%\Notch\hover.log`, to diagnose hover problems |
 | `--software-render` | Draw without the GPU, which makes rendering-timing problems easier to reproduce |
+| `--dev-reload` | Watch the app's own look files and restyle the running notch the moment they change; see [Editing the look live](#editing-the-look-live) |
+| `--reload-from=<folder>` | With `--dev-reload`, the source checkout (or `Notch.App`, or its `Themes` folder) to watch, for an installed copy that has no source beside it |
+
+### Editing the look live
+
+Run with `--dev-reload` and the notch watches its own `Themes/Design.xaml` (fonts, sizes, radii), `Styles.xaml` (control styles) and `Dark.xaml`/`Light.xaml` (colours). Save any of them and the notch restyles at once, without a rebuild or restart — everything in the UI reads these dictionaries through `DynamicResource`, so swapping one takes effect immediately. A file that does not parse mid-edit is reported in the pill and the working look is kept.
+
+```
+dotnet run --project src/Notch.App -- --dev-reload --pin-open
+```
+
+This covers the look. To also pick up C# and structural XAML changes, run under the SDK's hot reload, which rebuilds and re-applies method bodies and markup as you edit:
+
+```
+dotnet watch --project src/Notch.App run -- --pin-open
+```
 
 Settings live in `%AppData%\Notch\settings.json` and the shelf in `shelf.json` beside it; unexpected errors are logged to `%LocalAppData%\Notch\errors.log`, and plugin starts, stops and failures to `%LocalAppData%\Notch\plugins.log`.
 
