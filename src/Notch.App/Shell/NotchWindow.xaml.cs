@@ -115,6 +115,7 @@ public partial class NotchWindow : Window
         InitializeShelf();
         InitializeKeyboard();
         InitializeAgents();
+        RefreshLibrary();
         InitializeClipboard();
         InitializePalette();
 

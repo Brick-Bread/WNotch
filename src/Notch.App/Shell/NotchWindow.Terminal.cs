@@ -145,6 +145,7 @@ public partial class NotchWindow
 
         if (tab == NotchTab.Terminal)
         {
+            RefreshLibrary();
             FocusTerminal();
         }
 
@@ -277,6 +278,7 @@ public partial class NotchWindow
         _settings.RememberFolder(folder);
         _settingsStore.Save(_settings);
         UpdateFolderButton();
+        RefreshLibrary();
     }
 
     private void UpdateFolderButton()

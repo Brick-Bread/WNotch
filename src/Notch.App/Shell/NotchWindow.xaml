@@ -278,11 +278,65 @@
                         </ItemsControl>
                     </DockPanel>
 
-                    <!-- The WebView2 that renders the sessions is added here in code. -->
-                    <Border x:Name="TerminalHost" Grid.Row="1" Margin="0,10,0,0" Background="{DynamicResource IslandBrush}" />
-                    <TextBlock x:Name="TerminalEmpty" Grid.Row="1" Opacity="0.45"
-                               Text="Start a session with the buttons above"
-                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <Grid Grid.Row="1" Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="212" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- The WebView2 that renders the sessions is added here in code. -->
+                        <Border x:Name="TerminalHost" Background="{DynamicResource IslandBrush}" />
+                        <TextBlock x:Name="TerminalEmpty" Opacity="0.45"
+                                   Text="Start a session with the buttons above"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+                        <!-- The skills and subagents the coding agents would load, from .claude folders. -->
+                        <Border Grid.Column="2" Style="{DynamicResource Card}" Padding="12,10">
+                            <DockPanel>
+                                <TextBlock DockPanel.Dock="Top" Text="Skills &amp; agents" Style="{DynamicResource CardLabel}" />
+                                <TextBlock x:Name="LibraryEmpty" DockPanel.Dock="Top" Margin="0,10,0,0" Opacity="0.45"
+                                           FontSize="12" TextWrapping="Wrap" Visibility="Collapsed"
+                                           Text="None found in this folder or your .claude folder" />
+                                <ScrollViewer Margin="0,8,0,0" VerticalScrollBarVisibility="Hidden" Focusable="False">
+                                    <StackPanel>
+                                        <TextBlock x:Name="LibrarySkillsHeader" Text="SKILLS" FontSize="10" FontWeight="SemiBold"
+                                                   Opacity="0.4" Margin="0,0,0,4" Visibility="Collapsed" />
+                                        <ItemsControl x:Name="LibrarySkillList">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="Transparent" Padding="0,3" ToolTip="{Binding Tip}">
+                                                        <DockPanel>
+                                                            <TextBlock DockPanel.Dock="Right" Text="{Binding Scope}" FontSize="10" Opacity="0.4"
+                                                                       VerticalAlignment="Center" Margin="8,0,0,0" />
+                                                            <TextBlock Text="{Binding Name}" FontSize="12" VerticalAlignment="Center"
+                                                                       TextTrimming="CharacterEllipsis" />
+                                                        </DockPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock x:Name="LibraryAgentsHeader" Text="AGENTS" FontSize="10" FontWeight="SemiBold"
+                                                   Opacity="0.4" Margin="0,10,0,4" Visibility="Collapsed" />
+                                        <ItemsControl x:Name="LibraryAgentList">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="Transparent" Padding="0,3" ToolTip="{Binding Tip}">
+                                                        <DockPanel>
+                                                            <TextBlock DockPanel.Dock="Right" Text="{Binding Scope}" FontSize="10" Opacity="0.4"
+                                                                       VerticalAlignment="Center" Margin="8,0,0,0" />
+                                                            <TextBlock Text="{Binding Name}" FontSize="12" VerticalAlignment="Center"
+                                                                       TextTrimming="CharacterEllipsis" />
+                                                        </DockPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </DockPanel>
+                        </Border>
+                    </Grid>
                 </Grid>
 
                 <!-- Stats -->
