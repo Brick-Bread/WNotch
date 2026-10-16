@@ -444,7 +444,10 @@ The theme itself is a XAML file whose root element is a `ResourceDictionary`. Sh
 | `AccentBrush`, `AccentHoverBrush`, `AccentPressedBrush` | Brush | The selected tab, progress bars, focus rings, button hover and press. Defining `AccentBrush` makes the theme own the accent: the accent colour chosen in Settings is then not applied. |
 | `CardBrush`, `ControlBrush`, `HoverBrush`, `PressedBrush` | Brush | Panels, and the resting, hovered and pressed fills of controls. |
 | `TrackBrush` | Brush | The unfilled part of a progress bar. |
+| `CardBorderBrush` | Brush | The hairline edge of panels and text boxes. |
+| `SelectedBrush` | Brush | The raised segment that marks the selected tab in the tab strip. |
 | `UiFontFamily`, `UiFontSize` | FontFamily, double | The font and base size of all text. |
+| `DisplayFontFamily` | FontFamily | The font of the large figures: the timer, the Stats values, the song title. |
 | `CodeFontFamily` | FontFamily | The monospace font of the terminal and of plugin code blocks. |
 | `IconFont` | FontFamily | The icon font. The glyphs are Segoe Fluent Icons code points, so use a font that has them. |
 | `CardRadius`, `ControlRadius`, `SmallRadius`, `IconButtonRadius` | CornerRadius | Corners of panels, of buttons / text boxes / tabs, of small thumbnails, and of round icon buttons. |

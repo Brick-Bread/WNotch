@@ -177,16 +177,16 @@ public partial class NotchWindow : Window
     {
         NotchMode.Compact => new Shape(320, 34, 17),
         NotchMode.Peek => new Shape(360, 44, 22),
-        NotchMode.Expanded when _tab == NotchTab.Terminal => new Shape(920, 540, 30),
-        NotchMode.Expanded when _tab == NotchTab.Stats => new Shape(640, 290, 30),
-        NotchMode.Expanded when _tab == NotchTab.Shelf => new Shape(640, ShelfTabHeight, 30),
-        NotchMode.Expanded when _tab == NotchTab.Plugins => new Shape(640, PluginsTabHeight, 30),
-        NotchMode.Expanded when _tab == NotchTab.Clipboard => new Shape(640, ClipboardTabHeight, 30),
-        NotchMode.Expanded when _tab == NotchTab.Palette => new Shape(640, PaletteTabHeight, 30),
-        NotchMode.Expanded when _tab == NotchTab.Page => new Shape(920, 540, 30),
+        NotchMode.Expanded when _tab == NotchTab.Terminal => new Shape(920, 540, 36),
+        NotchMode.Expanded when _tab == NotchTab.Stats => new Shape(640, 290, 36),
+        NotchMode.Expanded when _tab == NotchTab.Shelf => new Shape(640, ShelfTabHeight, 36),
+        NotchMode.Expanded when _tab == NotchTab.Plugins => new Shape(640, PluginsTabHeight, 36),
+        NotchMode.Expanded when _tab == NotchTab.Clipboard => new Shape(640, ClipboardTabHeight, 36),
+        NotchMode.Expanded when _tab == NotchTab.Palette => new Shape(640, PaletteTabHeight, 36),
+        NotchMode.Expanded when _tab == NotchTab.Page => new Shape(920, 540, 36),
 
         // Home is taller while the media card or the agents card is showing.
-        NotchMode.Expanded => new Shape(640, (_media.Current is null ? 236 : 364) + AgentCardExtra, 30),
+        NotchMode.Expanded => new Shape(640, (_media.Current is null ? 236 : 364) + AgentCardExtra, 36),
         _ => new Shape(180, 32, 16),
     };
 

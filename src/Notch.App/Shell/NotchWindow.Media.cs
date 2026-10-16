@@ -8,8 +8,8 @@ namespace Notch.App.Shell;
 // The media card on the expanded Home tab.
 public partial class NotchWindow
 {
-    private const string PlayGlyph = "";
-    private const string PauseGlyph = "";
+    private const string PlayGlyph = "";
+    private const string PauseGlyph = "";
 
     private readonly DispatcherTimer _mediaTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
     private byte[]? _mediaArtBytes;

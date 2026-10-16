@@ -42,11 +42,11 @@
                 <Border x:Name="CompactArt" Width="22" Height="22" CornerRadius="{DynamicResource SmallRadius}"
                         VerticalAlignment="Center" Visibility="Collapsed" />
                 <TextBlock x:Name="CompactTitle" Grid.Column="1" Margin="10,0" VerticalAlignment="Center"
-                           FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                <TextBlock x:Name="CompactDetail" Grid.Column="2" VerticalAlignment="Center" Opacity="0.65"
+                           FontSize="12.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                <TextBlock x:Name="CompactDetail" Grid.Column="2" VerticalAlignment="Center" Opacity="0.55" FontSize="12.5"
                            MaxWidth="130" TextTrimming="CharacterEllipsis" />
-                <ProgressBar x:Name="CompactProgress" Grid.Column="2" Width="110" Height="4" Maximum="1"
-                             VerticalAlignment="Center" BorderThickness="0"
+                <ProgressBar x:Name="CompactProgress" Grid.Column="2" Width="110" Height="5" Maximum="1"
+                             VerticalAlignment="Center"
                              Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource TrackBrush}" />
             </Grid>
 
@@ -58,21 +58,25 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <StackPanel x:Name="TabStrip" Orientation="Horizontal">
-                    <RadioButton x:Name="TabHome" Style="{DynamicResource TabButton}" Content="Home" IsChecked="True" />
-                    <RadioButton x:Name="TabTerminal" Style="{DynamicResource TabButton}" Content="Terminal" />
-                    <RadioButton x:Name="TabStats" Style="{DynamicResource TabButton}" Content="Stats" />
-                    <RadioButton x:Name="TabShelf" Style="{DynamicResource TabButton}" Content="Shelf" />
-                    <!-- Only shown while the clipboard history is switched on in settings. -->
-                    <RadioButton x:Name="TabClipboard" Style="{DynamicResource TabButton}" Content="Clipboard"
-                                 Visibility="Collapsed" />
-                    <!-- Only shown while a plugin has a card to put on it. -->
-                    <RadioButton x:Name="TabPlugins" Style="{DynamicResource TabButton}" Content="Plugins"
-                                 Visibility="Collapsed" />
-                </StackPanel>
-                <Button x:Name="OpenSettingsButton" Style="{DynamicResource PillButton}" HorizontalAlignment="Right"
-                        VerticalAlignment="Center" Content="&#xE713;" FontFamily="{DynamicResource IconFont}"
-                        ToolTip="Settings" />
+                <!-- A segmented control: the tabs sit in one capsule track. -->
+                <Border HorizontalAlignment="Left" VerticalAlignment="Center" Padding="2"
+                        Background="{DynamicResource ControlBrush}" CornerRadius="{DynamicResource ControlRadius}">
+                    <StackPanel x:Name="TabStrip" Orientation="Horizontal">
+                        <RadioButton x:Name="TabHome" Style="{DynamicResource TabButton}" Content="Home" IsChecked="True" />
+                        <RadioButton x:Name="TabTerminal" Style="{DynamicResource TabButton}" Content="Terminal" />
+                        <RadioButton x:Name="TabStats" Style="{DynamicResource TabButton}" Content="Stats" />
+                        <RadioButton x:Name="TabShelf" Style="{DynamicResource TabButton}" Content="Shelf" />
+                        <!-- Only shown while the clipboard history is switched on in settings. -->
+                        <RadioButton x:Name="TabClipboard" Style="{DynamicResource TabButton}" Content="Clipboard"
+                                     Visibility="Collapsed" />
+                        <!-- Only shown while a plugin has a card to put on it. -->
+                        <RadioButton x:Name="TabPlugins" Style="{DynamicResource TabButton}" Content="Plugins"
+                                     Visibility="Collapsed" />
+                    </StackPanel>
+                </Border>
+                <Button x:Name="OpenSettingsButton" Style="{DynamicResource IconButton}" HorizontalAlignment="Right"
+                        VerticalAlignment="Center" Width="28" Height="28" FontSize="14" Opacity="0.75"
+                        Content="&#xE713;" ToolTip="Settings" />
 
                 <!-- Home: media, timer, calendar -->
                 <StackPanel x:Name="HomePanel" Grid.Row="1" Margin="0,16,0,0">
@@ -85,12 +89,12 @@
                         <Grid Width="112" Height="112">
                             <Border CornerRadius="{DynamicResource CardRadius}" Background="{DynamicResource ControlBrush}">
                                 <TextBlock Text="&#xE8D6;" FontFamily="{DynamicResource IconFont}" FontSize="34"
-                                           Opacity="0.5" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                           Opacity="0.35" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
                             <Border x:Name="MediaArt" CornerRadius="{DynamicResource CardRadius}" />
                         </Grid>
 
-                        <Grid Grid.Column="1" Margin="18,0,0,0">
+                        <Grid Grid.Column="1" Margin="20,2,0,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
@@ -98,33 +102,34 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <TextBlock x:Name="MediaTitle" FontSize="17" FontWeight="SemiBold"
-                                       TextTrimming="CharacterEllipsis" />
-                            <TextBlock x:Name="MediaArtist" Grid.Row="1" Margin="0,2,0,0" Opacity="0.65"
+                            <TextBlock x:Name="MediaTitle" FontFamily="{DynamicResource DisplayFontFamily}" FontSize="17"
+                                       FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                            <TextBlock x:Name="MediaArtist" Grid.Row="1" Margin="0,1,0,0" Opacity="0.55"
                                        TextTrimming="CharacterEllipsis" />
 
-                            <Grid x:Name="MediaTimeline" Grid.Row="2" VerticalAlignment="Center">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="44" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="44" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock x:Name="MediaElapsed" FontSize="11" Opacity="0.65" VerticalAlignment="Center" />
+                            <!-- The bar spans the column, with the times under its two ends. -->
+                            <Grid x:Name="MediaTimeline" Grid.Row="2" VerticalAlignment="Center" Margin="0,6,0,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
                                 <!-- Taller than the bar so it is easy to hit. -->
-                                <Border x:Name="MediaSeekArea" Grid.Column="1" Height="18" Background="Transparent">
-                                    <ProgressBar x:Name="MediaProgress" Height="4" Maximum="1" BorderThickness="0"
+                                <Border x:Name="MediaSeekArea" Height="14" Background="Transparent">
+                                    <ProgressBar x:Name="MediaProgress" Height="5" Maximum="1"
                                                  VerticalAlignment="Center" IsHitTestVisible="False"
                                                  Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource TrackBrush}" />
                                 </Border>
-                                <TextBlock x:Name="MediaRemaining" Grid.Column="2" FontSize="11" Opacity="0.65"
-                                           VerticalAlignment="Center" HorizontalAlignment="Right" />
+                                <TextBlock x:Name="MediaElapsed" Grid.Row="1" FontSize="10.5" FontWeight="Medium" Opacity="0.5"
+                                           Typography.NumeralAlignment="Tabular" />
+                                <TextBlock x:Name="MediaRemaining" Grid.Row="1" FontSize="10.5" FontWeight="Medium" Opacity="0.5"
+                                           Typography.NumeralAlignment="Tabular" HorizontalAlignment="Right" />
                             </Grid>
 
-                            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center">
-                                <Button x:Name="MediaPrevious" Style="{DynamicResource IconButton}" Content="&#xE892;" />
-                                <Button x:Name="MediaPlayPause" Style="{DynamicResource IconButton}" Content="&#xE768;"
-                                        FontSize="22" Margin="14,0" />
-                                <Button x:Name="MediaNext" Style="{DynamicResource IconButton}" Content="&#xE893;" />
+                            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,-4">
+                                <Button x:Name="MediaPrevious" Style="{DynamicResource IconButton}" Content="&#xF8AC;" FontSize="17" />
+                                <Button x:Name="MediaPlayPause" Style="{DynamicResource IconButton}" Content="&#xF5B0;"
+                                        Width="44" Height="44" FontSize="24" Margin="18,0" />
+                                <Button x:Name="MediaNext" Style="{DynamicResource IconButton}" Content="&#xF8AD;" FontSize="17" />
                             </StackPanel>
                         </Grid>
                     </Grid>
@@ -145,14 +150,18 @@
                                                     <ColumnDefinition Width="*" />
                                                     <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
-                                                <Ellipse Width="8" Height="8" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                <Ellipse Width="7" Height="7" HorizontalAlignment="Left" VerticalAlignment="Center"
                                                          Fill="{Binding Brush}" />
-                                                <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold"
                                                            VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="260" />
-                                                <TextBlock Grid.Column="2" Text="{Binding Where}" FontSize="12" Opacity="0.55"
+                                                <TextBlock Grid.Column="2" Text="{Binding Where}" FontSize="12" Opacity="0.5"
                                                            Margin="10,0,10,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                                <TextBlock Grid.Column="3" Text="{Binding StateText}" FontSize="12" Opacity="0.8"
-                                                           VerticalAlignment="Center" />
+                                                <!-- A badge tinted with the state's own colour. -->
+                                                <Grid Grid.Column="3" VerticalAlignment="Center">
+                                                    <Border Background="{Binding Brush}" Opacity="0.16" CornerRadius="9" />
+                                                    <TextBlock Text="{Binding StateText}" Foreground="{Binding Brush}" FontSize="11"
+                                                               FontWeight="SemiBold" Margin="8,2" />
+                                                </Grid>
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
@@ -173,7 +182,7 @@
                                 <DockPanel DockPanel.Dock="Top">
                                     <!-- Negative margins keep the label row as low as it is without the button. -->
                                     <Button x:Name="TimerCustom" DockPanel.Dock="Right" Style="{DynamicResource PillButton}"
-                                            Content="+ Custom" FontSize="11" Padding="8,2" Margin="0,-4,-4,-4"
+                                            Content="+ Custom" FontSize="11" Padding="9,2" Margin="0,-3,-6,-3"
                                             ToolTip="Set a timer of any length" />
                                     <TextBlock x:Name="TimerLabel" Text="Timer" Style="{DynamicResource CardLabel}" />
                                 </DockPanel>
@@ -200,7 +209,8 @@
                                 </StackPanel>
                                 <!-- Shrinks the digits when two rows of presets leave them less room. -->
                                 <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                    <TextBlock x:Name="TimerText" Text="0:00" FontSize="34" FontWeight="SemiBold" />
+                                    <TextBlock x:Name="TimerText" Text="0:00" FontFamily="{DynamicResource DisplayFontFamily}"
+                                               FontSize="40" FontWeight="Light" Typography.NumeralAlignment="Tabular" />
                                 </Viewbox>
                             </DockPanel>
                         </Border>
@@ -208,7 +218,7 @@
                         <Border Grid.Column="2" Style="{DynamicResource Card}">
                             <DockPanel>
                                 <TextBlock x:Name="CalendarDate" DockPanel.Dock="Top" Style="{DynamicResource CardLabel}" />
-                                <TextBlock x:Name="CalendarEmpty" Opacity="0.45" TextWrapping="Wrap"
+                                <TextBlock x:Name="CalendarEmpty" Opacity="0.45" TextWrapping="Wrap" FontSize="12.5"
                                            VerticalAlignment="Center" />
                                 <ItemsControl x:Name="CalendarList" Margin="0,8,0,0">
                                     <ItemsControl.ItemTemplate>
@@ -270,7 +280,7 @@
                                     </Border>
                                     <DataTemplate.Triggers>
                                         <DataTrigger Binding="{Binding IsActive}" Value="True">
-                                            <Setter TargetName="Tab" Property="Background" Value="{DynamicResource HoverBrush}" />
+                                            <Setter TargetName="Tab" Property="Background" Value="{DynamicResource ControlBrush}" />
                                         </DataTrigger>
                                     </DataTemplate.Triggers>
                                 </DataTemplate>
@@ -361,14 +371,14 @@
                     <Border Style="{DynamicResource Card}" Margin="6">
                         <DockPanel>
                             <TextBlock DockPanel.Dock="Top" Text="CPU" Style="{DynamicResource CardLabel}" />
-                            <TextBlock x:Name="StatsCpu" DockPanel.Dock="Top" Text="â€“" Style="{DynamicResource CardValue}" />
+                            <TextBlock x:Name="StatsCpu" DockPanel.Dock="Top" Text="&#x2013;" Style="{DynamicResource CardValue}" />
                             <shell:Sparkline x:Name="StatsCpuChart" Margin="0,6,0,0" />
                         </DockPanel>
                     </Border>
                     <Border Style="{DynamicResource Card}" Margin="6">
                         <DockPanel>
                             <TextBlock DockPanel.Dock="Top" Text="Memory" Style="{DynamicResource CardLabel}" />
-                            <TextBlock x:Name="StatsMemory" DockPanel.Dock="Top" Text="â€“" Style="{DynamicResource CardValue}" />
+                            <TextBlock x:Name="StatsMemory" DockPanel.Dock="Top" Text="&#x2013;" Style="{DynamicResource CardValue}" />
                             <TextBlock x:Name="StatsMemoryDetail" DockPanel.Dock="Top" FontSize="11" Opacity="0.55" />
                             <shell:Sparkline x:Name="StatsMemoryChart" Margin="0,6,0,0" />
                         </DockPanel>
@@ -376,26 +386,26 @@
                     <Border Style="{DynamicResource Card}" Margin="6">
                         <DockPanel>
                             <TextBlock DockPanel.Dock="Top" Text="GPU" Style="{DynamicResource CardLabel}" />
-                            <TextBlock x:Name="StatsGpu" DockPanel.Dock="Top" Text="â€“" Style="{DynamicResource CardValue}" />
+                            <TextBlock x:Name="StatsGpu" DockPanel.Dock="Top" Text="&#x2013;" Style="{DynamicResource CardValue}" />
                             <shell:Sparkline x:Name="StatsGpuChart" Margin="0,6,0,0" />
                         </DockPanel>
                     </Border>
                     <Border Style="{DynamicResource Card}" Margin="6">
                         <StackPanel>
                             <TextBlock Text="Download" Style="{DynamicResource CardLabel}" />
-                            <TextBlock x:Name="StatsDownload" Text="â€“" Style="{DynamicResource CardValue}" />
+                            <TextBlock x:Name="StatsDownload" Text="&#x2013;" Style="{DynamicResource CardValue}" />
                         </StackPanel>
                     </Border>
                     <Border Style="{DynamicResource Card}" Margin="6">
                         <StackPanel>
                             <TextBlock Text="Upload" Style="{DynamicResource CardLabel}" />
-                            <TextBlock x:Name="StatsUpload" Text="â€“" Style="{DynamicResource CardValue}" />
+                            <TextBlock x:Name="StatsUpload" Text="&#x2013;" Style="{DynamicResource CardValue}" />
                         </StackPanel>
                     </Border>
                     <Border Style="{DynamicResource Card}" Margin="6">
                         <StackPanel>
                             <TextBlock Text="Battery" Style="{DynamicResource CardLabel}" />
-                            <TextBlock x:Name="StatsBattery" Text="â€“" Style="{DynamicResource CardValue}" />
+                            <TextBlock x:Name="StatsBattery" Text="&#x2013;" Style="{DynamicResource CardValue}" />
                         </StackPanel>
                     </Border>
                 </UniformGrid>
@@ -428,12 +438,12 @@
                                             MouseRightButtonUp="OnShelfTileMenu">
                                         <Grid>
                                             <DockPanel>
-                                                <TextBlock DockPanel.Dock="Bottom" Text="{Binding Name}" FontSize="11"
+                                                <TextBlock DockPanel.Dock="Bottom" Text="{Binding Name}" FontSize="11" FontWeight="Medium"
                                                            TextAlignment="Center" TextTrimming="CharacterEllipsis" />
                                                 <Grid Margin="0,0,0,4">
                                                     <!-- Shows until the file's own picture has been fetched, and stays for a file that has none. -->
-                                                    <TextBlock Text="{Binding Glyph}" FontFamily="{DynamicResource IconFont}" FontSize="30"
-                                                               Opacity="0.55" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                    <TextBlock Text="{Binding Glyph}" FontFamily="{DynamicResource IconFont}" FontSize="32"
+                                                               Opacity="0.5" HorizontalAlignment="Center" VerticalAlignment="Center"
                                                                Visibility="{Binding GlyphVisibility}" />
                                                     <Image Source="{Binding Picture}" Width="44" Height="44" Stretch="Uniform" />
                                                 </Grid>
@@ -467,8 +477,10 @@
                     </Grid.RowDefinitions>
 
                     <Grid>
-                        <TextBox x:Name="PaletteInput" Style="{StaticResource PillTextBox}" Padding="12,8" FontSize="15" />
-                        <TextBlock x:Name="PaletteHint" IsHitTestVisible="False" Opacity="0.4" Margin="14,0,0,0"
+                        <TextBox x:Name="PaletteInput" Style="{StaticResource PillTextBox}" Padding="18,8,6,8" FontSize="15" />
+                        <TextBlock Text="&#xE721;" FontFamily="{DynamicResource IconFont}" FontSize="15" Opacity="0.45"
+                                   IsHitTestVisible="False" Margin="14,0,0,0" VerticalAlignment="Center" />
+                        <TextBlock x:Name="PaletteHint" IsHitTestVisible="False" Opacity="0.4" Margin="40,0,0,0"
                                    VerticalAlignment="Center" FontSize="15" Text="Type a command: timer, open stats, new Claude session…" />
                     </Grid>
 
@@ -481,7 +493,7 @@
                                     <DockPanel Margin="12,0">
                                         <TextBlock DockPanel.Dock="Right" Text="{Binding Subtitle}" FontSize="11" Opacity="0.5"
                                                    VerticalAlignment="Center" Margin="10,0,0,0" TextTrimming="CharacterEllipsis" MaxWidth="220" />
-                                        <TextBlock Text="{Binding Title}" FontSize="13" VerticalAlignment="Center"
+                                        <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="Medium" VerticalAlignment="Center"
                                                    TextTrimming="CharacterEllipsis" />
                                     </DockPanel>
                                 </Border>
@@ -501,8 +513,10 @@
                         <Button x:Name="ClipboardClear" DockPanel.Dock="Right" Style="{DynamicResource PillButton}"
                                 Content="Clear" ToolTip="Forget everything except what is pinned" />
                         <Grid>
-                            <TextBox x:Name="ClipboardSearch" Style="{StaticResource PillTextBox}" Padding="10,5" FontSize="13" />
-                            <TextBlock x:Name="ClipboardSearchHint" IsHitTestVisible="False" Opacity="0.4" Margin="12,0,0,0"
+                            <TextBox x:Name="ClipboardSearch" Style="{StaticResource PillTextBox}" Padding="16,5,5,5" FontSize="13" />
+                            <TextBlock Text="&#xE721;" FontFamily="{DynamicResource IconFont}" FontSize="13" Opacity="0.45"
+                                       IsHitTestVisible="False" Margin="12,0,0,0" VerticalAlignment="Center" />
+                            <TextBlock x:Name="ClipboardSearchHint" IsHitTestVisible="False" Opacity="0.4" Margin="34,0,0,0"
                                        VerticalAlignment="Center" FontSize="13" Text="Search what you copied" />
                         </Grid>
                     </DockPanel>
@@ -511,9 +525,19 @@
                         <ItemsControl x:Name="ClipboardList">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="Transparent" Cursor="Hand" Height="38" Margin="0,0,0,2"
+                                    <Border Cursor="Hand" Height="38" Margin="0,0,0,2"
                                             CornerRadius="{DynamicResource ControlRadius}" Tag="{Binding}"
                                             MouseLeftButtonDown="OnClipboardRowClicked" ToolTip="Click to copy it again">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="Transparent" />
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="{DynamicResource CardBrush}" />
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
                                         <Grid Margin="6,0,2,0">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="34" />
@@ -521,13 +545,14 @@
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
                                             <Grid Width="28" Height="28" HorizontalAlignment="Left">
-                                                <TextBlock Text="{Binding Glyph}" FontFamily="{DynamicResource IconFont}" FontSize="16"
-                                                           Opacity="0.6" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                <Border Background="{DynamicResource ControlBrush}" CornerRadius="{DynamicResource SmallRadius}" />
+                                                <TextBlock Text="{Binding Glyph}" FontFamily="{DynamicResource IconFont}" FontSize="14"
+                                                           Opacity="0.7" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                 <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" />
                                             </Grid>
                                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Preview}" FontSize="12" TextTrimming="CharacterEllipsis" />
-                                                <TextBlock Text="{Binding Subtitle}" FontSize="10" Opacity="0.5" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding Preview}" FontSize="12.5" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding Subtitle}" FontSize="10.5" Opacity="0.45" TextTrimming="CharacterEllipsis" />
                                             </StackPanel>
                                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                                                 <Button Style="{DynamicResource IconButton}" Content="&#xE8D5;" FontSize="12" Width="26" Height="26"
