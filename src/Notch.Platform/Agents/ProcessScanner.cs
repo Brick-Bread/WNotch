@@ -6,7 +6,7 @@ namespace Notch.Platform.Agents;
 /// <summary>
 /// Lists the running programs. Names and parents come from a cheap snapshot of the whole process
 /// table; the command line, path and start time are asked of Windows only for programs that could
-/// be an agent, and remembered, so a scan every few seconds costs next to nothing.
+/// be an agent (or one of the desktop apps whose sessions are read), and remembered, so a scan every few seconds costs next to nothing.
 /// </summary>
 public sealed class ProcessScanner
 {
@@ -32,7 +32,7 @@ public sealed class ProcessScanner
         }
 
         int[] needed = [.. table
-            .Where(p => !_details.ContainsKey(p.Pid) && (AgentCatalog.IsAgentProgram(p.Name) || AgentCatalog.IsRuntime(p.Name)))
+            .Where(p => !_details.ContainsKey(p.Pid) && (AgentCatalog.IsAgentProgram(p.Name) || AgentCatalog.IsRuntime(p.Name) || AppSessions.IsAppProgram(p.Name)))
             .Select(p => p.Pid)];
         if (needed.Length > 0)
         {

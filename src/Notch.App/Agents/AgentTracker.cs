@@ -10,10 +10,15 @@ namespace Notch.App.Agents;
 /// Finds coding agents that were not started from Notch's terminal and keeps them on the
 /// <see cref="AgentBoard"/>. Presence comes from looking at the running programs every few
 /// seconds; what an agent is doing comes from its hooks, when the user has them set up.
+/// Sessions inside the Claude and ChatGPT desktop apps are read from the files those apps keep,
+/// which say what each session is doing without any hooks.
 /// </summary>
 internal sealed class AgentTracker : IDisposable
 {
     private static readonly TimeSpan ScanInterval = TimeSpan.FromSeconds(3);
+
+    /// <summary>How long a desktop app session said to be working may stay quiet before it is taken to have stopped.</summary>
+    private static readonly TimeSpan AppSessionStale = TimeSpan.FromMinutes(10);
 
     private readonly Dispatcher _ui;
     private readonly AgentBoard _board;
@@ -24,6 +29,13 @@ internal sealed class AgentTracker : IDisposable
     private readonly CancellationTokenSource _stop = new();
     private readonly Dictionary<string, Tracked> _tracked = [];
     private readonly SemaphoreSlim _scanGate = new(1, 1);
+    private readonly AppSessionReader _appReader = new();
+
+    /// <summary>When the user last looked at each desktop app session through Notch or the app's window.</summary>
+    private readonly Dictionary<string, DateTime> _appViewed = [];
+
+    /// <summary>A ChatGPT turn that ended before Notch started has been seen, as far as Notch can tell.</summary>
+    private readonly DateTime _startedAt = DateTime.UtcNow;
 
     private volatile IReadOnlyList<ProcessSnapshot> _processes = [];
     private volatile IReadOnlyList<DetectedAgent> _detected = [];
@@ -63,7 +75,7 @@ internal sealed class AgentTracker : IDisposable
         if (focused)
         {
             // Looking at it is what clears a "Done".
-            _ui.BeginInvoke(() => MarkViewed(entry.Key));
+            _ui.BeginInvoke(() => MarkViewed(entry));
         }
 
         return focused;
@@ -94,21 +106,26 @@ internal sealed class AgentTracker : IDisposable
 
         try
         {
-            if (!_settings.DetectAgents)
+            if (!_settings.DetectAgents && !_settings.WatchAppSessions)
             {
                 _processes = [];
                 _detected = [];
-                _ = _ui.BeginInvoke(() => Apply([]));
+                _ = _ui.BeginInvoke(() => Apply([], [], []));
                 return;
             }
 
             IReadOnlyList<ProcessSnapshot> processes = _scanner.Scan();
-            IReadOnlyList<DetectedAgent> detected = AgentDetector.Detect(processes, Environment.ProcessId, [.. _settings.HiddenAgents]);
+            IReadOnlyList<DetectedAgent> detected = _settings.DetectAgents
+                ? AgentDetector.Detect(processes, Environment.ProcessId, [.. _settings.HiddenAgents])
+                : [];
             _processes = processes;
             _detected = detected;
 
+            IReadOnlyList<RunningApp> apps = _settings.WatchAppSessions ? AppSessions.Running(processes) : [];
+            IReadOnlyList<AppSession> appSessions = _appReader.Read(apps, DateTime.UtcNow);
+
             int foreground = WindowFocus.ForegroundProcessId();
-            _ = _ui.BeginInvoke(() => Apply(detected, foreground));
+            _ = _ui.BeginInvoke(() => Apply(detected, apps, appSessions, foreground));
         }
         catch (Exception e) when (e is InvalidOperationException or System.ComponentModel.Win32Exception or UnauthorizedAccessException)
         {
@@ -121,8 +138,10 @@ internal sealed class AgentTracker : IDisposable
     }
 
     /// <summary>On the UI thread: makes the board match what the scan found.</summary>
-    private void Apply(IReadOnlyList<DetectedAgent> detected, int foregroundPid = 0)
+    private void Apply(IReadOnlyList<DetectedAgent> detected, IReadOnlyList<RunningApp> apps, IReadOnlyList<AppSession> appSessions, int foregroundPid = 0)
     {
+        ApplyApps(apps, appSessions, foregroundPid);
+
         var keep = new HashSet<string>();
         foreach (DetectedAgent agent in detected)
         {
@@ -151,6 +170,63 @@ internal sealed class AgentTracker : IDisposable
 
         _board.KeepOnly(AgentSource.Detected, keep);
     }
+
+    /// <summary>On the UI thread: puts the desktop apps' sessions on the board.</summary>
+    private void ApplyApps(IReadOnlyList<RunningApp> apps, IReadOnlyList<AppSession> sessions, int foregroundPid)
+    {
+        DateTime now = DateTime.UtcNow;
+        var keep = new HashSet<string>();
+        foreach (RunningApp app in apps)
+        {
+            AppSession[] mine = [.. sessions.Where(s => s.App == app.App)];
+
+            // The app's window is in front: the session it shows has been seen. The Claude app says
+            // which one that is; the ChatGPT app does not, so all of its sessions count as seen.
+            if (IsInFront(app, foregroundPid))
+            {
+                AppSession? shown = app.App == DesktopApp.Claude ? mine.MaxBy(s => s.Viewed ?? DateTime.MinValue) : null;
+                foreach (AppSession session in app.App == DesktopApp.Claude ? (shown is null ? [] : [shown]) : mine)
+                {
+                    _appViewed[session.Key] = now;
+                }
+            }
+
+            AgentDefinition agent = AppSessions.Agent(app.App);
+            foreach (AppSession session in mine)
+            {
+                keep.Add(session.Key);
+                DateTime? viewed = Latest(session.Viewed, _appViewed.TryGetValue(session.Key, out DateTime seen) ? seen : null);
+                if (app.App == DesktopApp.ChatGpt)
+                {
+                    viewed = Latest(viewed, _startedAt);
+                }
+
+                _board.Set(new AgentEntry(
+                    session.Key,
+                    agent.Id,
+                    AppSessions.DisplayName(app.App),
+                    agent.Glyph,
+                    AppSessions.StateFor(session.Turn, viewed, now, AppSessionStale, session.AwaitingPerson),
+                    session.Title ?? AppSessions.FolderName(session.Folder),
+                    AgentSource.App,
+                    app.Pid,
+                    AppSessions.DisplayName(app.App) + " app"));
+            }
+        }
+
+        foreach (string gone in _appViewed.Keys.Where(k => !keep.Contains(k)).ToArray())
+        {
+            _appViewed.Remove(gone);
+        }
+
+        _board.KeepOnly(AgentSource.App, keep);
+    }
+
+    /// <summary>Whether the window in front belongs to the app: its main process, or one the main process started.</summary>
+    private bool IsInFront(RunningApp app, int foregroundPid) =>
+        foregroundPid != 0 && (foregroundPid == app.Pid || _processes.Any(p => p.Pid == foregroundPid && p.ParentPid == app.Pid));
+
+    private static DateTime? Latest(DateTime? a, DateTime? b) => a is null ? b : b is null ? a : a > b ? a : b;
 
     private void OnHook(AgentHooks.HookMessage message)
     {
@@ -228,9 +304,21 @@ internal sealed class AgentTracker : IDisposable
         Publish(tracked);
     }
 
-    private void MarkViewed(string key)
+    private void MarkViewed(AgentEntry entry)
     {
-        if (_tracked.TryGetValue(key, out Tracked? tracked))
+        if (entry.Source == AgentSource.App)
+        {
+            // Shown again at the next scan, without its "Done".
+            _appViewed[entry.Key] = DateTime.UtcNow;
+            if (entry.State == AgentState.Done)
+            {
+                _board.Set(entry with { State = AgentState.Idle });
+            }
+
+            return;
+        }
+
+        if (_tracked.TryGetValue(entry.Key, out Tracked? tracked))
         {
             tracked.Status.OnViewed();
             Publish(tracked);

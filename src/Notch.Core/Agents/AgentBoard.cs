@@ -9,6 +9,9 @@ public enum AgentSource
 
     /// <summary>Found running somewhere else on the computer.</summary>
     Detected,
+
+    /// <summary>A session inside the Claude or ChatGPT desktop app, read from the files the app keeps.</summary>
+    App,
 }
 
 /// <summary>One agent session as the Home tab and the pill show it.</summary>
@@ -32,7 +35,7 @@ public sealed record AgentEntry(
         AgentState.Working => "Working",
         AgentState.NeedsInput => "Needs input",
         AgentState.Done => "Done",
-        _ => Source == AgentSource.Detected ? "Open" : "Idle",
+        _ => Source == AgentSource.Notch ? "Idle" : "Open",
     };
 }
 

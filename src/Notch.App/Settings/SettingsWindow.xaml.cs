@@ -149,6 +149,7 @@ public partial class SettingsWindow : Window
         };
 
         DetectAgents.IsChecked = settings.DetectAgents;
+        WatchAppSessions.IsChecked = settings.WatchAppSessions;
         foreach (AgentDefinition agent in AgentCatalog.All)
         {
             AgentToggles.Children.Add(new CheckBox
@@ -373,6 +374,7 @@ public partial class SettingsWindow : Window
         }
 
         _settings.DetectAgents = DetectAgents.IsChecked == true;
+        _settings.WatchAppSessions = WatchAppSessions.IsChecked == true;
         _settings.ClipboardHistory = ClipboardHistory.IsChecked == true;
         _settings.MirrorNotifications = MirrorNotifications.IsChecked == true;
         _settings.MirroredApps = [.. MirroredApps.Text

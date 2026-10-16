@@ -153,6 +153,9 @@ public sealed class AppSettings
     /// <summary>Ids of agents (see <see cref="Agents.AgentCatalog"/>) the user does not want shown.</summary>
     public List<string> HiddenAgents { get; set; } = [];
 
+    /// <summary>Show the sessions open in the Claude and ChatGPT desktop apps too (read from the files those apps keep).</summary>
+    public bool WatchAppSessions { get; set; } = true;
+
     /// <summary>
     /// Whether Notch has put its hooks into the agents' own settings files so that agents started
     /// anywhere report what they are doing. Switched on and off from the settings window, which
