@@ -58,6 +58,17 @@
       "verified": true
     },
     {
+      "id": "brick-bread.paynow",
+      "name": "PayNow sales",
+      "repository": "Brick-Bread/wnotch-paynow",
+      "author": "Brick_Bread",
+      "description": "Celebrates every sale on your PayNow store: an alert in the pill with who bought what, a glow animation (confetti, gold, rainbow, fireworks or cash), a reminder until you look, and a tab with today's takings and the latest sales.",
+      "tags": ["store", "glow"],
+      "permissions": ["network"],
+      "apiVersion": 7,
+      "verified": true
+    },
+    {
       "id": "agentstats.agent-usage",
       "name": "WNotch-AgentStats",
       "repository": "tinywifi/WNotch-AgentStats",
