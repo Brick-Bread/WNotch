@@ -72,6 +72,10 @@ public partial class NotchWindow
     private double HomeHeight()
     {
         const double width = 640 - 36;
+
+        // A widget that changed (a row added, an item ticked) has only marked itself for measuring; its parents
+        // learn of it in the next layout pass. Run that first, or the measure below would give the old height.
+        UpdateLayout();
         HomePanel.Measure(new Size(width, double.PositiveInfinity));
         double tabs = Math.Max(24, TabStrip.DesiredSize.Height);
         double height = Math.Ceiling(14 + tabs + HomePanel.DesiredSize.Height + 18);
@@ -856,6 +860,18 @@ public partial class NotchWindow
             var block = new TextBlock { Text = text, FontSize = size, TextTrimming = TextTrimming.CharacterEllipsis };
             block.SetResourceReference(TextBlock.ForegroundProperty, "SecondaryTextBrush");
             return block;
+        }
+
+        /// <summary>
+        /// Focus left one of this widget's text boxes. The notch gives the keyboard back unless it went to
+        /// something else in the notch, such as another box, or a form is open.
+        /// </summary>
+        protected void ReleaseKeyboard(KeyboardFocusChangedEventArgs e)
+        {
+            if (!Owner.HomeSheetOpen && !(e.NewFocus is DependencyObject next && Owner.IsAncestorOf(next)))
+            {
+                Owner.SetHomeKeyboard(false);
+            }
         }
 
         protected static Button Pill(string text)

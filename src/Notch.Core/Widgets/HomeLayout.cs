@@ -59,6 +59,7 @@ public static class WidgetKinds
     public const string Clipboard = "clipboard";
     public const string Weather = "weather";
     public const string Note = "note";
+    public const string Todo = "todo";
     public const string Launcher = "launcher";
     public const string Command = "command";
     public const string Feed = "feed";
@@ -151,6 +152,10 @@ public static class WidgetCatalog
         new(WidgetKinds.Note, "Note", "\uE70B", "Text you type, kept for you", WidgetWidth.Half, Single: false, CanBeEmpty: false,
         [
             new(TitleKey, "Title", WidgetOptionType.Text, "Note"),
+        ]),
+        new(WidgetKinds.Todo, "To-do list", "", "Tasks to tick off, in the order you choose", WidgetWidth.Half, Single: false, CanBeEmpty: false,
+        [
+            new(TitleKey, "Title", WidgetOptionType.Text, "To do"),
         ]),
         new(WidgetKinds.Launcher, "Launcher", "\uE8A7", "Buttons that open apps, files, folders or links", WidgetWidth.Half, Single: false, CanBeEmpty: false,
         [

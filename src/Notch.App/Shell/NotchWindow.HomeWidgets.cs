@@ -38,6 +38,7 @@ public partial class NotchWindow
         WidgetKinds.Clipboard => new ClipboardView(this, widget),
         WidgetKinds.Weather => new WeatherView(this, widget),
         WidgetKinds.Note => new NoteView(this, widget),
+        WidgetKinds.Todo => new TodoView(this, widget),
         WidgetKinds.Launcher => new ButtonsView(this, widget, runs: false),
         WidgetKinds.Command => new ButtonsView(this, widget, runs: true),
         WidgetKinds.Feed => new FeedView(this, widget),
@@ -447,13 +448,10 @@ public partial class NotchWindow
                 _save.Stop();
                 _save.Start();
             };
-            _text.LostKeyboardFocus += (_, _) =>
+            _text.LostKeyboardFocus += (_, e) =>
             {
                 Save();
-                if (!Owner.HomeSheetOpen)
-                {
-                    Owner.SetHomeKeyboard(false);
-                }
+                ReleaseKeyboard(e);
             };
             _text.KeyDown += (_, e) =>
             {
@@ -491,6 +489,299 @@ public partial class NotchWindow
                 Widget.Options[WidgetCatalog.NoteTextKey] = _text.Text;
                 Owner.SaveHome();
             }
+        }
+    }
+
+    private sealed class TodoView(NotchWindow owner, HomeWidget widget) : HomeView(owner, widget)
+    {
+        private const double RowHeight = 26;
+        private const int MaxVisibleRows = 7;
+        private const string OpenGlyph = "";
+        private const string DoneGlyph = "";
+
+        private readonly TextBlock _label = Label("");
+        private readonly Button _clear = Pill("Clear done");
+        private readonly StackPanel _rows = new() { Background = Brushes.Transparent };
+        private readonly TextBox _input = new() { MaxLength = TodoList.MaxLength };
+        private readonly TextBlock _hint = Secondary("Add a task, then Enter", 12);
+        private TodoList _list = TodoList.FromJson(null);
+
+        /// <summary>The item being dragged to a new place, and where the press was.</summary>
+        private (TodoItem Item, Point Start, bool Moving)? _drag;
+
+        protected override FrameworkElement CreateContent()
+        {
+            _clear.FontSize = 11;
+            _clear.Padding = new Thickness(9, 2, 9, 2);
+            _clear.Margin = new Thickness(0, -3, -6, -3);
+            _clear.Click += (_, _) => Change(list => list.ClearDone());
+            var header = new DockPanel();
+            DockPanel.SetDock(_clear, Dock.Right);
+            header.Children.Add(_clear);
+            header.Children.Add(_label);
+
+            _input.SetResourceReference(StyleProperty, "PillTextBox");
+            _input.Padding = new Thickness(10, 4, 10, 4);
+            TakesTyping(_input);
+            _input.TextChanged += (_, _) => _hint.Visibility = _input.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+            _input.KeyDown += (_, e) =>
+            {
+                if (e.Key == Key.Enter)
+                {
+                    e.Handled = true;
+                    if (_list.Add(_input.Text))
+                    {
+                        _input.Clear();
+                        Save();
+                    }
+                }
+                else if (e.Key == Key.Escape)
+                {
+                    e.Handled = true;
+                    Keyboard.ClearFocus();
+                    Owner.SetHomeKeyboard(false);
+                }
+            };
+            _hint.IsHitTestVisible = false;
+            _hint.Margin = new Thickness(12, 0, 0, 0);
+            _hint.VerticalAlignment = VerticalAlignment.Center;
+            var entry = new Grid { Margin = new Thickness(0, 8, 0, 0), Children = { _input, _hint } };
+
+            _rows.MouseMove += OnDragMoved;
+            _rows.MouseLeftButtonUp += (_, _) => EndDrag();
+            _rows.LostMouseCapture += (_, _) => EndDrag();
+            var scroll = new ScrollViewer
+            {
+                Content = _rows,
+                MaxHeight = RowHeight * MaxVisibleRows,
+                Margin = new Thickness(0, 6, 0, 0),
+                VerticalScrollBarVisibility = ScrollBarVisibility.Hidden,
+                Focusable = false,
+            };
+
+            var dock = new DockPanel();
+            DockPanel.SetDock(header, Dock.Top);
+            DockPanel.SetDock(entry, Dock.Bottom);
+            dock.Children.Add(header);
+            dock.Children.Add(entry);
+            dock.Children.Add(scroll);
+            Border card = Card();
+            card.Child = dock;
+            return card;
+        }
+
+        public override void Refresh()
+        {
+            _label.Text = Widget.Option(WidgetCatalog.TitleKey) is { Length: > 0 } title ? title : "To do";
+            _list = TodoList.FromJson(Widget.Option(TodoList.ItemsKey));
+            Render();
+        }
+
+        public override void Release()
+        {
+            EndDrag();
+            base.Release();
+        }
+
+        private void Change(Action<TodoList> change)
+        {
+            change(_list);
+            Save();
+        }
+
+        private void Save()
+        {
+            Widget.Options[TodoList.ItemsKey] = _list.ToJson();
+            Owner.SaveHome();
+            Render();
+
+            // The card is taller or shorter with more or fewer items.
+            Owner.HomeContentChanged();
+        }
+
+        private void Render()
+        {
+            _rows.Children.Clear();
+            for (int index = 0; index < _list.Items.Count; index++)
+            {
+                _rows.Children.Add(Row(index, _list.Items[index]));
+            }
+
+            _clear.Visibility = _list.AnyDone ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private FrameworkElement Row(int index, TodoItem item)
+        {
+            var row = new Border { Height = RowHeight, Margin = new Thickness(-6, 0, -6, 0), Padding = new Thickness(2, 0, 2, 0), Background = Brushes.Transparent, Cursor = Cursors.Hand };
+            row.SetResourceReference(Border.CornerRadiusProperty, "SmallRadius");
+            if (_drag is { Moving: true } drag && ReferenceEquals(drag.Item, item))
+            {
+                row.Opacity = 0.5;
+            }
+
+            var tick = new Button { Content = item.Done ? DoneGlyph : OpenGlyph, Width = 22, Height = 22, FontSize = 13, ToolTip = item.Done ? "Mark as not done" : "Mark as done" };
+            tick.SetResourceReference(StyleProperty, "IconButton");
+            tick.Click += (_, _) => Change(list => list.Toggle(index));
+
+            var remove = new Button { Content = "", Width = 20, Height = 20, FontSize = 9, ToolTip = "Delete", Visibility = Visibility.Hidden };
+            remove.SetResourceReference(StyleProperty, "IconButton");
+            remove.Click += (_, _) => Change(list => list.Remove(index));
+
+            var text = new TextBlock { Text = item.Text, FontSize = 12.5, Margin = new Thickness(6, 0, 4, 0), VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, ToolTip = item.Text };
+            if (item.Done)
+            {
+                text.TextDecorations = TextDecorations.Strikethrough;
+                text.Opacity = 0.45;
+            }
+
+            var dock = new DockPanel();
+            DockPanel.SetDock(tick, Dock.Left);
+            DockPanel.SetDock(remove, Dock.Right);
+            dock.Children.Add(tick);
+            dock.Children.Add(remove);
+            dock.Children.Add(text);
+            row.Child = dock;
+
+            row.MouseEnter += (_, _) =>
+            {
+                row.SetResourceReference(Border.BackgroundProperty, "HoverBrush");
+                remove.Visibility = Visibility.Visible;
+            };
+            row.MouseLeave += (_, _) =>
+            {
+                row.Background = Brushes.Transparent;
+                remove.Visibility = Visibility.Hidden;
+            };
+
+            // A double-click edits the text; a press and drag moves the item.
+            row.MouseLeftButtonDown += (_, e) =>
+            {
+                e.Handled = true;
+                if (e.ClickCount == 2)
+                {
+                    _drag = null;
+                    BeginEdit(index, dock, text);
+                    return;
+                }
+
+                _drag = (item, e.GetPosition(_rows), false);
+                _rows.CaptureMouse();
+            };
+            return row;
+        }
+
+        private void BeginEdit(int index, DockPanel dock, TextBlock text)
+        {
+            var box = new TextBox { Text = text.Text, MaxLength = TodoList.MaxLength, Padding = new Thickness(6, 1, 6, 1), Margin = new Thickness(2, 0, 2, 0), VerticalAlignment = VerticalAlignment.Center };
+            box.SetResourceReference(StyleProperty, "PillTextBox");
+            TakesTyping(box);
+            dock.Children.Remove(text);
+            dock.Children.Add(box);
+
+            bool finished = false;
+            void Finish(bool keep)
+            {
+                if (finished)
+                {
+                    return;
+                }
+
+                finished = true;
+                if (keep && box.Text != text.Text)
+                {
+                    Change(list => list.Edit(index, box.Text));
+                }
+                else
+                {
+                    Render();
+                }
+            }
+
+            box.KeyDown += (_, e) =>
+            {
+                if (e.Key is Key.Enter or Key.Escape)
+                {
+                    e.Handled = true;
+                    Finish(e.Key == Key.Enter);
+                    _input.Focus();
+                }
+            };
+            box.LostKeyboardFocus += (_, _) => Finish(keep: true);
+
+            Owner.SetHomeKeyboard(true);
+            box.Focus();
+            box.SelectAll();
+        }
+
+        private void OnDragMoved(object sender, MouseEventArgs e)
+        {
+            if (_drag is not { } drag)
+            {
+                return;
+            }
+
+            Point point = e.GetPosition(_rows);
+            if (!drag.Moving)
+            {
+                if (Math.Abs(point.Y - drag.Start.Y) < SystemParameters.MinimumVerticalDragDistance)
+                {
+                    return;
+                }
+
+                _drag = drag with { Moving = true };
+            }
+
+            int from = IndexOf(drag.Item);
+            int to = Math.Clamp((int)(point.Y / RowHeight), 0, _list.Items.Count - 1);
+            if (from >= 0 && from != to)
+            {
+                _list.Move(from, to);
+            }
+
+            Render();
+        }
+
+        private int IndexOf(TodoItem item)
+        {
+            for (int i = 0; i < _list.Items.Count; i++)
+            {
+                if (ReferenceEquals(_list.Items[i], item))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private void EndDrag()
+        {
+            if (_drag is not { } drag)
+            {
+                return;
+            }
+
+            _drag = null;
+            if (_rows.IsMouseCaptured)
+            {
+                _rows.ReleaseMouseCapture();
+            }
+
+            if (drag.Moving)
+            {
+                Save();
+            }
+        }
+
+        /// <summary>A text box here asks for the keyboard when clicked, and gives it back when focus leaves the notch.</summary>
+        private void TakesTyping(TextBox box)
+        {
+            box.PreviewMouseLeftButtonDown += (_, _) =>
+            {
+                Owner.SetHomeKeyboard(true);
+                box.Focus();
+            };
+            box.LostKeyboardFocus += (_, e) => ReleaseKeyboard(e);
         }
     }
 
