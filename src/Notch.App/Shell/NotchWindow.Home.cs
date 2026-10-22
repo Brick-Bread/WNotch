@@ -513,16 +513,16 @@ public partial class NotchWindow
     {
         HomeWidget widget = HomeWidget.Create(type);
         HomeWidgets.Add(widget);
-        _homePickerOpen = false;
         if (type.NeedsSetup)
         {
+            // The form takes the picker's place.
             OpenHomeForm(widget, isNew: true);
             return;
         }
 
+        // While the picker still counts as open, or closing the sheet would do nothing and leave it showing.
         CloseHomeSheet(save: false);
         SaveHome();
-        LayoutHome();
     }
 
     /// <summary>A form for a widget's options, opened from its gear in edit mode, or straight after adding one that needs setting up.</summary>
