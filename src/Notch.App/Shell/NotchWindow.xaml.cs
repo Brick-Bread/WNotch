@@ -787,7 +787,9 @@ public partial class NotchWindow : Window
     private void ApplyShape()
     {
         double width = Math.Max(0, _animator.Width);
-        double height = Math.Max(0, _animator.Height);
+        // The springs overshoot, which reads well when the island grows but would sink it below its resting
+        // height (and under the notch's shoulders) as it shrinks back; it stops at the resting height instead.
+        double height = Math.Max(IdleHeight, _animator.Height);
         double radius = Math.Max(0, _animator.Radius);
 
         Island.Width = width;
