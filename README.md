@@ -6,7 +6,7 @@ A dynamic notch for Windows 11, in the spirit of Atoll on macOS: a small black p
 
 - **Pill and live activities.** Always on top, never takes focus. It widens for ongoing activity and briefly enlarges for system events.
 - **Out of the way of games.** While a game or any other fullscreen app shows on its display the notch is taken off the screen completely, HUDs and glow included, also when you are working on another display.
-- **Media.** Whatever is playing (Spotify, a browser tab, any app that reports to Windows) shows with its artwork. The expanded view has play/pause, skip and click-to-seek.
+- **Media.** Whatever is playing (Spotify, a browser tab, any app that reports to Windows) shows with its artwork, and its title and artist scroll across the pill when they are too long to fit. The expanded view has play/pause, skip and click-to-seek.
 - **System HUDs.** Volume, audio output changes, brightness, charger and low battery, Bluetooth devices connecting, Caps Lock switching on or off.
 - **Shelf.** Drag files or folders onto the pill to put them aside, then drag them out into any app or folder when you need them. The shelf remembers where the files are; it does not copy them.
 - **Terminal for Claude Code, Codex and opencode.** A real terminal inside the notch that runs the `claude`, `codex` and `opencode` CLIs (or PowerShell) in a folder you pick. The pill shows which agent is working, needs input, or is done, the folder it is in, and how many other sessions have something to report.
@@ -17,7 +17,7 @@ A dynamic notch for Windows 11, in the spirit of Atoll on macOS: a small black p
 - **Scriptable.** `notch://` links, the `notchctl` command and an optional local webhook; see [docs/automation.md](docs/automation.md).
 - **Glow effects.** The pill lights up in a colour and rhythm that matches what is happening: it pulses to the music in the album art's colour, breathes blue while an agent works, pulses amber when it needs you, turns green when it is done, and flashes for volume, charging, Bluetooth and low battery. Brightness is adjustable in settings.
 - **Notch or Dynamic Island, top or taskbar.** The pill can grow out of the screen edge like a notch or float clear of it as an island, and sit at the top of the screen or in the far left of the taskbar, where it opens upwards.
-- **Themes and colour.** Dark, light, or following Windows, with an accent colour of your choice. Stats, the timer and calendars each have their own colour.
+- **Themes and colour.** A pure black island in the spirit of the Dynamic Island, or a light one, or following Windows, with an accent colour of your choice. Coding agents show with their own logos. The text is SF Pro when it is installed on the PC, otherwise Inter, which Notch ships. Stats, the timer and calendars each have their own colour.
 - **Widgets.** A countdown timer with a Pomodoro mode (focus and break sessions back to back), your own presets and any length you type (`12`, `1:30`, `90s`, `1h20m`), upcoming events from iCalendar (.ics) feeds, and a Stats tab with CPU, memory, GPU, network and battery.
 - **Plugins.** Small .NET libraries can add their own activities to the pill and cards to a Plugins tab. See [Plugins](#plugins).
 - **Update notices.** An installed copy checks this repository's releases and shows a notice in the pill when a newer one is ready. Nothing is installed until you press **Update Notch now** in settings. The notices can be switched off.

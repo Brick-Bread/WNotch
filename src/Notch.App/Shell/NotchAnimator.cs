@@ -6,9 +6,16 @@ namespace Notch.App.Shell;
 /// <summary>Drives the notch's width, height and corner radius with springs, one step per rendered frame.</summary>
 internal sealed class NotchAnimator(double width, double height, double radius)
 {
-    private readonly Spring _width = new(width);
-    private readonly Spring _height = new(height);
-    private readonly Spring _radius = new(radius);
+    // Size springs a little stiffer and looser than the default, for a quick move with a visible overshoot
+    // (damping ratio about 0.67); the corners follow more calmly so they never look pinched.
+    private const double SizeStiffness = 380;
+    private const double SizeDamping = 26;
+    private const double RadiusStiffness = 300;
+    private const double RadiusDamping = 30;
+
+    private readonly Spring _width = new(width, SizeStiffness, SizeDamping);
+    private readonly Spring _height = new(height, SizeStiffness, SizeDamping);
+    private readonly Spring _radius = new(radius, RadiusStiffness, RadiusDamping);
     private TimeSpan? _lastFrame;
     private bool _running;
 

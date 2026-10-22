@@ -20,9 +20,9 @@ internal sealed class DemoDriver : IDisposable
         _script =
         [
             () => _activities.Publish(HudActivities.Volume(0.6, muted: false)),
-            () => _activities.Publish(AgentActivities.For("demo", "Claude", "", AgentState.Working, "notch")!),
-            () => _activities.Publish(AgentActivities.For("demo", "Claude", "", AgentState.NeedsInput, "notch")!),
-            () => _activities.Publish(AgentActivities.For("demo", "Claude", "", AgentState.Done, "notch")!),
+            () => _activities.Publish(AgentActivities.For("demo", "Claude", "", AgentState.Working, "notch", agentId: "claude")!),
+            () => _activities.Publish(AgentActivities.For("demo", "Claude", "", AgentState.NeedsInput, "notch", agentId: "claude")!),
+            () => _activities.Publish(AgentActivities.For("demo", "Claude", "", AgentState.Done, "notch", agentId: "claude")!),
             () => _activities.Publish(HudActivities.Power(pluggedIn: true, percent: 82)),
             () => _activities.Publish(HudActivities.Bluetooth("Headphones", connected: true)),
             () => _activities.Publish(HudActivities.Brightness(0.4)),
@@ -50,5 +50,5 @@ internal sealed class DemoDriver : IDisposable
     public void Dispose() => _timer.Stop();
 
     private static Activity Agent(string session, TerminalProfile profile, AgentState state, string folder) =>
-        AgentActivities.For(session, profile.DisplayName, profile.Glyph, state, folder, others: 1)!;
+        AgentActivities.For(session, profile.DisplayName, profile.Glyph, state, folder, others: 1, agentId: profile.Id)!;
 }

@@ -27,7 +27,11 @@ public partial class NotchWindow : Window
 
     private static readonly TimeSpan OpenDelay = TimeSpan.FromMilliseconds(120);
     private static readonly TimeSpan CloseDelay = TimeSpan.FromMilliseconds(350);
-    private static readonly Duration FadeDuration = TimeSpan.FromMilliseconds(160);
+    private static readonly Duration FadeDuration = TimeSpan.FromMilliseconds(220);
+
+    // Content comes in once the island has mostly reached its new size, so it is never squeezed by it.
+    private static readonly TimeSpan FadeInDelay = TimeSpan.FromMilliseconds(130);
+    private static readonly TimeSpan ExpandFadeInDelay = TimeSpan.FromMilliseconds(170);
 
     // A game takes the foreground a moment before its window fills the screen.
     private static readonly TimeSpan FullscreenRecheckDelay = TimeSpan.FromMilliseconds(400);
@@ -175,20 +179,29 @@ public partial class NotchWindow : Window
 
     private Shape BaseShapeFor(NotchMode mode) => mode switch
     {
-        NotchMode.Compact => new Shape(320, 34, 17),
-        NotchMode.Peek => new Shape(360, 44, 22),
-        NotchMode.Expanded when _tab == NotchTab.Terminal => new Shape(920, 540, 36),
-        NotchMode.Expanded when _tab == NotchTab.Stats => new Shape(640, 290, 36),
-        NotchMode.Expanded when _tab == NotchTab.Shelf => new Shape(640, ShelfTabHeight, 36),
-        NotchMode.Expanded when _tab == NotchTab.Plugins => new Shape(640, PluginsTabHeight, 36),
-        NotchMode.Expanded when _tab == NotchTab.Clipboard => new Shape(640, ClipboardTabHeight, 36),
-        NotchMode.Expanded when _tab == NotchTab.Palette => new Shape(640, PaletteTabHeight, 36),
-        NotchMode.Expanded when _tab == NotchTab.Page => new Shape(920, 540, 36),
+        NotchMode.Compact => new Shape(PillWidth(_pillActivity), 32, 16),
+        NotchMode.Peek => new Shape(380, 38, 19),
+        NotchMode.Expanded when _tab == NotchTab.Terminal => new Shape(920, 540, 32),
+        NotchMode.Expanded when _tab == NotchTab.Stats => new Shape(640, 290, 32),
+        NotchMode.Expanded when _tab == NotchTab.Shelf => new Shape(640, ShelfTabHeight, 32),
+        NotchMode.Expanded when _tab == NotchTab.Plugins => new Shape(640, PluginsTabHeight, 32),
+        NotchMode.Expanded when _tab == NotchTab.Clipboard => new Shape(640, ClipboardTabHeight, 32),
+        NotchMode.Expanded when _tab == NotchTab.Palette => new Shape(640, PaletteTabHeight, 32),
+        NotchMode.Expanded when _tab == NotchTab.Page => new Shape(920, 540, 32),
 
-        // Home is taller while the media card or the agents card is showing.
-        NotchMode.Expanded => new Shape(640, (_media.Current is null ? 236 : 364) + AgentCardExtra, 36),
+        // Home is as tall as what is on it: media, agents, timer and calendar.
+        NotchMode.Expanded => new Shape(640, HomeHeight(), 32),
         _ => new Shape(180, 32, 16),
     };
+
+    /// <summary>The open island's height on the Home tab: its content measured at the width it has, plus the margins.</summary>
+    private double HomeHeight()
+    {
+        const double width = 640 - 36;
+        HomePanel.Measure(new Size(width, double.PositiveInfinity));
+        double tabs = Math.Max(24, TabStrip.DesiredSize.Height);
+        return Math.Ceiling(14 + tabs + HomePanel.DesiredSize.Height + 18);
+    }
 
     protected override void OnSourceInitialized(EventArgs e)
     {
@@ -413,7 +426,7 @@ public partial class NotchWindow : Window
         // to both sides at the top, upwards and to the right in the taskbar.
         ExpandedLayer.HorizontalAlignment = horizontal;
         ExpandedLayer.VerticalAlignment = vertical;
-        ExpandedLayer.Margin = bottom ? new Thickness(20, 0, 0, 20) : new Thickness(0, 16, 0, 0);
+        ExpandedLayer.Margin = bottom ? new Thickness(18, 0, 0, 18) : new Thickness(0, 14, 0, 0);
 
         ApplyShape();
     }
@@ -688,50 +701,19 @@ public partial class NotchWindow : Window
             SetLargeWindow(true);
         }
 
+        _pillActivity = activities.Count > 0 ? activities[0] : null;
         Shape shape = ShapeFor(mode);
         _animator.AnimateTo(shape.Width, shape.Height, shape.Radius);
 
         if (activities.Count > 0)
         {
-            Activity top = activities[0];
-            CompactGlyph.Text = top.Glyph;
-
-            // The glyph takes the colour of the activity's glow; without one it is plain text.
-            if (top.Glow is { } glow)
-            {
-                CompactGlyph.Foreground = ThemeManager.Brush(glow.Color);
-            }
-            else
-            {
-                CompactGlyph.ClearValue(ForegroundProperty);
-            }
-
-            if (!ReferenceEquals(top.Image, _compactArtBytes))
-            {
-                _compactArtBytes = top.Image;
-                ImageSource? art = ImageLoader.Decode(top.Image, 64);
-                CompactArt.Background = ImageLoader.ToCoverBrush(art);
-                _artAccent = ImageLoader.AccentOf(art);
-            }
-
-            // Album art and the like replace the glyph when the image decodes.
-            bool showArt = CompactArt.Background is not null;
-            CompactArt.Visibility = showArt ? Visibility.Visible : Visibility.Collapsed;
-            CompactGlyph.Visibility = showArt ? Visibility.Collapsed : Visibility.Visible;
-            CompactTitle.Text = top.Title;
-            CompactDetail.Text = top.Detail;
-
-            // A transient HUD with a level (volume, brightness) shows a bar instead of detail text.
-            bool showBar = top is { Tier: ActivityTier.Transient, Progress: not null };
-            CompactProgress.Visibility = showBar ? Visibility.Visible : Visibility.Collapsed;
-            CompactDetail.Visibility = showBar ? Visibility.Collapsed : Visibility.Visible;
-            CompactProgress.Value = top.Progress ?? 0;
+            FillPill(activities[0]);
         }
 
         // The content keeps a fixed size per tab; the island grows or shrinks around it.
         Shape expanded = ShapeFor(NotchMode.Expanded);
-        ExpandedLayer.Width = expanded.Width - 40;
-        ExpandedLayer.Height = expanded.Height - 36;
+        ExpandedLayer.Width = expanded.Width - 36;
+        ExpandedLayer.Height = expanded.Height - 32;
         UpdateMediaTimer();
 
         // No glow while expanded: the halo around the large panel would swallow clicks meant
@@ -744,8 +726,15 @@ public partial class NotchWindow : Window
         _glow.Allow(_pluginGlowAllowed ? _pluginGlow : null);
         _glow.Show(lit?.Glow, lit?.Id == MediaActivityPublisher.ActivityId && lit.Image is not null ? _artAccent : null);
 
-        Fade(CompactLayer, mode is NotchMode.Compact or NotchMode.Peek);
-        Fade(ExpandedLayer, mode is NotchMode.Expanded);
+        bool pill = mode is NotchMode.Compact or NotchMode.Peek;
+        string pillKey = pill ? activities[0].Id : "";
+        Fade(CompactLayer, CompactScale, pill, pillKey != _pillKey, FadeInDelay);
+        Fade(ExpandedLayer, ExpandedScale, mode is NotchMode.Expanded, false, ExpandFadeInDelay);
+        _pillKey = pillKey;
+        if (!pill)
+        {
+            StopPillAnimations();
+        }
         ExpandedLayer.IsHitTestVisible = mode is NotchMode.Expanded;
     }
 
@@ -753,8 +742,37 @@ public partial class NotchWindow : Window
     private void OnPluginGlowActiveChanged(object? sender, EventArgs e) =>
         Dispatcher.BeginInvoke(() => _glow.Allow(_pluginGlowAllowed ? _pluginGlow : null));
 
-    private static void Fade(UIElement element, bool visible) =>
-        element.BeginAnimation(OpacityProperty, new DoubleAnimation(visible ? 1 : 0, FadeDuration));
+    private string _pillKey = "";
+
+    /// <summary>
+    /// Hides or shows a layer. Content leaves at once and comes in, from slightly smaller, once the island has
+    /// mostly reached its new size. <paramref name="again"/> fades content that is already showing out and back
+    /// in, for a new activity taking the pill.
+    /// </summary>
+    private static void Fade(UIElement element, ScaleTransform scale, bool visible, bool again, TimeSpan delay)
+    {
+        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+        if (!visible)
+        {
+            element.BeginAnimation(OpacityProperty, new DoubleAnimation(0, TimeSpan.FromMilliseconds(90)));
+            return;
+        }
+
+        if (element.Opacity >= 0.99 && !again && element.HasAnimatedProperties)
+        {
+            return;
+        }
+
+        var opacity = new DoubleAnimationUsingKeyFrames { Duration = delay + FadeDuration.TimeSpan };
+        opacity.KeyFrames.Add(new LinearDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(60))));
+        opacity.KeyFrames.Add(new DiscreteDoubleKeyFrame(0, KeyTime.FromTimeSpan(delay)));
+        opacity.KeyFrames.Add(new EasingDoubleKeyFrame(1, KeyTime.FromTimeSpan(delay + FadeDuration.TimeSpan), ease));
+        element.BeginAnimation(OpacityProperty, opacity);
+
+        var grow = new DoubleAnimation(0.96, 1, FadeDuration) { BeginTime = delay, EasingFunction = ease };
+        scale.BeginAnimation(ScaleTransform.ScaleXProperty, grow);
+        scale.BeginAnimation(ScaleTransform.ScaleYProperty, grow);
+    }
 
     private void ApplyShape()
     {
@@ -806,5 +824,10 @@ public partial class NotchWindow : Window
             : new Rect(0, bottom ? 0 : -radius, width, height + radius);
         _islandClip.RadiusX = radius;
         _islandClip.RadiusY = radius;
+
+        Visibility shoulders = floating || bottom ? Visibility.Collapsed : Visibility.Visible;
+        ShoulderLeft.Visibility = ShoulderRight.Visibility = shoulders;
+        ShoulderLeft.Margin = new Thickness(-(width + 10), 0, 0, 0);
+        ShoulderRight.Margin = new Thickness(width + 10, 0, 0, 0);
     }
 }

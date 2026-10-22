@@ -59,6 +59,7 @@ public partial class NotchWindow
         {
             _mediaArtBytes = media.Thumbnail;
             MediaArt.Background = ImageLoader.ToCoverBrush(ImageLoader.Decode(media.Thumbnail, 256));
+            MediaWash.Background = MediaArt.Background;
         }
 
         UpdateMediaTimeline();

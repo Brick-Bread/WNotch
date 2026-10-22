@@ -32,6 +32,8 @@
     <Content Include="Assets\terminal\**" CopyToOutputDirectory="PreserveNewest" />
     <!-- The plugin Notch puts in opencode's plugins folder, with the setting that lets agents report; see AgentHookFiles. -->
     <Content Include="Assets\opencode\**" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Inter, the font used when SF Pro is not installed (Themes/Design.xaml). -->
+    <Resource Include="Assets\Fonts\*.ttf" />
   </ItemGroup>
 
 </Project>

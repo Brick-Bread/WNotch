@@ -4,20 +4,26 @@
     <!-- The look that is not a colour, shared by Dark.xaml and Light.xaml. A plugin theme may define
          any of these keys again. docs/plugins.md lists them all under "Themes". -->
 
-    <!-- Fonts: the notch's text, the large figures (timer, stats), the terminal's and plugin code blocks' monospace,
-         and the icon glyphs (Segoe code points, so keep a font that has them). -->
-    <FontFamily x:Key="UiFontFamily">Segoe UI Variable Text, Segoe UI</FontFamily>
-    <FontFamily x:Key="DisplayFontFamily">Segoe UI Variable Display, Segoe UI</FontFamily>
+    <!-- Fonts: the notch's text, the large figures (timer, stats, song title), the terminal's and plugin code
+         blocks' monospace, and the icon glyphs (Segoe code points, so keep a font that has them).
+         SF Pro is used when it is installed on the machine; Notch does not ship it. Inter, which it does
+         ship (Assets/Fonts, SIL Open Font License), stands in everywhere else. -->
+    <FontFamily x:Key="UiFontFamily">SF Pro Text, SF Pro, /Assets/Fonts/#Inter, Segoe UI Variable Text, Segoe UI</FontFamily>
+    <FontFamily x:Key="DisplayFontFamily">SF Pro Display, SF Pro, /Assets/Fonts/#Inter Display, Segoe UI Variable Display, Segoe UI</FontFamily>
     <FontFamily x:Key="CodeFontFamily">Cascadia Mono, Consolas</FontFamily>
     <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
     <sys:Double x:Key="UiFontSize">13</sys:Double>
 
-    <!-- Corner radii of panels, buttons and text boxes, tabs, small thumbnails and round icon buttons.
-         CardRadius plus the 20px inset of the content matches the open island's corners, so they nest. -->
-    <CornerRadius x:Key="CardRadius">16</CornerRadius>
+    <!-- Corner radii of panels, buttons and text boxes, small thumbnails and round icon buttons.
+         CardRadius plus the 18px inset of the content matches the open island's 32px corners, so they nest.
+         ControlRadius is half the height of a pill button, which makes it a capsule. WPF stretches a radius
+         larger than half a control's height into an ellipse, so keep these no bigger than that. -->
+    <CornerRadius x:Key="CardRadius">14</CornerRadius>
     <CornerRadius x:Key="ControlRadius">12</CornerRadius>
-    <CornerRadius x:Key="SmallRadius">7</CornerRadius>
+    <CornerRadius x:Key="SmallRadius">6</CornerRadius>
     <CornerRadius x:Key="IconButtonRadius">20</CornerRadius>
+    <!-- The rows of a list: clipboard entries, palette results, terminal sessions. -->
+    <CornerRadius x:Key="RowRadius">10</CornerRadius>
 
     <!-- Multiplies the corner radius of the island itself, in every size it takes. 0 gives square corners. -->
     <sys:Double x:Key="IslandRadiusScale">1</sys:Double>

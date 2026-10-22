@@ -156,7 +156,7 @@ public sealed class AgentPublisher : IDisposable
             foreach (AgentEntry entry in entries)
             {
                 Activity? activity = AgentActivities.For(
-                    entry.Key, entry.DisplayName, entry.Glyph, entry.State, entry.FolderName, reporting - 1);
+                    entry.Key, entry.DisplayName, entry.Glyph, entry.State, entry.FolderName, reporting - 1, entry.AgentId);
                 if (activity is not null)
                 {
                     now.Add(entry.Key);
