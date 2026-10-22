@@ -51,16 +51,16 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <Grid Width="20" Height="20" VerticalAlignment="Center">
-                    <TextBlock x:Name="CompactGlyph" FontFamily="{DynamicResource IconFont}" FontSize="15"
+                <Grid Width="18" Height="18" VerticalAlignment="Center">
+                    <TextBlock x:Name="CompactGlyph" FontFamily="{DynamicResource IconFont}" FontSize="14"
                                HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    <Path x:Name="CompactLogo" Width="16" Height="16" Stretch="Uniform" Fill="{DynamicResource TextBrush}"
+                    <Path x:Name="CompactLogo" Width="14" Height="14" Stretch="Uniform" Fill="{DynamicResource TextBrush}"
                           HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
                     <Border x:Name="CompactArt" CornerRadius="{DynamicResource SmallRadius}" Visibility="Collapsed" />
                 </Grid>
 
                 <shell:Marquee Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
-                    <TextBlock FontSize="12" FontWeight="SemiBold">
+                    <TextBlock FontSize="11.5" FontWeight="SemiBold">
                         <Run x:Name="CompactTitle" /><Run x:Name="CompactSubtitle" FontWeight="Medium"
                              Foreground="{DynamicResource SecondaryTextBrush}" />
                     </TextBlock>
@@ -74,7 +74,7 @@
                         <Ellipse Width="5" Height="5" Fill="{DynamicResource WorkingBrush}" />
                     </StackPanel>
                     <!-- Music: four bars that move to it. -->
-                    <StackPanel x:Name="CompactWave" Orientation="Horizontal" Height="14" Visibility="Collapsed">
+                    <StackPanel x:Name="CompactWave" Orientation="Horizontal" Height="12" Visibility="Collapsed">
                         <Rectangle Width="3" RadiusX="1.5" RadiusY="1.5" Margin="0,0,2.5,0" RenderTransformOrigin="0.5,0.5" />
                         <Rectangle Width="3" RadiusX="1.5" RadiusY="1.5" Margin="0,0,2.5,0" RenderTransformOrigin="0.5,0.5" />
                         <Rectangle Width="3" RadiusX="1.5" RadiusY="1.5" Margin="0,0,2.5,0" RenderTransformOrigin="0.5,0.5" />
@@ -82,12 +82,12 @@
                     </StackPanel>
                     <TextBlock x:Name="CompactStateGlyph" FontFamily="{DynamicResource IconFont}" FontSize="11"
                                Margin="0,0,5,0" VerticalAlignment="Center" Visibility="Collapsed" />
-                    <TextBlock x:Name="CompactDetail" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold"
+                    <TextBlock x:Name="CompactDetail" VerticalAlignment="Center" FontSize="11.5" FontWeight="SemiBold"
                                Foreground="{DynamicResource SecondaryTextBrush}" MaxWidth="130" TextTrimming="CharacterEllipsis" />
                     <ProgressBar x:Name="CompactProgress" Width="84" Height="5" Maximum="1" VerticalAlignment="Center"
                                  Foreground="{DynamicResource TextBrush}" Background="{DynamicResource TrackBrush}" />
                     <TextBlock x:Name="CompactLevel" Width="22" Margin="8,0,0,0" TextAlignment="Right" VerticalAlignment="Center"
-                               FontSize="12" FontWeight="SemiBold" Typography.NumeralAlignment="Tabular" />
+                               FontSize="11.5" FontWeight="SemiBold" Typography.NumeralAlignment="Tabular" />
                 </StackPanel>
             </Grid>
 

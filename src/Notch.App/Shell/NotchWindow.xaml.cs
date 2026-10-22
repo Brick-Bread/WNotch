@@ -179,7 +179,7 @@ public partial class NotchWindow : Window
 
     private Shape BaseShapeFor(NotchMode mode) => mode switch
     {
-        NotchMode.Compact => new Shape(PillWidth(_pillActivity), 32, 16),
+        NotchMode.Compact => new Shape(PillWidth(_pillActivity), CompactHeight, CompactHeight / 2),
         NotchMode.Peek => new Shape(380, 38, 19),
         NotchMode.Expanded when _tab == NotchTab.Terminal => new Shape(920, 540, 32),
         NotchMode.Expanded when _tab == NotchTab.Stats => new Shape(640, 290, 32),
@@ -191,8 +191,15 @@ public partial class NotchWindow : Window
 
         // Home is as tall as what is on it: media, agents, timer and calendar.
         NotchMode.Expanded => new Shape(640, HomeHeight(), 32),
-        _ => new Shape(180, 32, 16),
+        _ => new Shape(180, IdleHeight, IdleHeight / 2),
     };
+
+    // At the top of the screen the resting notch is a slim bar and a live activity a low pill, so they cover as
+    // little as they can of what is there, such as a browser's tabs. In the taskbar they keep the height the
+    // taskbar is laid out for (IslandPlacement.PillHeight).
+    private double IdleHeight => _placement.AtBottom ? IslandPlacement.PillHeight : 10;
+
+    private double CompactHeight => _placement.AtBottom ? IslandPlacement.PillHeight : 26;
 
     /// <summary>The open island's height on the Home tab: its content measured at the width it has, plus the margins.</summary>
     private double HomeHeight()
@@ -379,6 +386,9 @@ public partial class NotchWindow : Window
         {
             _placement = placement;
             ApplyPlacement();
+
+            // The resting and compact heights depend on where the notch sits.
+            Refresh();
         }
 
         // At the bottom the window would have to grow upwards, moving its top edge, and the

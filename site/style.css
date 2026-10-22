@@ -43,7 +43,7 @@ h1,h2,h3{font-family:"SF Pro Display","SF Pro",Inter,system-ui,sans-serif;letter
 .desk.dim::before{opacity:0}
 .desk .bar,.desk .win{display:none}
 
-.sim{--s-bg:#000;--s-fg:#f5f5f7;--s-ac:#f5f5f7;--glow:transparent;position:absolute;top:0;left:50%;transform:translateX(-50%);width:180px;height:32px;color:var(--s-fg);background:var(--s-bg);border-radius:0 0 16px 16px;cursor:pointer;
+.sim{--s-bg:#000;--s-fg:#f5f5f7;--s-ac:#f5f5f7;--glow:transparent;position:absolute;top:0;left:50%;transform:translateX(-50%);width:180px;height:10px;color:var(--s-fg);background:var(--s-bg);border-radius:0 0 16px 16px;cursor:pointer;
  transition:width .55s cubic-bezier(.3,1.25,.45,1),height .55s cubic-bezier(.3,1.25,.45,1),border-radius .5s,background .5s,color .5s,box-shadow .5s}
 /* the notch's shoulders, curving into the top edge */
 .sim::before,.sim::after{content:"";position:absolute;top:0;width:10px;height:10px;background:radial-gradient(circle at 0 100%,transparent 9.5px,var(--s-bg) 10px);transition:background .5s}
