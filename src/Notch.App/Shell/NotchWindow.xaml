@@ -124,8 +124,10 @@
                         VerticalAlignment="Center" Width="24" Height="24" FontSize="13"
                         Foreground="{DynamicResource SecondaryTextBrush}" Content="&#xE713;" ToolTip="Settings" />
 
-                <!-- Home: the widgets the user chose, in rows of one or two. Laid out in code (NotchWindow.Home.cs). -->
-                <Grid x:Name="HomePanel" Grid.Row="1" Margin="0,16,0,0">
+                <!-- Home: the widgets the user chose, in rows of one or two. Laid out in code (NotchWindow.Home.cs).
+                     Beneath the tab row: its scroller reaches up over the tabs for the media card's wash, and a
+                     scroller takes every click on it, so the tabs and buttons must be above it to be clicked. -->
+                <Grid x:Name="HomePanel" Grid.Row="1" Margin="0,16,0,0" Panel.ZIndex="-1">
                     <!-- Scrolls (wheel only) once the notch has grown as tall as it may. -->
                     <ScrollViewer x:Name="HomeScroll" VerticalScrollBarVisibility="Hidden" Focusable="False">
                         <StackPanel>
