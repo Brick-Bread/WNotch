@@ -20,6 +20,7 @@ public partial class PluginConfirmWindow : Window
     public PluginConfirmWindow(RegistryEntry entry, string? installedVersion)
     {
         InitializeComponent();
+        Shell.WindowTheming.Follow(this);
 
         PluginName.Text = entry.Name;
         ByLine.Text = (entry.Author is null ? "" : $"by {entry.Author}  ·  ") + $"github.com/{entry.Repository}";

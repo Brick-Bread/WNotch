@@ -66,6 +66,7 @@ public partial class SettingsWindow : Window
         _hasOpenTerminals = hasOpenTerminals;
         _restart = restart;
         MaxHeight = SystemParameters.WorkArea.Height;
+        InitializeSections();
 
         // The theme can also change from the tray menu while this window is open.
         _chosenPluginTheme = settings.PluginTheme;
@@ -121,6 +122,7 @@ public partial class SettingsWindow : Window
 
         Version? version = Assembly.GetExecutingAssembly().GetName().Version;
         VersionText.Text = version is null ? "" : $"Version {version.ToString(3)}";
+        SidebarVersion.Text = version is null ? "" : version.ToString(3);
 
         ListPlugins([.. settings.EnabledPlugins]);
         InstallPlugin.Click += (_, _) => OnInstallPlugin();
@@ -287,14 +289,61 @@ public partial class SettingsWindow : Window
         _shownPluginTheme = _settings.PluginTheme;
         Theme.SelectedIndex = (int)_shownTheme;
         ListPluginThemes();
-        ThemeMode = ThemeManager.ActivePluginTheme is not null
-            ? (ThemeManager.IsLight ? ThemeMode.Light : ThemeMode.Dark)
-            : _shownTheme switch
+    }
+
+    /// <summary>Saves a picture of every section as settings-&lt;section&gt;.png (<c>--screenshots= --with-settings</c>).</summary>
+    internal async Task SavePicturesAsync(string folder)
+    {
+        foreach (RadioButton section in Sections.Children.OfType<RadioButton>())
+        {
+            section.IsChecked = true;
+            await Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            await Task.Delay(300);
+            UpdateLayout();
+
+            var root = (FrameworkElement)Content;
+            var picture = new System.Windows.Media.Imaging.RenderTargetBitmap(
+                (int)(root.ActualWidth * 1.5), (int)(root.ActualHeight * 1.5), 144, 144, PixelFormats.Pbgra32);
+            var backing = new DrawingVisual();
+            using (DrawingContext context = backing.RenderOpen())
             {
-                NotchTheme.Light => ThemeMode.Light,
-                NotchTheme.System => ThemeMode.System,
-                _ => ThemeMode.Dark,
+                context.DrawRectangle(Background, null, new Rect(0, 0, root.ActualWidth, root.ActualHeight));
+            }
+
+            picture.Render(backing);
+            picture.Render(root);
+            var png = new System.Windows.Media.Imaging.PngBitmapEncoder();
+            png.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(picture));
+            using FileStream file = File.Create(Path.Combine(folder, $"settings-{((string)section.Content).ToLowerInvariant()}.png"));
+            png.Save(file);
+        }
+
+        Close();
+    }
+
+    /// <summary>
+    /// The sidebar shows one section at a time; the title bar names it. The window's own title bar is drawn here,
+    /// so minimise and close are too.
+    /// </summary>
+    private void InitializeSections()
+    {
+        foreach (RadioButton section in Sections.Children.OfType<RadioButton>())
+        {
+            section.Checked += (_, _) =>
+            {
+                string name = (string)section.Content;
+                SectionTitle.Text = name;
+                foreach (FrameworkElement page in Pages.Children.OfType<FrameworkElement>())
+                {
+                    page.Visibility = (string)page.Tag == name ? Visibility.Visible : Visibility.Collapsed;
+                }
+
+                PageScroller.ScrollToTop();
             };
+        }
+
+        MinimizeButton.Click += (_, _) => WindowState = WindowState.Minimized;
+        CloseButton.Click += (_, _) => Close();
     }
 
     /// <summary>Lists the themes running plugins offer, keeping the choice even when its plugin is not running right now.</summary>

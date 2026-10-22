@@ -14,6 +14,7 @@ public partial class PluginBrowserWindow : Window
     public PluginBrowserWindow(PluginRegistry registry, PluginInstallFlow flow, PluginManager plugins)
     {
         InitializeComponent();
+        Shell.WindowTheming.Follow(this);
         _registry = registry;
         _flow = flow;
         _plugins = plugins;
