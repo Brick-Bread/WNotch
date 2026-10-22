@@ -408,10 +408,11 @@ public partial class NotchWindow
         return today ? entry.Start.ToString("t") : $"{entry.Start:ddd} {entry.Start:t}";
     }
 
-    /// <summary>Stats are only sampled while their tab is on screen.</summary>
+    /// <summary>Stats are only sampled while their tab, or a stats widget on Home, is on screen.</summary>
     private void UpdateStatsTimer()
     {
-        bool run = _expanded && _tab == NotchTab.Stats;
+        UpdateHomeTick();
+        bool run = _expanded && (_tab == NotchTab.Stats || HomeShowsStats);
         if (run && !_statsTimer.IsEnabled)
         {
             _statsTimer.Start();
@@ -446,6 +447,7 @@ public partial class NotchWindow
             StatsDownload.Text = StatsFormat.Rate(stats.DownloadBytesPerSecond);
             StatsUpload.Text = StatsFormat.Rate(stats.UploadBytesPerSecond);
             StatsBattery.Text = stats.BatteryPercent is { } battery ? $"{battery}%" : "None";
+            ShowHomeStats(stats);
             if (_batteryPercent != stats.BatteryPercent)
             {
                 _batteryPercent = stats.BatteryPercent;

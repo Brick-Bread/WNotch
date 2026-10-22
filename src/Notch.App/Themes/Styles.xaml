@@ -107,6 +107,24 @@
         </Style.Triggers>
     </Style>
 
+    <!-- Several lines of text in the same look, such as the buttons of a launcher widget. -->
+    <Style x:Key="PillTextArea" TargetType="TextBox" BasedOn="{StaticResource PillTextBox}">
+        <Setter Property="AcceptsReturn" Value="True" />
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="VerticalScrollBarVisibility" Value="Hidden" />
+        <Setter Property="HorizontalScrollBarVisibility" Value="Hidden" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{DynamicResource ControlRadius}">
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- A tab at the top of the open notch: an icon (set FontFamily to IconFont, as the built-in tabs do) or,
          for a plugin's page, its title. The selected one sits on a round SelectedBrush fill. -->
     <Style x:Key="TabButton" TargetType="RadioButton">

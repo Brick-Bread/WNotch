@@ -32,6 +32,9 @@ public partial class NotchWindow
 
     private int _shelfCount;
 
+    /// <summary>The tiles last shown, newest first, which the shelf widget on Home shows too.</summary>
+    private IReadOnlyList<ShelfTile> _shelfTiles = [];
+
     /// <summary>The tile the left button went down on and where, until it is released or becomes a drag.</summary>
     private (ShelfTile Tile, Point Point)? _shelfPress;
 
@@ -86,6 +89,13 @@ public partial class NotchWindow
         ShelfTile[] tiles = [.. paths.Select(path => new ShelfTile(path, _shelfPictures.GetValueOrDefault(path)))];
         ShelfItems.ItemsSource = tiles;
         _shelfCount = tiles.Length;
+        _shelfTiles = tiles;
+        foreach (HomeView view in HomeViewsOf<ShelfView>())
+        {
+            view.Refresh();
+        }
+
+        HomeContentChanged();
 
         TabShelf.ToolTip = tiles.Length switch
         {

@@ -39,13 +39,12 @@ public partial class NotchWindow
             .Select(entry => new AgentRow(entry))];
 
         AgentList.ItemsSource = rows;
-        AgentsCard.Visibility = rows.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
 
         if (_agentRowsShown != rows.Length)
         {
-            // The Home tab is taller with more rows.
+            // The Home tab is taller with more rows, and the widget may be hidden with none.
             _agentRowsShown = rows.Length;
-            Refresh();
+            HomeContentChanged();
         }
     }
 

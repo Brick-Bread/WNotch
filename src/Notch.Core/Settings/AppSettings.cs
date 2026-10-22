@@ -120,6 +120,9 @@ public sealed class AppSettings
             return preset with { Name = name.Length > Widgets.TimerPreset.MaxNameLength ? name[..Widgets.TimerPreset.MaxNameLength].TrimEnd() : name };
         })];
 
+    /// <summary>The widgets on the Home tab, in order. Rearranged from the notch's own edit mode.</summary>
+    public List<Widgets.HomeWidget> HomeWidgets { get; set; } = Widgets.HomeLayout.Default();
+
     /// <summary>iCalendar (.ics) links shown on the Home tab's calendar card.</summary>
     public List<string> CalendarFeeds { get; set; } = [];
 

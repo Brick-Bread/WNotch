@@ -41,6 +41,12 @@ public partial class NotchWindow
         PluginCards.ItemsSource = rows;
         _pluginCardCount = rows.Length;
         TabPlugins.Visibility = rows.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+        foreach (HomeView view in HomeViewsOf<PluginCardView>())
+        {
+            view.Refresh();
+        }
+
+        HomeContentChanged();
 
         if (_tab == NotchTab.Plugins)
         {

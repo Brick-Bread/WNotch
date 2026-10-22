@@ -42,7 +42,7 @@ public partial class NotchWindow : Window
     // In DIPs. Large fits the biggest expanded tab; small fits the pill plus room for its glow.
     // Both are the same width: a resize that moved the left edge would show the previous frame
     // in the wrong place until the next one is drawn, leaving nothing under the pointer.
-    private static readonly Size LargeWindowSize = new(980, 600);
+    private static readonly Size LargeWindowSize = new(980, 700);
     private static readonly Size SmallWindowSize = new(980, 96);
 
     private readonly ActivityManager _activities;
@@ -163,6 +163,9 @@ public partial class NotchWindow : Window
             Housekeeping();
         };
 
+        // After the animator: laying out Home refreshes the island.
+        InitializeHome();
+
         // Colours everything that is coloured in code, and does the first Refresh.
         ThemeManager.Changed += OnThemeChanged;
         OnThemeChanged();
@@ -189,7 +192,7 @@ public partial class NotchWindow : Window
         NotchMode.Expanded when _tab == NotchTab.Palette => new Shape(640, PaletteTabHeight, 32),
         NotchMode.Expanded when _tab == NotchTab.Page => new Shape(920, 540, 32),
 
-        // Home is as tall as what is on it: media, agents, timer and calendar.
+        // Home is as tall as the widgets on it.
         NotchMode.Expanded => new Shape(640, HomeHeight(), 32),
         _ => new Shape(180, IdleHeight, IdleHeight / 2),
     };
@@ -200,15 +203,6 @@ public partial class NotchWindow : Window
     private double IdleHeight => _placement.AtBottom ? IslandPlacement.PillHeight : 10;
 
     private double CompactHeight => _placement.AtBottom ? IslandPlacement.PillHeight : 26;
-
-    /// <summary>The open island's height on the Home tab: its content measured at the width it has, plus the margins.</summary>
-    private double HomeHeight()
-    {
-        const double width = 640 - 36;
-        HomePanel.Measure(new Size(width, double.PositiveInfinity));
-        double tabs = Math.Max(24, TabStrip.DesiredSize.Height);
-        return Math.Ceiling(14 + tabs + HomePanel.DesiredSize.Height + 18);
-    }
 
     protected override void OnSourceInitialized(EventArgs e)
     {
@@ -316,6 +310,7 @@ public partial class NotchWindow : Window
         _terminal.Bridge.SetTheme(ThemeManager.IsLight, look?.Palette, look?.Background);
         ApplyWidgetColors();
         UpdatePluginCards();
+        RefreshHomeViews();
         ShowPageFigures();
         Refresh();
     }
@@ -341,6 +336,8 @@ public partial class NotchWindow : Window
         RefreshCalendar();
         ShowTimerPresets();
         ShowTerminalLaunchers();
+        RefreshHomeViews();
+        HomeContentChanged();
         _glow.Gain = GlowOutput.Gain(_settings.GlowIntensity);
         ApplyShape();
         Refresh();
@@ -541,7 +538,7 @@ public partial class NotchWindow : Window
 
         bool closePending = _hoverTimer.IsEnabled && !_hoverWantsExpanded;
         bool over = PointerOverIsland();
-        if (!over && pressed && !_pinnedOpen && (_hotkeyHold || KeyboardInUse))
+        if (!over && pressed && !_pinnedOpen && (_hotkeyHold || KeyboardInUse || HomeSheetOpen))
         {
             // The notch never saw this click, so no Deactivated either: it was opened without the
             // keyboard, or the window clicked does not take focus.
@@ -601,10 +598,11 @@ public partial class NotchWindow : Window
 
     /// <summary>
     /// Something keeps the notch open although the pointer is not on it: a file is being dragged
-    /// out of it, a menu of its own is showing, or a hotkey opened it. Having the keyboard does
-    /// not: the notch closes when the pointer leaves, and gives the keyboard back.
+    /// out of it, a menu of its own is showing, a hotkey opened it, or a Home widget is being moved
+    /// or set up. Having the keyboard does not: the notch closes when the pointer leaves, and gives
+    /// the keyboard back.
     /// </summary>
-    private bool HoldOpen => _dragOutActive || _shelfMenuOpen || _folderMenuOpen || _hotkeyHold;
+    private bool HoldOpen => _dragOutActive || _shelfMenuOpen || _folderMenuOpen || _hotkeyHold || _homeDrag is not null || HomeSheetOpen;
 
     /// <summary>Closes the notch because the user clicked another window, unless a menu or drag of its own is what they are using.</summary>
     private void CloseForClickAway()
@@ -684,6 +682,7 @@ public partial class NotchWindow : Window
                 _pointerWatch.Stop();
                 _hotkeyHold = false;
                 SetTimerEntryOpen(false);
+                LeaveHomeEditing();
             }
 
             Refresh();

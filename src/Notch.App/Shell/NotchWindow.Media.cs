@@ -13,6 +13,7 @@ public partial class NotchWindow
 
     private readonly DispatcherTimer _mediaTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
     private byte[]? _mediaArtBytes;
+    private bool _mediaShown;
 
     private void InitializeMedia()
     {
@@ -31,12 +32,11 @@ public partial class NotchWindow
     private void UpdateMediaCard()
     {
         MediaSnapshot? media = _media.Current;
-        Visibility visibility = media is null ? Visibility.Collapsed : Visibility.Visible;
-        if (MediaCard.Visibility != visibility)
+        if (_mediaShown != media is not null)
         {
-            // The Home tab is taller with the card than without it.
-            MediaCard.Visibility = visibility;
-            Refresh();
+            // The media widget may be hidden while nothing plays, and Home is taller with it.
+            _mediaShown = media is not null;
+            HomeContentChanged();
         }
 
         UpdateMediaTimer();

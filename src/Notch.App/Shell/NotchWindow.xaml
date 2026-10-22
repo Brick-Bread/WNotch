@@ -116,131 +116,161 @@
                     <RadioButton x:Name="TabPlugins" Style="{DynamicResource TabButton}" FontFamily="{DynamicResource IconFont}" FontSize="13" Width="24" Padding="0" Content="&#xE71D;" ToolTip="Plugins"
                                  Visibility="Collapsed" />
                 </StackPanel>
+                <!-- Only on Home: switches it into rearranging its widgets and back. -->
+                <Button x:Name="HomeEditButton" Style="{DynamicResource IconButton}" HorizontalAlignment="Right"
+                        VerticalAlignment="Center" Width="24" Height="24" FontSize="12" Margin="0,0,28,0"
+                        Foreground="{DynamicResource SecondaryTextBrush}" Content="&#xE70F;" ToolTip="Edit Home" />
                 <Button x:Name="OpenSettingsButton" Style="{DynamicResource IconButton}" HorizontalAlignment="Right"
                         VerticalAlignment="Center" Width="24" Height="24" FontSize="13"
                         Foreground="{DynamicResource SecondaryTextBrush}" Content="&#xE713;" ToolTip="Settings" />
 
-                <!-- Home: media, timer, calendar -->
-                <StackPanel x:Name="HomePanel" Grid.Row="1" Margin="0,16,0,0">
-                    <Grid x:Name="MediaCard" Margin="0,0,0,16" Visibility="Collapsed">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
+                <!-- Home: the widgets the user chose, in rows of one or two. Laid out in code (NotchWindow.Home.cs). -->
+                <Grid x:Name="HomePanel" Grid.Row="1" Margin="0,16,0,0">
+                    <!-- Scrolls (wheel only) once the notch has grown as tall as it may. -->
+                    <ScrollViewer x:Name="HomeScroll" VerticalScrollBarVisibility="Hidden" Focusable="False">
+                        <StackPanel>
+                            <StackPanel x:Name="HomeRows" Background="Transparent" />
+                            <TextBlock x:Name="HomeEmpty" Opacity="0.45" HorizontalAlignment="Center" Margin="0,24"
+                                       Text="Nothing on Home. Click the pencil to add widgets." Visibility="Collapsed" />
+                            <!-- Under the widgets while they are being rearranged. -->
+                            <DockPanel x:Name="HomeEditBar" LastChildFill="False" Visibility="Collapsed">
+                                <Button x:Name="HomeAdd" DockPanel.Dock="Left" Style="{DynamicResource PillButton}" Margin="0"
+                                        Content="+ Add widget" Background="{DynamicResource AccentHoverBrush}" />
+                                <Button x:Name="HomeReset" DockPanel.Dock="Right" Style="{DynamicResource PillButton}"
+                                        Content="Reset" ToolTip="Put back the widgets Home starts with" />
+                                <TextBlock DockPanel.Dock="Left" Margin="12,0,0,0" VerticalAlignment="Center" FontSize="11"
+                                           Foreground="{DynamicResource SecondaryTextBrush}"
+                                           Text="Drag a widget to move it" />
+                            </DockPanel>
+                        </StackPanel>
+                    </ScrollViewer>
 
-                        <!-- The artwork again, large and blurred, washing the island in its colour. -->
-                        <!-- On a canvas, which lets it spill past the card without being cut off at the card's edge. -->
-                        <Canvas Grid.ColumnSpan="2" IsHitTestVisible="False">
-                            <Border x:Name="MediaWash" Canvas.Left="-60" Canvas.Top="-50" Width="340" Height="240" Opacity="0.4">
-                                <Border.OpacityMask>
-                                    <RadialGradientBrush>
-                                        <GradientStop Color="#FF000000" Offset="0" />
-                                        <GradientStop Color="#66000000" Offset="0.45" />
-                                        <GradientStop Color="#00000000" Offset="1" />
-                                    </RadialGradientBrush>
-                                </Border.OpacityMask>
-                                <Border.Effect>
-                                    <BlurEffect Radius="40" RenderingBias="Performance" />
-                                </Border.Effect>
-                            </Border>
-                        </Canvas>
+                    <!-- Takes Home's place while a widget is picked or set up. -->
+                    <DockPanel x:Name="HomeSheet" Visibility="Collapsed" VerticalAlignment="Top">
+                        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+                            <Button x:Name="HomeSheetDone" DockPanel.Dock="Right" Style="{DynamicResource PillButton}"
+                                    Content="Save" Background="{DynamicResource AccentHoverBrush}" />
+                            <Button x:Name="HomeSheetCancel" DockPanel.Dock="Right" Style="{DynamicResource PillButton}"
+                                    Content="Cancel" />
+                            <TextBlock x:Name="HomeSheetTitle" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        </DockPanel>
+                        <StackPanel x:Name="HomeSheetBody" />
+                    </DockPanel>
 
-                        <Grid Width="96" Height="96">
-                            <Border CornerRadius="{DynamicResource CardRadius}" Background="{DynamicResource ControlBrush}">
-                                <TextBlock Text="&#xE8D6;" FontFamily="{DynamicResource IconFont}" FontSize="30"
-                                           Opacity="0.35" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                            <Border x:Name="MediaArt" CornerRadius="{DynamicResource CardRadius}" />
-                        </Grid>
+                    <!-- The cards Home has always had. Code moves each into its place among the rows. -->
+                    <StackPanel x:Name="HomeParts" Visibility="Collapsed">
+                        <Grid x:Name="MediaCard">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
 
-                        <Grid Grid.Column="1" Margin="18,0,0,0">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-
-                            <shell:Marquee HorizontalAlignment="Left">
-                                <TextBlock x:Name="MediaTitle" FontFamily="{DynamicResource DisplayFontFamily}" FontSize="15"
-                                           FontWeight="SemiBold" />
-                            </shell:Marquee>
-                            <TextBlock x:Name="MediaArtist" Grid.Row="1" Foreground="{DynamicResource SecondaryTextBrush}"
-                                       TextTrimming="CharacterEllipsis" />
-
-                            <!-- The time gone and the time left on either side of the bar. -->
-                            <Grid x:Name="MediaTimeline" Grid.Row="2" VerticalAlignment="Center">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock x:Name="MediaElapsed" FontSize="11" FontWeight="Medium" VerticalAlignment="Center"
-                                           Foreground="{DynamicResource SecondaryTextBrush}" Typography.NumeralAlignment="Tabular" />
-                                <!-- Taller than the bar so it is easy to hit. -->
-                                <Border x:Name="MediaSeekArea" Grid.Column="1" Height="14" Margin="10,0" Background="Transparent">
-                                    <ProgressBar x:Name="MediaProgress" Height="4" Maximum="1"
-                                                 VerticalAlignment="Center" IsHitTestVisible="False"
-                                                 Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource TrackBrush}" />
+                            <!-- The artwork again, large and blurred, washing the island in its colour. -->
+                            <!-- On a canvas, which lets it spill past the card without being cut off at the card's edge. -->
+                            <Canvas Grid.ColumnSpan="2" IsHitTestVisible="False">
+                                <Border x:Name="MediaWash" Canvas.Left="-60" Canvas.Top="-50" Width="340" Height="240" Opacity="0.4">
+                                    <Border.OpacityMask>
+                                        <RadialGradientBrush>
+                                            <GradientStop Color="#FF000000" Offset="0" />
+                                            <GradientStop Color="#66000000" Offset="0.45" />
+                                            <GradientStop Color="#00000000" Offset="1" />
+                                        </RadialGradientBrush>
+                                    </Border.OpacityMask>
+                                    <Border.Effect>
+                                        <BlurEffect Radius="40" RenderingBias="Performance" />
+                                    </Border.Effect>
                                 </Border>
-                                <TextBlock x:Name="MediaRemaining" Grid.Column="2" FontSize="11" FontWeight="Medium" VerticalAlignment="Center"
-                                           Foreground="{DynamicResource SecondaryTextBrush}" Typography.NumeralAlignment="Tabular" />
+                            </Canvas>
+
+                            <Grid Width="96" Height="96">
+                                <Border CornerRadius="{DynamicResource CardRadius}" Background="{DynamicResource ControlBrush}">
+                                    <TextBlock Text="&#xE8D6;" FontFamily="{DynamicResource IconFont}" FontSize="30"
+                                               Opacity="0.35" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <Border x:Name="MediaArt" CornerRadius="{DynamicResource CardRadius}" />
                             </Grid>
 
-                            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,-6">
-                                <Button x:Name="MediaPrevious" Style="{DynamicResource IconButton}" Content="&#xF8AC;" FontSize="16" />
-                                <Button x:Name="MediaPlayPause" Style="{DynamicResource IconButton}" Content="&#xF5B0;"
-                                        Width="40" Height="40" FontSize="22" Margin="14,0" />
-                                <Button x:Name="MediaNext" Style="{DynamicResource IconButton}" Content="&#xF8AD;" FontSize="16" />
-                            </StackPanel>
+                            <Grid Grid.Column="1" Margin="18,0,0,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <shell:Marquee HorizontalAlignment="Left">
+                                    <TextBlock x:Name="MediaTitle" FontFamily="{DynamicResource DisplayFontFamily}" FontSize="15"
+                                               FontWeight="SemiBold" />
+                                </shell:Marquee>
+                                <TextBlock x:Name="MediaArtist" Grid.Row="1" Foreground="{DynamicResource SecondaryTextBrush}"
+                                           TextTrimming="CharacterEllipsis" />
+
+                                <!-- The time gone and the time left on either side of the bar. -->
+                                <Grid x:Name="MediaTimeline" Grid.Row="2" VerticalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="MediaElapsed" FontSize="11" FontWeight="Medium" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource SecondaryTextBrush}" Typography.NumeralAlignment="Tabular" />
+                                    <!-- Taller than the bar so it is easy to hit. -->
+                                    <Border x:Name="MediaSeekArea" Grid.Column="1" Height="14" Margin="10,0" Background="Transparent">
+                                        <ProgressBar x:Name="MediaProgress" Height="4" Maximum="1"
+                                                     VerticalAlignment="Center" IsHitTestVisible="False"
+                                                     Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource TrackBrush}" />
+                                    </Border>
+                                    <TextBlock x:Name="MediaRemaining" Grid.Column="2" FontSize="11" FontWeight="Medium" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource SecondaryTextBrush}" Typography.NumeralAlignment="Tabular" />
+                                </Grid>
+
+                                <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,-6">
+                                    <Button x:Name="MediaPrevious" Style="{DynamicResource IconButton}" Content="&#xF8AC;" FontSize="16" />
+                                    <Button x:Name="MediaPlayPause" Style="{DynamicResource IconButton}" Content="&#xF5B0;"
+                                            Width="40" Height="40" FontSize="22" Margin="14,0" />
+                                    <Button x:Name="MediaNext" Style="{DynamicResource IconButton}" Content="&#xF8AD;" FontSize="16" />
+                                </StackPanel>
+                            </Grid>
                         </Grid>
-                    </Grid>
 
-                    <!-- Coding agents, in Notch's terminal or running anywhere else. Only shown while there are any. -->
-                    <Border x:Name="AgentsCard" Style="{DynamicResource Card}" Margin="0,0,0,14" Visibility="Collapsed">
-                        <DockPanel>
-                            <TextBlock DockPanel.Dock="Top" Text="Agents" Style="{DynamicResource CardLabel}" />
-                            <ItemsControl x:Name="AgentList" Margin="0,6,0,0">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Background="Transparent" Cursor="Hand" Height="28" Tag="{Binding}"
-                                                MouseLeftButtonDown="OnAgentRowClicked" ToolTip="{Binding Tip}">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="22" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                </Grid.ColumnDefinitions>
-                                                <!-- The agent's logo, or its glyph when it has none. -->
-                                                <Path Width="13" Height="13" Stretch="Uniform" HorizontalAlignment="Left"
-                                                      VerticalAlignment="Center" Data="{Binding Logo}"
-                                                      Fill="{DynamicResource TextBrush}" />
-                                                <TextBlock Text="{Binding Glyph}" FontFamily="{DynamicResource IconFont}" FontSize="12"
-                                                           VerticalAlignment="Center" />
-                                                <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="13" FontWeight="SemiBold"
-                                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="260" />
-                                                <TextBlock Grid.Column="2" Text="{Binding Where}" FontSize="13" Foreground="{DynamicResource SecondaryTextBrush}"
-                                                           Margin="10,0,10,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                                <!-- The state, in its own colour. -->
-                                                <TextBlock Grid.Column="3" Text="{Binding StateText}" Foreground="{Binding Brush}"
-                                                           FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </DockPanel>
-                    </Border>
+                        <!-- Coding agents, in Notch's terminal or running anywhere else. -->
+                        <Border x:Name="AgentsCard" Style="{DynamicResource Card}">
+                            <DockPanel>
+                                <TextBlock DockPanel.Dock="Top" Text="Agents" Style="{DynamicResource CardLabel}" />
+                                <ItemsControl x:Name="AgentList" Margin="0,6,0,0">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="Transparent" Cursor="Hand" Height="28" Tag="{Binding}"
+                                                    MouseLeftButtonDown="OnAgentRowClicked" ToolTip="{Binding Tip}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="22" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <!-- The agent's logo, or its glyph when it has none. -->
+                                                    <Path Width="13" Height="13" Stretch="Uniform" HorizontalAlignment="Left"
+                                                          VerticalAlignment="Center" Data="{Binding Logo}"
+                                                          Fill="{DynamicResource TextBrush}" />
+                                                    <TextBlock Text="{Binding Glyph}" FontFamily="{DynamicResource IconFont}" FontSize="12"
+                                                               VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="13" FontWeight="SemiBold"
+                                                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="260" />
+                                                    <TextBlock Grid.Column="2" Text="{Binding Where}" FontSize="13" Foreground="{DynamicResource SecondaryTextBrush}"
+                                                               Margin="10,0,10,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                    <!-- The state, in its own colour. -->
+                                                    <TextBlock Grid.Column="3" Text="{Binding StateText}" Foreground="{Binding Brush}"
+                                                               FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </DockPanel>
+                        </Border>
 
-                    <Grid Height="150">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="14" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-
-                        <Border Style="{DynamicResource Card}">
+                        <Border x:Name="TimerCard" Style="{DynamicResource Card}">
                             <DockPanel>
                                 <DockPanel DockPanel.Dock="Top">
                                     <!-- Negative margins keep the label row as low as it is without the button. -->
@@ -278,7 +308,7 @@
                             </DockPanel>
                         </Border>
 
-                        <Border Grid.Column="2" Style="{DynamicResource Card}">
+                        <Border x:Name="CalendarCard" Style="{DynamicResource Card}">
                             <DockPanel>
                                 <TextBlock x:Name="CalendarDate" DockPanel.Dock="Top" Style="{DynamicResource CardLabel}" />
                                 <TextBlock x:Name="CalendarEmpty" Opacity="0.45" TextWrapping="Wrap" FontSize="12.5"
@@ -304,8 +334,8 @@
                                 </ItemsControl>
                             </DockPanel>
                         </Border>
-                    </Grid>
-                </StackPanel>
+                    </StackPanel>
+                </Grid>
 
                 <!-- Terminal -->
                 <Grid x:Name="TerminalPanel" Grid.Row="1" Margin="0,12,0,0" Visibility="Collapsed">

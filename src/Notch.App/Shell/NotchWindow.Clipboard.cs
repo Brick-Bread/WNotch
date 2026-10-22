@@ -167,6 +167,13 @@ public partial class NotchWindow
         ClipboardList.ItemsSource = items.Select(item => new ClipboardRow(item)).ToList();
         ClipboardEmpty.Visibility = items.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
         ClipboardEmpty.Text = string.IsNullOrWhiteSpace(filter) ? "Things you copy will show up here" : "Nothing matches";
+
+        foreach (HomeView view in HomeViewsOf<ClipboardView>())
+        {
+            view.Refresh();
+        }
+
+        HomeContentChanged();
     }
 
     private void SaveClipboardPins() => ClipboardPins.Save(_clipboardPinsFile, _clipboard.Snapshot());
