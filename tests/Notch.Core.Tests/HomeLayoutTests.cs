@@ -196,6 +196,22 @@ public class HomeLayoutTests
         Assert.Equal("Rain", OpenMeteo.Describe(report.Code));
         Assert.Throws<FormatException>(() => OpenMeteo.ReadReport("{}"));
 
+        WeatherForecast forecast = OpenMeteo.ReadForecast("""
+            {"current":{"time":"2026-10-23T14:45","temperature_2m":12.3,"apparent_temperature":10.1,"relative_humidity_2m":81,
+                        "weather_code":2,"wind_speed_10m":14.0,"wind_direction_10m":225,"is_day":1},
+             "hourly":{"time":["2026-10-23T13:00","2026-10-23T14:00","2026-10-23T15:00"],
+                       "temperature_2m":[11.0,12.0,13.5],"weather_code":[1,2,61],"precipitation_probability":[0,null,70],"is_day":[1,1,1]},
+             "daily":{"time":["2026-10-23","2026-10-24"],"weather_code":[61,0],"temperature_2m_max":[15.1,17.0],"temperature_2m_min":[8.4,9.0],
+                      "precipitation_probability_max":[80,5],"sunrise":["2026-10-23T07:31","2026-10-24T07:33"],
+                      "sunset":["2026-10-23T17:52","2026-10-24T17:50"],"uv_index_max":[1.5,2.25]}}
+            """);
+        Assert.Equal((10.1, 81, "SW"), (forecast.FeelsLike, forecast.Humidity, OpenMeteo.Compass(forecast.WindDirection)));
+        Assert.Equal([new DateTime(2026, 10, 23, 14, 0, 0), new DateTime(2026, 10, 23, 15, 0, 0)], forecast.Hours.Select(h => h.Time));
+        Assert.Equal([null, 70], forecast.Hours.Select(h => h.RainChance));
+        Assert.Equal(2, forecast.Days.Count);
+        Assert.Equal(new WeatherDay(new DateOnly(2026, 10, 23), 15.1, 8.4, 61, 80, new DateTime(2026, 10, 23, 7, 31, 0), new DateTime(2026, 10, 23, 17, 52, 0), 1.5), forecast.Days[0]);
+        Assert.Equal(("N", "N", "E"), (OpenMeteo.Compass(350), OpenMeteo.Compass(-10), OpenMeteo.Compass(95)));
+
         string url = OpenMeteo.ForecastUrl(place!, fahrenheit: true);
         Assert.Contains("latitude=51.5085&longitude=-0.1257", url);
         Assert.Contains("temperature_unit=fahrenheit", url);

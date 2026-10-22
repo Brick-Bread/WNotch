@@ -42,8 +42,20 @@ public partial class NotchWindow
         WidgetKinds.Launcher => new ButtonsView(this, widget, runs: false),
         WidgetKinds.Command => new ButtonsView(this, widget, runs: true),
         WidgetKinds.Feed => new FeedView(this, widget),
+        WidgetKinds.PluginWidget => new PluginWidgetView(this, widget),
         _ => new PluginCardView(this, widget),
     };
+
+    /// <summary>A plugin registered or withdrew a kind of widget, started or stopped, or showed something new.</summary>
+    private void OnPluginWidgetsChanged(object? sender, EventArgs e) => Dispatcher.BeginInvoke(() =>
+    {
+        foreach (PluginWidgetView view in HomeViewsOf<PluginWidgetView>())
+        {
+            view.Refresh();
+        }
+
+        HomeContentChanged();
+    });
 
     /// <summary>Home has a stats widget on screen, which needs the sampler running as the Stats tab does.</summary>
     private bool HomeShowsStats => _tab == NotchTab.Home && HomeViewsOf<StatsView>().Any();
@@ -335,6 +347,7 @@ public partial class NotchWindow
         private readonly TextBlock _detail = Secondary(size: 11);
         private DateTime _due = DateTime.MinValue;
         private bool _fetching;
+        private (WeatherPlace Place, WeatherForecast Forecast, bool Fahrenheit)? _last;
 
         protected override FrameworkElement CreateContent()
         {
@@ -356,12 +369,25 @@ public partial class NotchWindow
             dock.Children.Add(middle);
             Border card = Card();
             card.Child = dock;
+            card.Cursor = Cursors.Hand;
+            card.ToolTip = "Show the forecast";
+
+            // A click opens the hours, days and details ahead, once there is a forecast to show.
+            card.MouseLeftButtonUp += (_, e) =>
+            {
+                if (_last is { } last)
+                {
+                    e.Handled = true;
+                    Owner.ShowWeatherDetail(last.Place, last.Forecast, last.Fahrenheit);
+                }
+            };
             return card;
         }
 
         public override void OptionsChanged()
         {
             _due = DateTime.MinValue;
+            _last = null;
             Refresh();
             Tick(DateTime.Now);
         }
@@ -390,10 +416,12 @@ public partial class NotchWindow
             bool fahrenheit = Widget.Option("units") == "Fahrenheit";
             try
             {
-                (WeatherPlace place, WeatherReport report) = await Owner._weather.FetchAsync(city, fahrenheit);
+                (WeatherPlace place, WeatherForecast forecast) = await Owner._weather.FetchAsync(city, fahrenheit);
+                WeatherReport report = forecast.Now;
+                _last = (place, forecast, fahrenheit);
                 _label.Text = place.Name;
                 _temperature.Text = $"{Math.Round(report.Temperature)}°";
-                _glyph.Text = OpenMeteo.IsClear(report.Code) ? (report.IsDay ? "" : "") : "";
+                _glyph.Text = WeatherGlyph(report.Code, report.IsDay);
                 _summary.Text = OpenMeteo.Describe(report.Code);
                 _detail.Text = $"H {Math.Round(report.High)}°  L {Math.Round(report.Low)}°  ·  wind {Math.Round(report.WindSpeed)} {(fahrenheit ? "mph" : "km/h")}";
                 _due = now + Every;
@@ -409,6 +437,137 @@ public partial class NotchWindow
             {
                 _fetching = false;
             }
+        }
+    }
+
+    /// <summary>The sun or the moon for clear skies, a cloud for anything else.</summary>
+    private static string WeatherGlyph(int code, bool day) => OpenMeteo.IsClear(code) ? (day ? "" : "") : "";
+
+    /// <summary>The weather widget, clicked: now in detail, then the next hours and the next days, in Home's place.</summary>
+    private void ShowWeatherDetail(WeatherPlace place, WeatherForecast forecast, bool fahrenheit)
+    {
+        WeatherReport now = forecast.Now;
+        WeatherDay? today = forecast.Days.Count > 0 ? forecast.Days[0] : null;
+        var body = new StackPanel();
+
+        // Now: the temperature large, what it is like, and how it feels.
+        var current = new DockPanel { Margin = new Thickness(0, 0, 0, 14) };
+        TextBlock glyph = Icon(WeatherGlyph(now.Code, now.IsDay), 40);
+        glyph.Opacity = 0.85;
+        DockPanel.SetDock(glyph, Dock.Right);
+        current.Children.Add(glyph);
+        var temperature = new TextBlock { Text = $"{Math.Round(now.Temperature)}°", FontSize = 48, FontWeight = FontWeights.Light, Margin = new Thickness(0, -6, 16, -4), VerticalAlignment = VerticalAlignment.Center };
+        temperature.SetResourceReference(TextBlock.FontFamilyProperty, "DisplayFontFamily");
+        DockPanel.SetDock(temperature, Dock.Left);
+        current.Children.Add(temperature);
+        TextBlock feels = HomeView.Caption($"Feels like {Math.Round(forecast.FeelsLike)}°  ·  H {Math.Round(now.High)}°  L {Math.Round(now.Low)}°");
+        feels.FontSize = 12.5;
+        feels.FontWeight = FontWeights.Normal;
+        current.Children.Add(new StackPanel
+        {
+            VerticalAlignment = VerticalAlignment.Center,
+            Children = { new TextBlock { Text = OpenMeteo.Describe(now.Code), FontSize = 15, FontWeight = FontWeights.SemiBold }, feels },
+        });
+        body.Children.Add(current);
+
+        // Details, six to a row.
+        string wind = fahrenheit ? "mph" : "km/h";
+        var details = new UniformGrid { Columns = 6, Margin = new Thickness(-4, 0, -4, 14) };
+        (string Label, string Value)[] figures =
+        [
+            ("Humidity", $"{forecast.Humidity}%"),
+            ("Wind", $"{Math.Round(now.WindSpeed)} {wind} {OpenMeteo.Compass(forecast.WindDirection)}"),
+            ("Rain", today?.RainChance is { } rain ? $"{rain}%" : "–"),
+            ("UV index", today?.UvIndex is { } uv ? $"{Math.Round(uv)}" : "–"),
+            ("Sunrise", today?.Sunrise is { } sunrise ? sunrise.ToString("t") : "–"),
+            ("Sunset", today?.Sunset is { } sunset ? sunset.ToString("t") : "–"),
+        ];
+        foreach ((string label, string value) in figures)
+        {
+            Border tile = HomeView.Tile();
+            tile.Margin = new Thickness(4);
+            tile.Padding = new Thickness(10, 7, 10, 7);
+            tile.Child = new StackPanel
+            {
+                Children =
+                {
+                    HomeView.Caption(label),
+                    new TextBlock { Text = value, FontSize = 13, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 2, 0, 0), TextTrimming = TextTrimming.CharacterEllipsis, ToolTip = value },
+                },
+            };
+            details.Children.Add(tile);
+        }
+
+        body.Children.Add(details);
+
+        // The next hours, side by side.
+        body.Children.Add(HomeView.Caption("Next hours"));
+        var hours = new UniformGrid { Rows = 1, Margin = new Thickness(0, 6, 0, 14) };
+        for (int i = 0; i < forecast.Hours.Count; i++)
+        {
+            WeatherHour hour = forecast.Hours[i];
+            TextBlock time = Centred(HomeView.Caption(i == 0 ? "Now" : hour.Time.ToString("HH")));
+            TextBlock hourGlyph = Centred(Icon(WeatherGlyph(hour.Code, hour.IsDay), 15));
+            hourGlyph.Margin = new Thickness(0, 4, 0, 3);
+            hourGlyph.ToolTip = OpenMeteo.Describe(hour.Code);
+            TextBlock value = Centred(new TextBlock { Text = $"{Math.Round(hour.Temperature)}°", FontSize = 13, FontWeight = FontWeights.SemiBold });
+            TextBlock chance = Centred(HomeView.Caption(hour.RainChance is { } c and > 0 ? $"{c}%" : " "));
+            chance.FontWeight = FontWeights.Normal;
+            hours.Children.Add(new StackPanel { Children = { time, hourGlyph, value, chance } });
+        }
+
+        body.Children.Add(hours);
+
+        // The next days, one to a line: name, sky, words, chance of rain, low, high.
+        body.Children.Add(HomeView.Caption("Next days"));
+        var days = new StackPanel { Margin = new Thickness(0, 4, 0, 0) };
+        for (int i = 0; i < forecast.Days.Count; i++)
+        {
+            WeatherDay day = forecast.Days[i];
+            var line = new Grid { Height = 24 };
+            foreach (double width in new[] { 64.0, 28, -1, 52, 44, 44 })
+            {
+                line.ColumnDefinitions.Add(new ColumnDefinition { Width = width < 0 ? new GridLength(1, GridUnitType.Star) : new GridLength(width) });
+            }
+
+            TextBlock rainCell = HomeView.Caption(day.RainChance is { } r and > 0 ? $"{r}%" : "");
+            TextBlock low = HomeView.Caption($"{Math.Round(day.Low)}°");
+            low.FontSize = rainCell.FontSize = 12.5;
+            low.FontWeight = rainCell.FontWeight = FontWeights.Normal;
+            rainCell.HorizontalAlignment = low.HorizontalAlignment = HorizontalAlignment.Right;
+            FrameworkElement[] cells =
+            [
+                new TextBlock { Text = i == 0 ? "Today" : day.Date.ToString("ddd"), FontSize = 12.5, FontWeight = FontWeights.SemiBold },
+                Icon(WeatherGlyph(day.Code, true), 13),
+                new TextBlock { Text = OpenMeteo.Describe(day.Code), FontSize = 12.5, TextTrimming = TextTrimming.CharacterEllipsis },
+                rainCell,
+                low,
+                new TextBlock { Text = $"{Math.Round(day.High)}°", FontSize = 12.5, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Right },
+            ];
+            for (int column = 0; column < cells.Length; column++)
+            {
+                cells[column].VerticalAlignment = VerticalAlignment.Center;
+                Grid.SetColumn(cells[column], column);
+                line.Children.Add(cells[column]);
+            }
+
+            days.Children.Add(line);
+        }
+
+        body.Children.Add(days);
+        ShowHomeDetail($"Weather in {place.Name}", body);
+
+        static TextBlock Icon(string glyph, double size)
+        {
+            var icon = new TextBlock { Text = glyph, FontSize = size };
+            icon.SetResourceReference(TextBlock.FontFamilyProperty, "IconFont");
+            return icon;
+        }
+
+        static TextBlock Centred(TextBlock block)
+        {
+            block.HorizontalAlignment = HorizontalAlignment.Center;
+            return block;
         }
     }
 
@@ -956,6 +1115,154 @@ public partial class NotchWindow
             {
                 _fetching = false;
             }
+        }
+    }
+
+    /// <summary>
+    /// A widget a plugin draws: with page blocks in the notch's own style, or with a WPF element of its own. Tells
+    /// the plugin when it is placed, set up or removed; the plugin fills it in through IPluginWidgets.Show.
+    /// </summary>
+    private sealed class PluginWidgetView : HomeView
+    {
+        private readonly TextBlock _label = Label("");
+        private readonly StackPanel _blocksPanel = new() { Margin = new Thickness(0, 6, 0, 0) };
+        private readonly Border _nativeHost = new() { Margin = new Thickness(0, 6, 0, 0) };
+        private readonly TextBlock _status = Secondary(size: 12);
+        private readonly PageBlocks _blocks;
+        private Border? _card;
+        private Func<object>? _shownView;
+        private PluginWidgetContent? _content;
+
+        public PluginWidgetView(NotchWindow owner, HomeWidget widget)
+            : base(owner, widget)
+        {
+            _blocks = new PageBlocks(_blocksPanel);
+            _status.TextWrapping = TextWrapping.Wrap;
+            _status.Margin = new Thickness(0, 6, 0, 0);
+        }
+
+        protected override FrameworkElement CreateContent()
+        {
+            var dock = new DockPanel();
+            DockPanel.SetDock(_label, Dock.Top);
+            dock.Children.Add(_label);
+            dock.Children.Add(new Grid { Children = { _status, _blocksPanel, _nativeHost } });
+            _card = Card();
+            _card.Child = dock;
+
+            // A click on the card itself; buttons, switches and the like keep their clicks to themselves.
+            _card.MouseLeftButtonUp += (_, _) => _content?.Clicked?.Invoke();
+
+            // Boxes in the widget, the plugin's own or a text field block, take typing like a note does.
+            _card.AddHandler(PreviewMouseLeftButtonDownEvent, new MouseButtonEventHandler((_, e) =>
+            {
+                if (e.OriginalSource is DependencyObject source && FindTextBox(source) is { } box)
+                {
+                    Owner.SetHomeKeyboard(true);
+                    box.Focus();
+                }
+            }), handledEventsToo: true);
+            _card.AddHandler(LostKeyboardFocusEvent, new KeyboardFocusChangedEventHandler((_, e) =>
+            {
+                if (e.OriginalSource is TextBox)
+                {
+                    ReleaseKeyboard(e);
+                }
+            }), handledEventsToo: true);
+            return _card;
+        }
+
+        public override void Refresh()
+        {
+            PluginWidgetBoard board = Owner._pluginWidgets;
+            bool running = board.IsPlaced(Widget.Id) || board.Place(Widget);
+            PluginWidgetTypeEntry? type = board.FindType(Widget.Source);
+            _content = running ? board.ContentFor(Widget.Id) : null;
+
+            _label.Text = _content?.Title ?? type?.Type.Name ?? "Plugin widget";
+            _label.Visibility = _label.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+            if (_card is not null)
+            {
+                _card.Cursor = _content?.Clicked is null ? Cursors.Arrow : Cursors.Hand;
+            }
+
+            if (_content is null)
+            {
+                Show(_status);
+                _status.Text = running ? "Loading…" : "This widget's plugin is not running. Switch it on in Settings, or remove the widget.";
+                return;
+            }
+
+            if (_content.View is { } view)
+            {
+                if (!ReferenceEquals(view, _shownView))
+                {
+                    _shownView = view;
+                    _nativeHost.Child = NativeView(view);
+                }
+
+                Show(_nativeHost);
+                return;
+            }
+
+            _shownView = null;
+            _nativeHost.Child = null;
+            _blocks.Render(_content.Blocks);
+            Show(_blocksPanel);
+        }
+
+        public override void OptionsChanged()
+        {
+            Owner._pluginWidgets.UpdateOptions(Widget);
+            Refresh();
+        }
+
+        public override void Release()
+        {
+            Owner._pluginWidgets.Unplace(Widget.Id);
+            _nativeHost.Child = null;
+            base.Release();
+        }
+
+        private void Show(FrameworkElement part)
+        {
+            foreach (FrameworkElement each in new FrameworkElement[] { _status, _blocksPanel, _nativeHost })
+            {
+                each.Visibility = each == part ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        /// <summary>The plugin's own element. Plugin code, so it may throw or hand back something that is not an element.</summary>
+        private static UIElement NativeView(Func<object> view)
+        {
+            try
+            {
+                if (view() is UIElement element)
+                {
+                    // An element can only be in one place; one the plugin reuses comes out of where it was.
+                    (VisualTreeHelper.GetParent(element) as Decorator)?.Child = null;
+                    return element;
+                }
+
+                return Secondary("The plugin's view is not a WPF element.", 12);
+            }
+            catch (Exception)
+            {
+                return Secondary("The plugin's view could not be drawn.", 12);
+            }
+        }
+
+        private static TextBox? FindTextBox(DependencyObject? from)
+        {
+            for (DependencyObject? d = from; d is not null; d = d is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d))
+            {
+                if (d is TextBox box)
+                {
+                    return box;
+                }
+            }
+
+            return null;
         }
     }
 

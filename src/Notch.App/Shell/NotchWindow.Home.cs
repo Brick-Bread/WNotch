@@ -4,6 +4,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using Notch.Core.Plugins;
 using Notch.Core.Widgets;
 using Notch.Platform.Display;
 
@@ -38,6 +39,9 @@ public partial class NotchWindow
 
     private bool _homePickerOpen;
 
+    /// <summary>Set while a widget shows more of itself in Home's place, such as the weather's forecast.</summary>
+    private bool _homeDetailOpen;
+
     /// <summary>The widget being dragged to a new place, and where the press was.</summary>
     private (HomeView View, Point Start, bool Moving)? _homeDrag;
 
@@ -48,7 +52,7 @@ public partial class NotchWindow
 
     private List<HomeWidget> HomeWidgets => _settings.HomeWidgets;
 
-    private bool HomeSheetOpen => _homeForm is not null || _homePickerOpen;
+    private bool HomeSheetOpen => _homeForm is not null || _homePickerOpen || _homeDetailOpen;
 
     private void InitializeHome()
     {
@@ -65,6 +69,7 @@ public partial class NotchWindow
         HomeRows.LostMouseCapture += (_, _) => EndHomeDrag();
 
         _homeTick.Tick += (_, _) => TickHome();
+        _pluginWidgets.Changed += OnPluginWidgetsChanged;
         LayoutHome();
     }
 
@@ -198,6 +203,9 @@ public partial class NotchWindow
     private void UpdateHomeTick()
     {
         bool run = _expanded && _tab == NotchTab.Home;
+
+        // Plugins may stop updating their widgets while Home cannot be seen.
+        _pluginWidgets.SetVisible(run);
         if (run && !_homeTick.IsEnabled)
         {
             _homeTick.Start();
@@ -463,6 +471,7 @@ public partial class NotchWindow
 
         _homeForm = null;
         _homePickerOpen = false;
+        _homeDetailOpen = false;
         _homeFormFields.Clear();
         HomeSheetBody.Children.Clear();
         HomeSheet.Visibility = Visibility.Collapsed;
@@ -470,6 +479,16 @@ public partial class NotchWindow
         Keyboard.ClearFocus();
         SetHomeKeyboard(false);
         LayoutHome();
+    }
+
+    /// <summary>Shows more of a widget in Home's place, until Close.</summary>
+    private void ShowHomeDetail(string title, UIElement body)
+    {
+        CloseHomeSheet(save: false);
+        _homeDetailOpen = true;
+        HomeSheetBody.Children.Clear();
+        HomeSheetBody.Children.Add(body);
+        ShowHomeSheet(title, canSave: false);
     }
 
     /// <summary>Every kind of widget that can still be added, three to a row.</summary>
@@ -480,28 +499,14 @@ public partial class NotchWindow
         var grid = new UniformGrid { Columns = 3, Margin = new Thickness(-4, -4, -4, 0) };
         foreach (WidgetType type in HomeLayout.Addable(HomeWidgets))
         {
-            var tile = new Border { Margin = new Thickness(4), Cursor = Cursors.Hand };
-            tile.SetResourceReference(StyleProperty, "Card");
-            tile.Padding = new Thickness(12, 9, 12, 9);
-            tile.MouseEnter += (_, _) => tile.SetResourceReference(Border.BackgroundProperty, "HoverBrush");
-            tile.MouseLeave += (_, _) => tile.SetResourceReference(Border.BackgroundProperty, "CardBrush");
-            tile.MouseLeftButtonUp += (_, e) =>
-            {
-                e.Handled = true;
-                AddHomeWidget(type);
-            };
+            grid.Children.Add(PickerTile(type, () => AddHomeWidget(type, source: null)));
+        }
 
-            var name = new DockPanel();
-            var glyph = new TextBlock { Text = type.Glyph, FontSize = 13, Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center };
-            glyph.SetResourceReference(TextBlock.FontFamilyProperty, "IconFont");
-            DockPanel.SetDock(glyph, Dock.Left);
-            name.Children.Add(glyph);
-            name.Children.Add(new TextBlock { Text = type.Name, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center });
-
-            var description = new TextBlock { Text = type.Description, FontSize = 11, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 0, 0) };
-            description.SetResourceReference(TextBlock.ForegroundProperty, "SecondaryTextBrush");
-            tile.Child = new StackPanel { Children = { name, description } };
-            grid.Children.Add(tile);
+        // Then the plugins' own kinds, by their own names.
+        foreach (PluginWidgetTypeEntry entry in HomeLayout.AddableFromPlugins(HomeWidgets, _pluginWidgets.Types).OrderBy(e => e.Type.Name))
+        {
+            WidgetType type = WidgetCatalog.ForPlugin(entry.Type);
+            grid.Children.Add(PickerTile(type, () => AddHomeWidget(type, entry.Source)));
         }
 
         HomeSheetBody.Children.Clear();
@@ -509,11 +514,39 @@ public partial class NotchWindow
         ShowHomeSheet("Add a widget", canSave: false);
     }
 
-    private void AddHomeWidget(WidgetType type)
+    private static Border PickerTile(WidgetType type, Action add)
+    {
+        var tile = new Border { Margin = new Thickness(4), Cursor = Cursors.Hand };
+        tile.SetResourceReference(StyleProperty, "Card");
+        tile.Padding = new Thickness(12, 9, 12, 9);
+        tile.MouseEnter += (_, _) => tile.SetResourceReference(Border.BackgroundProperty, "HoverBrush");
+        tile.MouseLeave += (_, _) => tile.SetResourceReference(Border.BackgroundProperty, "CardBrush");
+        tile.MouseLeftButtonUp += (_, e) =>
+        {
+            e.Handled = true;
+            add();
+        };
+
+        var name = new DockPanel();
+        var glyph = new TextBlock { Text = type.Glyph, FontSize = 13, Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center };
+        glyph.SetResourceReference(TextBlock.FontFamilyProperty, "IconFont");
+        DockPanel.SetDock(glyph, Dock.Left);
+        name.Children.Add(glyph);
+        name.Children.Add(new TextBlock { Text = type.Name, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center });
+
+        var description = new TextBlock { Text = type.Description, FontSize = 11, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 0, 0) };
+        description.SetResourceReference(TextBlock.ForegroundProperty, "SecondaryTextBrush");
+        tile.Child = new StackPanel { Children = { name, description } };
+        return tile;
+    }
+
+    /// <param name="source">For a plugin's kind of widget, which one (<see cref="HomeWidget.Source"/>).</param>
+    private void AddHomeWidget(WidgetType type, string? source)
     {
         HomeWidget widget = HomeWidget.Create(type);
+        widget.Source = source;
         HomeWidgets.Add(widget);
-        if (type.NeedsSetup)
+        if (type.NeedsSetup || (source is not null && type.Options.Count > 0))
         {
             // The form takes the picker's place.
             OpenHomeForm(widget, isNew: true);
@@ -528,7 +561,7 @@ public partial class NotchWindow
     /// <summary>A form for a widget's options, opened from its gear in edit mode, or straight after adding one that needs setting up.</summary>
     private void OpenHomeForm(HomeWidget widget, bool isNew)
     {
-        if (WidgetCatalog.Find(widget.Kind) is not { } type)
+        if (TypeOf(widget) is not { } type)
         {
             return;
         }
@@ -544,7 +577,8 @@ public partial class NotchWindow
             IReadOnlyList<(string Value, string Label)> choices = option.Choices is { } fixedChoices
                 ? [.. fixedChoices.Select(c => (c, c))]
                 : PluginCardChoices();
-            FrameworkElement editor = OptionEditor(option.Type, widget.Option(option.Key), choices, out Func<string> read, out TextBox? box);
+            string value = widget.Options.TryGetValue(option.Key, out string? set) ? set : option.Default;
+            FrameworkElement editor = OptionEditor(option.Type, value, choices, out Func<string> read, out TextBox? box);
             first ??= box;
             _homeFormFields.Add((option.Key, read));
             HomeSheetBody.Children.Add(FormRow(option.Label, option.Hint, editor));
@@ -571,6 +605,12 @@ public partial class NotchWindow
             first.CaretIndex = first.Text.Length;
         }
     }
+
+    /// <summary>What kind of widget this is: its built-in type, or for a plugin's widget the type its plugin registered while it runs.</summary>
+    private WidgetType? TypeOf(HomeWidget widget) =>
+        widget.Kind == WidgetKinds.PluginWidget && _pluginWidgets.FindType(widget.Source) is { } entry
+            ? WidgetCatalog.ForPlugin(entry.Type)
+            : WidgetCatalog.Find(widget.Kind);
 
     /// <summary>The plugin cards there are now, for a plugin card widget to show one of.</summary>
     private IReadOnlyList<(string Value, string Label)> PluginCardChoices() =>
@@ -711,13 +751,16 @@ public partial class NotchWindow
         private readonly Grid _chrome = new() { Cursor = Cursors.SizeAll, Background = Brushes.Transparent };
         private readonly TextBlock _chromeNote = new() { FontSize = 11, Margin = new Thickness(0, 2, 0, 0), HorizontalAlignment = HorizontalAlignment.Center };
         private readonly Button _widthButton = new();
+        private readonly Button _settingsButton = new();
+        private readonly TextBlock _chromeGlyph = new() { FontSize = 16, HorizontalAlignment = HorizontalAlignment.Center };
+        private readonly TextBlock _chromeName = new() { FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 4, 0, 0), HorizontalAlignment = HorizontalAlignment.Center };
         private FrameworkElement? _content;
 
         protected HomeView(NotchWindow owner, HomeWidget widget)
         {
             Owner = owner;
             Widget = widget;
-            Type = WidgetCatalog.Find(widget.Kind)!;
+            Type = owner.TypeOf(widget)!;
 
             _empty.SetResourceReference(StyleProperty, "Card");
             _empty.Child = _emptyText;
@@ -735,19 +778,15 @@ public partial class NotchWindow
             outline.SetResourceReference(Border.CornerRadiusProperty, "CardRadius");
 
             var name = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, IsHitTestVisible = false };
-            var glyph = new TextBlock { Text = Type.Glyph, FontSize = 16, HorizontalAlignment = HorizontalAlignment.Center };
-            glyph.SetResourceReference(TextBlock.FontFamilyProperty, "IconFont");
-            name.Children.Add(glyph);
-            name.Children.Add(new TextBlock { Text = Type.Name, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 4, 0, 0), HorizontalAlignment = HorizontalAlignment.Center });
+            _chromeGlyph.SetResourceReference(TextBlock.FontFamilyProperty, "IconFont");
+            name.Children.Add(_chromeGlyph);
+            name.Children.Add(_chromeName);
             _chromeNote.SetResourceReference(TextBlock.ForegroundProperty, "SecondaryTextBrush");
             name.Children.Add(_chromeNote);
 
             var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 4, 4, 0) };
             buttons.Children.Add(ChromeButton(_widthButton, "", () => owner.ToggleHomeWidth(Widget)));
-            if (Type.Options.Count > 0 || Type.CanBeEmpty)
-            {
-                buttons.Children.Add(ChromeButton(new Button(), "", () => owner.OpenHomeForm(Widget, isNew: false), "Settings"));
-            }
+            buttons.Children.Add(ChromeButton(_settingsButton, "", () => owner.OpenHomeForm(Widget, isNew: false), "Settings"));
 
             buttons.Children.Add(ChromeButton(new Button(), "", () => owner.RemoveHomeWidget(Widget), "Remove from Home"));
             _chrome.Children.Add(backdrop);
@@ -760,7 +799,8 @@ public partial class NotchWindow
 
         public HomeWidget Widget { get; }
 
-        public WidgetType Type { get; }
+        /// <summary>For a plugin's widget, the type its plugin registered, which can come and go while the widget stays.</summary>
+        public WidgetType Type { get; private set; }
 
         /// <summary>What goes into the row.</summary>
         public FrameworkElement Host
@@ -813,6 +853,11 @@ public partial class NotchWindow
 
         public void UpdateChrome(bool editing)
         {
+            Type = Owner.TypeOf(Widget) ?? Type;
+            _chromeGlyph.Text = Type.Glyph;
+            _chromeName.Text = Type.Name;
+            _settingsButton.Visibility = Type.Options.Count > 0 || Type.CanBeEmpty ? Visibility.Visible : Visibility.Collapsed;
+
             bool empty = IsEmpty;
             _ = Host;
             _content!.Visibility = empty ? Visibility.Hidden : Visibility.Visible;
@@ -840,6 +885,16 @@ public partial class NotchWindow
             };
             return button;
         }
+
+        /// <summary>A small inner card, for figures in a widget's detail view.</summary>
+        public static Border Tile()
+        {
+            var tile = new Border();
+            tile.SetResourceReference(StyleProperty, "Card");
+            return tile;
+        }
+
+        public static TextBlock Caption(string text) => Label(text);
 
         protected static Border Card()
         {

@@ -156,7 +156,10 @@
                                     Content="Cancel" />
                             <TextBlock x:Name="HomeSheetTitle" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
                         </DockPanel>
-                        <StackPanel x:Name="HomeSheetBody" />
+                        <!-- Scrolls (wheel only) when the picker or a forecast is taller than the notch may grow. -->
+                        <ScrollViewer VerticalScrollBarVisibility="Hidden" Focusable="False">
+                            <StackPanel x:Name="HomeSheetBody" />
+                        </ScrollViewer>
                     </DockPanel>
 
                     <!-- The cards Home has always had. Code moves each into its place among the rows. -->

@@ -52,6 +52,7 @@ public partial class NotchWindow : Window
     private readonly PluginPageBoard _pluginPages;
     private readonly PluginShellState _shellState;
     private readonly PluginGlowBoard _pluginGlow;
+    private readonly PluginWidgetBoard _pluginWidgets;
     private bool _pluginGlowAllowed;
     private readonly FileShelf _shelf;
     private readonly SettingsStore _settingsStore;
@@ -88,6 +89,7 @@ public partial class NotchWindow : Window
         PluginPageBoard pluginPages,
         PluginShellState shellState,
         PluginGlowBoard pluginGlow,
+        PluginWidgetBoard pluginWidgets,
         FileShelf shelf,
         SettingsStore settingsStore,
         AppSettings settings,
@@ -106,6 +108,7 @@ public partial class NotchWindow : Window
         _pluginPages = pluginPages;
         _shellState = shellState;
         _pluginGlow = pluginGlow;
+        _pluginWidgets = pluginWidgets;
         _shelf = shelf;
         _settingsStore = settingsStore;
         _settings = settings;
@@ -236,6 +239,7 @@ public partial class NotchWindow : Window
         _pluginCards.Changed -= OnPluginCardsChanged;
         _pluginPages.Changed -= OnPluginPagesChanged;
         _pluginGlow.ActiveChanged -= OnPluginGlowActiveChanged;
+        _pluginWidgets.Changed -= OnPluginWidgetsChanged;
         _shelf.Changed -= OnShelfChanged;
         ThemeManager.Changed -= OnThemeChanged;
         _mediaTimer.Stop();

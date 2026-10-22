@@ -27,6 +27,9 @@ public sealed class HomeWidget
     /// <summary>The widget's own settings, by <see cref="WidgetOption.Key"/>, and anything it keeps, such as a note's text.</summary>
     public Dictionary<string, string> Options { get; set; } = [];
 
+    /// <summary>For a <see cref="WidgetKinds.PluginWidget"/>: which plugin's type it is, as "plugin-id/type-id".</summary>
+    public string? Source { get; set; }
+
     /// <summary>An option's value, or what the widget's type gives it when it has not been set.</summary>
     public string Option(string key)
     {
@@ -64,6 +67,9 @@ public static class WidgetKinds
     public const string Command = "command";
     public const string Feed = "feed";
     public const string Plugin = "plugin";
+
+    /// <summary>A widget a plugin draws itself; <see cref="HomeWidget.Source"/> says whose. Not in the catalog's picker list.</summary>
+    public const string PluginWidget = "plugin-widget";
 }
 
 public enum WidgetOptionType
@@ -179,9 +185,23 @@ public static class WidgetCatalog
         [
             new("card", "Card", WidgetOptionType.Choice),
         ]),
+
+        // Stands for every plugin's widget types; the app offers each of those in the picker by its own name.
+        new(WidgetKinds.PluginWidget, "Plugin widget", "", "A widget from a plugin", WidgetWidth.Half, Single: false, CanBeEmpty: false, []),
     ];
 
     public static WidgetType? Find(string? kind) => All.FirstOrDefault(t => t.Kind == kind);
+
+    /// <summary>How the picker offers a plugin's widget type, with that type's own name, icon, width and options.</summary>
+    public static WidgetType ForPlugin(Plugins.PluginWidgetType type) => new(
+        WidgetKinds.PluginWidget,
+        type.Name,
+        type.Glyph,
+        type.Description ?? "",
+        type.FullWidth ? WidgetWidth.Full : WidgetWidth.Half,
+        type.Single,
+        CanBeEmpty: false,
+        type.Options);
 }
 
 /// <summary>Arranges the Home tab's widgets and keeps the list in the settings sensible.</summary>
@@ -254,6 +274,12 @@ public static class HomeLayout
                 continue;
             }
 
+            // A plugin widget is kept while its plugin is off, so it is back in its place when the plugin is.
+            if (widget.Kind == WidgetKinds.PluginWidget && string.IsNullOrWhiteSpace(widget.Source))
+            {
+                continue;
+            }
+
             if (type.Single && result.Any(w => w.Kind == widget.Kind))
             {
                 continue;
@@ -284,10 +310,17 @@ public static class HomeLayout
         return result;
     }
 
-    /// <summary>The types the picker can still add: every type, less the single ones already on Home.</summary>
+    /// <summary>The built-in types the picker can still add: every type, less the single ones already on Home.</summary>
     public static IReadOnlyList<WidgetType> Addable(IReadOnlyCollection<HomeWidget> widgets) => widgets.Count >= MaxWidgets
         ? []
-        : [.. WidgetCatalog.All.Where(t => !t.Single || widgets.All(w => w.Kind != t.Kind))];
+        : [.. WidgetCatalog.All.Where(t => t.Kind != WidgetKinds.PluginWidget && (!t.Single || widgets.All(w => w.Kind != t.Kind)))];
+
+    /// <summary>The plugins' types the picker can still add, less the single ones already on Home.</summary>
+    public static IReadOnlyList<Plugins.PluginWidgetTypeEntry> AddableFromPlugins(
+        IReadOnlyCollection<HomeWidget> widgets,
+        IEnumerable<Plugins.PluginWidgetTypeEntry> types) => widgets.Count >= MaxWidgets
+        ? []
+        : [.. types.Where(t => !t.Type.Single || widgets.All(w => w.Source != t.Source))];
 
     /// <summary>Moves a widget to a new place in the list, counted as if it had already been taken out. False when nothing moved.</summary>
     public static bool Move(List<HomeWidget> widgets, string id, int index)

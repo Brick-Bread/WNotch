@@ -7,10 +7,10 @@
       "name": "Break reminder",
       "repository": "Brick-Bread/WNotch",
       "author": "Notch contributors",
-      "description": "Counts how long you have been at the screen and nudges you to take a break with a notice in the pill.",
+      "description": "Counts how long you have been at the screen and nudges you to take a break with a notice in the pill. Adds a countdown widget for Home.",
       "tags": ["health", "sample"],
       "permissions": [],
-      "apiVersion": 1,
+      "apiVersion": 8,
       "verified": true
     },
     {

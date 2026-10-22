@@ -220,7 +220,7 @@ public partial class App : Application
 
         // Before any window exists, so nothing is ever drawn without its colours.
         ThemeManager.Apply(settings);
-        var window = new NotchWindow(_activities, media, _terminal, pluginCards, _plugins.Pages, _plugins.ShellState, _plugins.Glow, shelf, settingsStore, settings, _agentBoard, entry => _agentTracker?.Focus(entry) ?? false)
+        var window = new NotchWindow(_activities, media, _terminal, pluginCards, _plugins.Pages, _plugins.ShellState, _plugins.Glow, _plugins.Widgets, shelf, settingsStore, settings, _agentBoard, entry => _agentTracker?.Focus(entry) ?? false)
         {
             ShelfKeepsMissingFiles = demo,
         };

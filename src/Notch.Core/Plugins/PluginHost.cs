@@ -18,6 +18,7 @@ internal sealed class PluginHost : IPluginHost
     private readonly ScopedAudio _audio;
     private readonly ScopedShell _shell;
     private readonly ScopedBus _bus;
+    private readonly ScopedWidgets _widgets;
 
     public PluginHost(
         PluginManifest manifest,
@@ -31,7 +32,8 @@ internal sealed class PluginHost : IPluginHost
         PluginAudioHub audio,
         PluginShellState shell,
         PluginBus bus,
-        PluginLog log)
+        PluginLog log,
+        PluginWidgetBoard? widgets = null)
     {
         Manifest = manifest;
         PluginDirectory = pluginDirectory;
@@ -47,6 +49,7 @@ internal sealed class PluginHost : IPluginHost
         Audio = _audio = new ScopedAudio(audio);
         Shell = _shell = new ScopedShell(manifest.Id, shell, Activities);
         Bus = _bus = new ScopedBus(manifest.Id, bus, scopedLog);
+        Widgets = _widgets = new ScopedWidgets(manifest.Id, widgets ?? new PluginWidgetBoard(), scopedLog);
         Settings = SettingsStore = new PluginSettingsStore(Path.Combine(dataDirectory, "settings.json"));
     }
 
@@ -68,6 +71,8 @@ internal sealed class PluginHost : IPluginHost
     public IPluginCards Cards { get; }
 
     public IPluginPages Pages { get; }
+
+    public IPluginWidgets Widgets { get; }
 
     public IPluginThemes Themes { get; }
 
@@ -91,6 +96,7 @@ internal sealed class PluginHost : IPluginHost
     {
         _activities.Close();
         _cards.Close();
+        _widgets.Close();
         _pages.Close();
         _themes.Close();
         _glow.Close();
@@ -209,6 +215,79 @@ internal sealed class PluginHost : IPluginHost
                 }
             });
         }
+    }
+
+    private sealed class ScopedWidgets(string pluginId, PluginWidgetBoard board, ScopedLog log) : IPluginWidgets
+    {
+        private readonly Lock _gate = new();
+        private bool _closed;
+
+        public IReadOnlyList<PluginWidget> Placed => board.PlacedFor(pluginId);
+
+        public void Register(PluginWidgetType type)
+        {
+            ArgumentNullException.ThrowIfNull(type);
+            ArgumentException.ThrowIfNullOrWhiteSpace(type.Id);
+            ArgumentException.ThrowIfNullOrWhiteSpace(type.Name);
+
+            lock (_gate)
+            {
+                if (_closed)
+                {
+                    return;
+                }
+
+                string what = $"widget type '{type.Id}'";
+                board.Register(pluginId, type with
+                {
+                    Placed = Guard(type.Placed, what),
+                    Removed = Guard(type.Removed, what),
+                    OptionsChanged = Guard(type.OptionsChanged, what),
+                    VisibleChanged = type.VisibleChanged is { } visible
+                        ? (widget, shown) => Run(() => visible(widget, shown), what)
+                        : null,
+                });
+            }
+        }
+
+        public bool Unregister(string typeId) => board.Unregister(pluginId, typeId);
+
+        public void Show(string widgetId, PluginWidgetContent content)
+        {
+            ArgumentNullException.ThrowIfNull(content);
+            lock (_gate)
+            {
+                if (!_closed)
+                {
+                    board.Show(pluginId, widgetId, content with { Clicked = content.Clicked is { } clicked ? () => Run(clicked, $"widget '{widgetId}'") : null });
+                }
+            }
+        }
+
+        public void Close()
+        {
+            lock (_gate)
+            {
+                _closed = true;
+                board.RemoveAll(pluginId);
+            }
+        }
+
+        private Action<PluginWidget>? Guard(Action<PluginWidget>? callback, string what) =>
+            callback is null ? null : widget => Run(() => callback(widget), what);
+
+        /// <summary>The shell calls these on the UI thread; plugin code runs elsewhere and cannot throw into it.</summary>
+        private void Run(Action action, string what) => Task.Run(() =>
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception e)
+            {
+                log.Error($"A callback of {what} failed.", e);
+            }
+        });
     }
 
     private sealed class ScopedThemes(string pluginId, string pluginDirectory, PluginThemeBoard board) : IPluginThemes

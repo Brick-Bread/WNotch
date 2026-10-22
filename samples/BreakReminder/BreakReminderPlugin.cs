@@ -1,16 +1,20 @@
 using Notch.Core.Activities;
 using Notch.Core.Plugins;
+using Notch.Core.Widgets;
 
 namespace BreakReminder;
 
 /// <summary>
 /// The sample plugin from docs/plugins.md. It shows a card counting down to the next break and,
-/// when the time is up, an activity in the pill until the card is clicked.
+/// when the time is up, an activity in the pill until the card is clicked. It also offers the same
+/// countdown as a widget for the Home tab.
 /// </summary>
 public sealed class BreakReminderPlugin : INotchPlugin
 {
     private const string ReminderId = "reminder";
     private const string IntervalKey = "intervalMinutes";
+    private const string WidgetTypeId = "next-break";
+    private const string LabelKey = "label";
 
     private readonly Lock _gate = new();
     private IPluginHost? _host;
@@ -28,6 +32,18 @@ public sealed class BreakReminderPlugin : INotchPlugin
         host.Settings.Set(IntervalKey, minutes);
         _interval = TimeSpan.FromMinutes(minutes);
         _since = DateTimeOffset.UtcNow;
+
+        // A widget the user can put on Home from "Add widget". Each one placed is filled in by Update.
+        host.Widgets.Register(new PluginWidgetType
+        {
+            Id = WidgetTypeId,
+            Name = "Next break",
+            Description = "Counts down to your next break",
+            Glyph = "",
+            Options = [new WidgetOption(LabelKey, "Label", WidgetOptionType.Text, "Next break")],
+            Placed = _ => Tick(),
+            OptionsChanged = _ => Tick(),
+        });
 
         _timer = new Timer(_ => Tick(), null, TimeSpan.Zero, TimeSpan.FromSeconds(10));
     }
@@ -70,6 +86,25 @@ public sealed class BreakReminderPlugin : INotchPlugin
             Progress = Math.Clamp(elapsed / _interval, 0, 1),
             Clicked = Restart,
         });
+
+        foreach (PluginWidget widget in host.Widgets.Placed)
+        {
+            host.Widgets.Show(widget.Id, new PluginWidgetContent
+            {
+                Title = widget.Option(LabelKey),
+                Blocks =
+                [
+                    new PluginProgress
+                    {
+                        Label = due ? "Time for a break" : "Until your break",
+                        Value = due ? "Now" : $"{Math.Ceiling(left.TotalMinutes)} min",
+                        Progress = Math.Clamp(elapsed / _interval, 0, 1),
+                        Color = due ? GlowColor.Violet : null,
+                    },
+                    new PluginButtons { Actions = [new PluginAction { Label = due ? "I'm back" : "Start over", Clicked = Restart }] },
+                ],
+            });
+        }
 
         if (due && !_reminded)
         {

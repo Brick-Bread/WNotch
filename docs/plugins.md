@@ -320,6 +320,76 @@ A card is plain data: the plugin describes it and Notch draws it in its own styl
 
 There is currently no way to learn whether the tab is on screen, so update cards on a modest schedule: once a second at most, and less often for anything that costs something to compute or fetch.
 
+## Widgets: the Home tab
+
+A plugin can offer kinds of widget for the Home tab. They appear in the **Add widget** picker beside the built-in ones, and the user places, moves, sizes, sets up and removes them in Home's edit mode like any other. There can be several widgets of one kind, each with its own settings. Needs API version 8.
+
+```csharp
+host.Widgets.Register(new PluginWidgetType
+{
+    Id = "build",
+    Name = "Build status",
+    Description = "The last build of a branch",
+    Glyph = "",
+    Options = [new WidgetOption("branch", "Branch", WidgetOptionType.Text, "main")],
+    Placed = widget => Refresh(widget),
+    OptionsChanged = widget => Refresh(widget),
+    Removed = widget => Forget(widget.Id),
+    VisibleChanged = (widget, visible) => Pause(widget.Id, !visible),
+});
+
+void Refresh(PluginWidget widget) => host.Widgets.Show(widget.Id, new PluginWidgetContent
+{
+    Title = $"Build · {widget.Option("branch")}",
+    Blocks =
+    [
+        new PluginValueRow { Label = "Status", Value = "Passing", Color = GlowColor.Green },
+        new PluginButtons { Actions = [new PluginAction { Label = "Rerun", Clicked = Rerun }] },
+    ],
+});
+```
+
+| `PluginWidgetType` property | Meaning |
+|---|---|
+| `Id` | Required. Identifies the kind within your plugin. It is kept in the user's layout, so do not change it between versions. |
+| `Name` | Required. What the picker and edit mode call it. |
+| `Description` | One line for the picker. |
+| `Glyph` | A Segoe Fluent Icons character for the picker and edit mode. |
+| `FullWidth` | A new widget takes a whole row instead of half of one. The user can change it. |
+| `Single` | Only one widget of this kind can be on Home. |
+| `Options` | Settings under the widget's gear, as `WidgetOption`s: `Text`, `Lines`, `Toggle` (`"true"` or `"false"`) or `Choice` (give `Choices`). When there are any, the form opens as soon as the widget is added. |
+| `Placed` | A widget of this kind is on Home: just added, or already there when your plugin started. Show something for it. |
+| `Removed` | The user took it off Home. |
+| `OptionsChanged` | The user saved its settings. |
+| `VisibleChanged` | Home came on screen (`true`) or went off it (`false`). There is no need to keep widgets up to date while they cannot be seen. |
+
+Each callback gets a `PluginWidget`: its `Id` (stays the same across restarts), its `TypeId`, and its `Options`, with the default for any the user has not set; `Option(key)` reads one. `host.Widgets.Placed` lists all of your widgets on Home now.
+
+`host.Widgets.Show(id, content)` sets what one widget shows, and can be called again whenever it changes. A widget shows "Loading…" until the first call. `PluginWidgetContent` has:
+
+| Property | Meaning |
+|---|---|
+| `Title` | The caption at the top. Null uses the kind's name; empty shows none. |
+| `Blocks` | The body, built from the same blocks as a page (see [Back button, list, actions and blocks](#back-button-list-actions-and-blocks)). Notch draws them in its own style, so they match every theme. |
+| `View` | Instead of blocks, a body you draw yourself with WPF (see below). |
+| `Clicked` | Called when the user clicks the card outside its buttons and other controls. |
+
+**Drawing a widget yourself.** For something blocks cannot show, set `View` to a function that returns a `System.Windows.FrameworkElement`. Your project then targets `net10.0-windows` with `<UseWPF>true</UseWPF>`. Notch calls the function on the UI thread, once per widget and again when you show content with a different function, so keep the function and change the element rather than making a new function each update. Change the element only on the UI thread, through its `Dispatcher`, and colour it with the theme's brushes by resource key (`TextBrush`, `SecondaryTextBrush`, `CardBrush`, `AccentBrush`) so it suits every theme:
+
+```csharp
+var text = new TextBlock { FontSize = 28 };
+text.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
+Func<object> view = () => text;
+host.Widgets.Show(widget.Id, new PluginWidgetContent { View = view });
+
+// Later, from any thread:
+text.Dispatcher.Invoke(() => text.Text = "42");
+```
+
+Blocks are the better choice when they will do: they cannot break the notch, and they keep up with its look as it changes. A view that throws, or returns something that is not an element, shows an error in the widget instead.
+
+All callbacks run on a background thread, and an exception from one is logged. When your plugin stops, its widgets stay where the user put them and say that the plugin is not running; they come back to life when it starts again.
+
 ## Pages: tabs with a console
 
 A page is a tab of its own in the expanded notch: up to eight figures in a row on top and a console below. It suits a plugin that watches one thing closely, such as a game server. Needs API version 3.
@@ -740,7 +810,7 @@ This repository does the same for its sample: each Notch release has the [Break 
 
 ## Compatibility
 
-The plugin API is `Notch.Core.Plugins` plus the types in `Notch.Core.Activities` that it uses (`Activity`, `ActivityTier`, `Glow`, `GlowColor`, `GlowPattern`). Everything else in `Notch.Core.dll` is the app's own code: it is visible because it shares the assembly, but it can change in any release. Do not use it.
+The plugin API is `Notch.Core.Plugins` plus the types in `Notch.Core.Activities` that it uses (`Activity`, `ActivityTier`, `Glow`, `GlowColor`, `GlowPattern`) and, for widgets, `WidgetOption` and `WidgetOptionType` in `Notch.Core.Widgets`. Everything else in `Notch.Core.dll` is the app's own code: it is visible because it shares the assembly, but it can change in any release. Do not use it.
 
 `PluginApi.Version` is the API version a build of Notch offers. It goes up when the API gains something. Notch runs plugins whose `apiVersion` is equal to or lower than its own and refuses those that ask for a newer one, telling the user to update Notch. Set `apiVersion` to the lowest version that has everything your plugin uses.
 
@@ -753,6 +823,7 @@ The plugin API is `Notch.Core.Plugins` plus the types in `Notch.Core.Activities`
 | 5 | Pages: `Actions` and `Blocks`. `IPluginHost.Shell` (notch state, `Notify`), `IPluginBus` (messages between plugins), options listed in the manifest with `IPluginSettings.Changed`, and `repository` in the manifest. |
 | 6 | `IPluginHost.Themes`: themes that restyle the whole notch. |
 | 7 | `IPluginHost.Glow` (draw the light around the pill, in segments if you like) and `IPluginHost.Audio` (loudness of the PC's sound by pitch). The `audio` permission. |
+| 8 | `IPluginHost.Widgets`: widgets for the Home tab, drawn with blocks or with WPF. |
 
 ## Troubleshooting
 
