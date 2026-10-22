@@ -8,23 +8,23 @@
 <meta property="og:title" content="Notch for Windows 11">
 <meta property="og:description" content="A small black pill that grows to show what is happening on your machine.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="preload" href="media/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
 <div class="wrap">
-<nav><b><a href="./">Notch</a></b><div><a href="#features">Features</a><a href="#themes">Themes</a><a href="#install">Install</a><a href="plugins.html">Plugins</a><a href="https://github.com/Brick-Bread/WNotch">GitHub</a><a class="count" id="count" href="https://github.com/Brick-Bread/WNotch/releases" title="Total downloads" hidden><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8M4.5 6.8 8 10.3l3.5-3.5M2.5 13.5h11"/></svg><span id="total"></span></a></div></nav>
+<nav><b><a href="./"><span class="mark" aria-hidden="true"></span>Notch</a></b><div><a href="#features">Features</a><a href="#themes">Themes</a><a href="#install">Install</a><a href="plugins.html">Plugins</a><a href="https://github.com/Brick-Bread/WNotch">GitHub</a><a class="count" id="count" href="https://github.com/Brick-Bread/WNotch/releases" title="Total downloads" hidden><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8M4.5 6.8 8 10.3l3.5-3.5M2.5 13.5h11"/></svg><span id="total"></span></a></div></nav>
 
 <header class="hero">
-<h1>The notch Windows <em>never had.</em></h1>
-<p>A small black pill at the top of your screen that grows to show what is happening: music, volume, timers, and your coding agents.</p>
+<h1>A Dynamic Island for Windows.</h1>
+<p>A small black pill at the top of your screen that grows to show what is playing, which coding agent needs you, and what just changed.</p>
 <div class="cta">
 <a class="btn" id="dl" href="https://github.com/Brick-Bread/WNotch/releases/latest">Download for Windows</a>
-<a class="btn alt" href="https://github.com/Brick-Bread/WNotch">View source</a>
+<a class="btn alt" href="https://github.com/Brick-Bread/WNotch">View on GitHub</a>
 <div class="small" id="ver">Free and open source. Windows 10 2004 or later, Windows 11 recommended.</div>
 </div>
 
 <div class="desk" id="desk" aria-label="An animated demonstration of the notch">
- <div class="win"></div><div class="bar"><i style="left:44%"></i><i style="left:48%"></i><i style="left:52%"></i></div>
  <div class="sim is-compact" id="sim" role="img" aria-label="The notch changing between what is playing, an agent working, volume and its expanded view">
   <div class="compact" id="compact"></div>
   <div class="full" id="full"></div>
@@ -38,8 +38,8 @@
 
 <section id="features">
 <span class="eyebrow">Features</span>
-<h2>What it does</h2>
-<p class="lead">Always on top, never takes focus, and gets out of the way of fullscreen games.</p>
+<h2>Everything, at a glance.</h2>
+<p class="lead">Always on top, never takes focus, and leaves the screen completely while a game runs fullscreen.</p>
 <div class="bento">
 <div class="card w4"><span class="k"><svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13M9 18a3 3 0 1 1-3-3 3 3 0 0 1 3 3Zm11-2a3 3 0 1 1-3-3 3 3 0 0 1 3 3Z"/></svg></span><h3>Media</h3><p>Whatever is playing shows with its artwork, with play/pause, skip and click-to-seek when expanded.</p></div>
 <div class="card"><span class="k"><svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4V5Zm5 3a5 5 0 0 1 0 8"/></svg></span><h3>System HUDs</h3><p>Volume, audio output, brightness, charger, low battery, Bluetooth and Caps Lock.</p></div>
@@ -57,7 +57,7 @@
 
 <section id="themes" class="themes">
 <span class="eyebrow">Themes</span>
-<h2>Make it yours</h2>
+<h2>Make it yours.</h2>
 <p class="lead">Dark and light are built in. Theme plugins restyle every surface, font and corner. Every picture below is the real app, rendered with each theme.</p>
 <div class="picker">
  <div class="row"><span class="lab">Built in</span><div class="chips" id="gBuilt"></div></div>
@@ -66,10 +66,10 @@
 <div class="gallery" id="gallery">
  <div class="name"><b id="gName"></b><span id="gNote"></span></div>
  <div class="big">
-  <img id="gHome" width="1280" height="728" decoding="async" alt="The Home tab in this theme">
+  <img id="gHome" width="1310" height="668" decoding="async" alt="The Home tab in this theme">
   <div class="col">
-   <img id="gStats" width="1280" height="580" decoding="async" alt="The Stats tab in this theme">
-   <div class="pills"><img id="gMedia" width="668" height="82" decoding="async" alt="The compact pill showing music"><img id="gAgent" width="718" height="109" decoding="async" alt="The compact pill when an agent needs input"></div>
+   <img id="gStats" width="1310" height="580" decoding="async" alt="The Stats tab in this theme">
+   <div class="pills"><img id="gMedia" width="800" height="69" decoding="async" alt="The compact pill showing music"><img id="gAgent" width="784" height="79" decoding="async" alt="The compact pill when an agent needs input"></div>
   </div>
  </div>
 </div>
@@ -77,11 +77,11 @@
 
 <section>
 <span class="eyebrow">Inside</span>
-<h2>Hover, and it opens</h2>
+<h2>Hover, and it opens.</h2>
 <p class="lead">Home has what is playing, a timer and your calendar; Stats shows the machine; the Shelf holds files for later.</p>
 <div class="inside">
-<div class="stage"><img class="shot" src="shots/home.webp" alt="The Home tab with media controls, a timer and a calendar" loading="lazy"></div>
-<div class="stage"><img class="shot" src="shots/stats.webp" alt="The Stats tab with CPU, memory, GPU, network and battery" loading="lazy"></div>
+<div class="stage"><img class="shot" src="shots/home.png" alt="The Home tab with media controls, a timer and a calendar" loading="lazy"></div>
+<div class="stage"><img class="shot" src="shots/stats.png" alt="The Stats tab with CPU, memory, GPU, network and battery" loading="lazy"></div>
 <div class="stage"><img class="shot" src="shots/shelf.png" alt="The Shelf tab holding five files and folders" loading="lazy"></div>
 <div class="stage"><img class="shot" src="shots/home-agents.png" alt="The Home tab listing three coding agents with their state and where they run" loading="lazy"></div>
 <div class="stage"><img class="shot" src="shots/palette-search.png" alt="The command palette showing timers for the search tim" loading="lazy"></div>
@@ -91,24 +91,24 @@
 
 <section>
 <span class="eyebrow">Glow</span>
-<h2>Glow that means something</h2>
+<h2>Glow that means something.</h2>
 <p class="lead">The pill lights up in a colour and rhythm that matches the moment.</p>
 <div class="states">
-<div class="state" style="--c:#4a9eff"><img loading="lazy" decoding="async" src="shots/pill-agent-working.png" alt=""><span>An agent is working</span></div>
-<div class="state flash" style="--c:#fbbf24"><img loading="lazy" decoding="async" src="shots/pill-agent-needs-input.png" alt=""><span>An agent needs you</span></div>
-<div class="state flash" style="--c:#4ade80"><img loading="lazy" decoding="async" src="shots/pill-agent-done.png" alt=""><span>It is done</span></div>
-<div class="state steady" style="--c:#e8e8f2"><img loading="lazy" decoding="async" src="shots/pill-volume.png" alt=""><span>Volume</span></div>
-<div class="state" style="--c:#4ade80"><img loading="lazy" decoding="async" src="shots/pill-charging.png" alt=""><span>Charger connected</span></div>
-<div class="state" style="--c:#4a9eff"><img loading="lazy" decoding="async" src="shots/pill-bluetooth.png" alt=""><span>Bluetooth device</span></div>
-<div class="state flash" style="--c:#f87171"><img loading="lazy" decoding="async" src="shots/pill-low-battery.png" alt=""><span>Low battery</span></div>
-<div class="state flash" style="--c:#fbbf24"><img loading="lazy" decoding="async" src="shots/pill-caps-lock.png" alt=""><span>Caps Lock</span></div>
-<div class="state" style="--c:#c77dff"><img loading="lazy" decoding="async" src="shots/pill-media.png" alt=""><span>Music, in the artwork's colour</span></div>
+<div class="state"><img loading="lazy" decoding="async" src="shots/pill-agent-working.png" alt=""><span>An agent is working</span></div>
+<div class="state"><img loading="lazy" decoding="async" src="shots/pill-agent-needs-input.png" alt=""><span>An agent needs you</span></div>
+<div class="state"><img loading="lazy" decoding="async" src="shots/pill-agent-done.png" alt=""><span>It is done</span></div>
+<div class="state"><img loading="lazy" decoding="async" src="shots/pill-volume.png" alt=""><span>Volume</span></div>
+<div class="state"><img loading="lazy" decoding="async" src="shots/pill-charging.png" alt=""><span>Charger connected</span></div>
+<div class="state"><img loading="lazy" decoding="async" src="shots/pill-bluetooth.png" alt=""><span>Bluetooth device</span></div>
+<div class="state"><img loading="lazy" decoding="async" src="shots/pill-low-battery.png" alt=""><span>Low battery</span></div>
+<div class="state"><img loading="lazy" decoding="async" src="shots/pill-caps-lock.png" alt=""><span>Caps Lock</span></div>
+<div class="state"><img loading="lazy" decoding="async" src="shots/pill-media.png" alt=""><span>Music, in the artwork's colour</span></div>
 </div>
 </section>
 
 <section id="install">
 <span class="eyebrow">Install</span>
-<h2>Up in a minute</h2>
+<h2>Install in a minute.</h2>
 <ol class="install">
 <li>Download <code>Notch-Setup-&lt;version&gt;.exe</code> from the <a href="https://github.com/Brick-Bread/WNotch/releases/latest">latest release</a>.</li>
 <li>Run it. It installs for your user, with no admin rights.</li>
@@ -206,41 +206,46 @@ later(function(){
  // ---- the animated notch
  var ICON={
   bolt:'<svg class="ico" viewBox="0 0 16 16"><path d="M9 1 3 9h4l-1 6 6-8H8l1-6Z"/></svg>',
-  check:'<svg class="ico" viewBox="0 0 16 16"><path d="m3 8.5 3.2 3L13 4.5"/></svg>',
+  check:'<svg class="ico" viewBox="0 0 16 16" style="width:13px;height:13px;vertical-align:-2px"><path d="m3 8.5 3.2 3L13 4.5"/></svg>',
   speaker:'<svg class="ico" viewBox="0 0 16 16"><path d="M2 6h3l4-3v10l-4-3H2V6Zm9 0a3 3 0 0 1 0 4"/></svg>',
-  alert:'<svg class="ico" viewBox="0 0 16 16"><path d="M8 3v6M8 12v.5"/></svg>'
+  // Agent logos: LobeHub Icons (MIT), the same files the app draws (src/Notch.App/Assets/agents).
+  claude:'<svg class="logo" viewBox="0 0 24 24" role="img" aria-label="Claude"><path fill-rule="evenodd" d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z"/></svg>',
+  codex:'<svg class="logo" viewBox="0 0 24 24" role="img" aria-label="Codex"><path fill-rule="evenodd" d="M8.086.457a6.105 6.105 0 013.046-.415c1.333.153 2.521.72 3.564 1.7a.117.117 0 00.107.029c1.408-.346 2.762-.224 4.061.366l.063.03.154.076c1.357.703 2.33 1.77 2.918 3.198.278.679.418 1.388.421 2.126a5.655 5.655 0 01-.18 1.631.167.167 0 00.04.155 5.982 5.982 0 011.578 2.891c.385 1.901-.01 3.615-1.183 5.14l-.182.22a6.063 6.063 0 01-2.934 1.851.162.162 0 00-.108.102c-.255.736-.511 1.364-.987 1.992-1.199 1.582-2.962 2.462-4.948 2.451-1.583-.008-2.986-.587-4.21-1.736a.145.145 0 00-.14-.032c-.518.167-1.04.191-1.604.185a5.924 5.924 0 01-2.595-.622 6.058 6.058 0 01-2.146-1.781c-.203-.269-.404-.522-.551-.821a7.74 7.74 0 01-.495-1.283 6.11 6.11 0 01-.017-3.064.166.166 0 00.008-.074.115.115 0 00-.037-.064 5.958 5.958 0 01-1.38-2.202 5.196 5.196 0 01-.333-1.589 6.915 6.915 0 01.188-2.132c.45-1.484 1.309-2.648 2.577-3.493.282-.188.55-.334.802-.438.286-.12.573-.22.861-.304a.129.129 0 00.087-.087A6.016 6.016 0 015.635 2.31C6.315 1.464 7.132.846 8.086.457zm-.804 7.85a.848.848 0 00-1.473.842l1.694 2.965-1.688 2.848a.849.849 0 001.46.864l1.94-3.272a.849.849 0 00.007-.854l-1.94-3.393zm5.446 6.24a.849.849 0 000 1.695h4.848a.849.849 0 000-1.696h-4.848z"/></svg>'
  };
  var STATES=[
-  {n:"Idle",c:"A quiet pill, tucked into the top of the screen.",w:150,h:30,html:"",glow:null},
-  {n:"Playing music",c:"<b>Music</b> shows with its artwork, and glows in its colour.",w:290,h:40,html:'<span class="art"></span><span class="tx">Breaking the Habit<small>Linkin Park</small></span><span class="eq"><i></i><i></i><i></i><i></i></span>',glow:["#c77dff","breathe"]},
-  {n:"An agent is working",c:"<b>Claude</b> is working. A steady blue pulse while it thinks.",w:290,h:40,html:'<span class="spin"></span><span class="tx">Claude<small>Working…</small></span>',glow:["#4a9eff","pulse"]},
-  {n:"An agent needs you",c:"<b>Claude</b> needs input. Amber, and it flashes so you see it.",w:290,h:40,html:'<span class="dot" style="--c:#fbbf24"></span><span class="tx">Claude<small>Needs your input</small></span>'+ICON.alert,glow:["#fbbf24","flash"]},
-  {n:"It is done",c:"<b>Done.</b> A green flash and it tucks itself away.",w:250,h:40,html:'<span class="dot" style="--c:#4ade80"></span><span class="tx">Claude<small>Done</small></span>'+ICON.check,glow:["#4ade80","flash"]},
-  {n:"Volume",c:"<b>Volume</b> HUD, in place of the one Windows draws.",w:290,h:40,html:ICON.speaker+'<span class="vol"><i></i></span><span class="tx" style="flex:none">62%</span>',glow:["#e8e8f2","steady"]},
-  {n:"Charger",c:"<b>Charger</b> connected, with the battery level.",w:240,h:40,html:ICON.bolt+'<span class="tx">Charging<small>82%</small></span>',glow:["#4ade80","breathe"]},
-  {n:"Home",c:"Hover and it opens: <b>media, a timer, your calendar.</b>",full:"home",dur:3600},
+  {n:"Idle",c:"A quiet pill, tucked into the top of the screen.",w:180,h:32,html:"",glow:null},
+  {n:"Playing music",c:"<b>Music</b> shows with its artwork, and the title scrolls when it is too long.",w:380,h:32,lit:"#c8553d",html:'<span class="art"></span><span class="mq"><span>Breaking the Habit (Live) <span class="sub">· Linkin Park</span></span></span><span class="eq"><i></i><i></i><i></i><i></i></span>',glow:["#f2b05e","breathe"]},
+  {n:"An agent is working",c:"<b>Claude</b> is working. A steady blue breath while it thinks.",w:292,h:32,html:ICON.claude+'<span class="tx"><span class="sub">notch</span></span><span class="dots"><i></i><i></i><i></i></span>',glow:["#0a84ff","breathe"]},
+  {n:"An agent needs you",c:"<b>Codex</b> needs input. Amber, and it pulses so you see it.",w:372,h:32,html:ICON.codex+'<span class="tx"><span class="sub">site</span></span><span class="state-t" style="color:#ff9f0a">Needs you</span>',glow:["#ff9f0a","pulse"]},
+  {n:"It is done",c:"<b>Done.</b> Green, and it tucks itself away.",w:292,h:32,html:ICON.claude+'<span class="tx"><span class="sub">notch</span></span><span class="state-t" style="color:#30d158">'+ICON.check+' Done</span>',glow:["#30d158","steady"]},
+  {n:"Volume",c:"<b>Volume</b>, in place of the box Windows draws.",w:380,h:38,html:ICON.speaker+'<span class="tx"></span><span class="vol"><i></i></span><span class="state-t" style="width:22px;text-align:right">62</span>',glow:["#e8e8f2","steady"]},
+  {n:"Charger",c:"<b>Charger</b> connected, with the battery level.",w:380,h:38,html:'<span style="color:#30d158;display:flex">'+ICON.bolt+'</span><span class="tx">Charging</span><span class="state-t" style="opacity:.56">82%</span>',glow:["#30d158","breathe"]},
+  {n:"Home",c:"Hover and it opens: <b>media, agents, a timer, your calendar.</b>",full:"home",dur:3600},
   {n:"Stats",c:"…and <b>Stats</b> for CPU, memory, GPU and network.",full:"stats",dur:3600}
  ];
  steps.innerHTML="";
  var stepEls=STATES.map(function(s,i){var b=document.createElement("button");b.type="button";b.setAttribute("aria-label",s.n);b.onclick=function(){hold=false;go(i,true)};steps.appendChild(b);return b});
 
  var at=-1,timer=0,hold=false;
- function k(){return desk.clientWidth/940}
+ function k(){return Math.max(.62,desk.clientWidth/980)}
  function go(i,manual){
   clearTimeout(timer);at=i;var s=STATES[i],K=k();
   stepEls.forEach(function(b,j){b.setAttribute("aria-current",j===i?"true":"false")});
   cap.innerHTML=s.c;
   if(s.full){
-   var w=Math.min(640,880)*K,hgt=w*(s.full==="home"?728:580)/1280;
+   var w=Math.min(640,880)*K,hgt=w*(s.full==="home"?668:580)/1310;
    sim.classList.remove("is-compact");sim.classList.add("is-full");syncFull();
-   sim.style.width=w+"px";sim.style.height=hgt+"px";sim.style.borderRadius="0 0 "+(26*K)+"px "+(26*K)+"px";
+   sim.style.width=w+"px";sim.style.height=hgt+"px";sim.style.borderRadius="0 0 "+(32*K)+"px "+(32*K)+"px";
+   desk.classList.add("dim");
    fHome.classList.toggle("on",s.full==="home");fStats.classList.toggle("on",s.full==="stats");
    sim.removeAttribute("data-glow");sim.style.removeProperty("--glow");
   }else{
    sim.classList.remove("is-full");sim.classList.add("is-compact");
    sim.style.width=s.w*K+"px";sim.style.height=s.h*K+"px";sim.style.borderRadius="0 0 "+(s.h*K/2)+"px "+(s.h*K/2)+"px";
+   // Only music lights the stage, in the colour of its artwork.
+   desk.classList.toggle("dim",!s.lit);if(s.lit)desk.style.setProperty("--lit",s.lit);
    compact.innerHTML="";requestAnimationFrame(function(){compact.innerHTML=s.html});
-   compact.style.fontSize=Math.max(11,13*K)+"px";
+   compact.style.fontSize=Math.max(11,12.5*K)+"px";
    if(s.glow){sim.style.setProperty("--glow",s.glow[0]);sim.setAttribute("data-glow",s.glow[1])}
    else{sim.removeAttribute("data-glow");sim.style.removeProperty("--glow")}
   }
