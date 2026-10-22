@@ -11,6 +11,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Themes/Design.xaml" />
                 <ResourceDictionary Source="Themes/Styles.xaml" />
+                <ResourceDictionary Source="Themes/AgentLogos.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

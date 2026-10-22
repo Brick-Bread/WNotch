@@ -440,17 +440,21 @@ The theme itself is a XAML file whose root element is a `ResourceDictionary`. Sh
 | Key | Type | What it changes |
 |---|---|---|
 | `IslandBrush` | Brush | The island itself. Gradients and images work. |
-| `TextBrush` | Brush | Text and icons. |
+| `TextBrush` | Brush | Text, icons and the agents' logos. |
+| `SecondaryTextBrush` | Brush | The text that comes second: artists, folders, times, labels, help in Settings. |
 | `AccentBrush`, `AccentHoverBrush`, `AccentPressedBrush` | Brush | The selected tab, progress bars, focus rings, button hover and press. Defining `AccentBrush` makes the theme own the accent: the accent colour chosen in Settings is then not applied. |
 | `CardBrush`, `ControlBrush`, `HoverBrush`, `PressedBrush` | Brush | Panels, and the resting, hovered and pressed fills of controls. |
 | `TrackBrush` | Brush | The unfilled part of a progress bar. |
-| `CardBorderBrush` | Brush | The hairline edge of panels and text boxes. |
-| `SelectedBrush` | Brush | The raised segment that marks the selected tab in the tab strip. |
-| `UiFontFamily`, `UiFontSize` | FontFamily, double | The font and base size of all text. |
+| `CardBorderBrush` | Brush | The edge of panels. Transparent by default: panels are a fill only. |
+| `SelectedBrush` | Brush | The round fill behind the selected tab. |
+| `WorkingBrush`, `AttentionBrush`, `DoneBrush` | Brush | What an agent is doing: working, needs input, done. They colour the state next to an agent, never its logo. |
+| `DangerBrush` | Brush | Errors, such as a plugin theme that cannot be used. |
+| `WindowBrush`, `SidebarBrush`, `SwitchOnBrush`, `OnAccentBrush` | Brush | Settings and Notch's other windows: their background, the sidebar of Settings, a switch that is on, and text on an accent-filled button. |
+| `UiFontFamily`, `UiFontSize` | FontFamily, double | The font and base size of all text. Notch's own is SF Pro when it is installed, otherwise Inter, which Notch ships. |
 | `DisplayFontFamily` | FontFamily | The font of the large figures: the timer, the Stats values, the song title. |
 | `CodeFontFamily` | FontFamily | The monospace font of the terminal and of plugin code blocks. |
 | `IconFont` | FontFamily | The icon font. The glyphs are Segoe Fluent Icons code points, so use a font that has them. |
-| `CardRadius`, `ControlRadius`, `SmallRadius`, `IconButtonRadius` | CornerRadius | Corners of panels, of buttons / text boxes / tabs, of small thumbnails, and of round icon buttons. |
+| `CardRadius`, `ControlRadius`, `SmallRadius`, `IconButtonRadius`, `RowRadius` | CornerRadius | Corners of panels, of buttons / text boxes / tabs, of small thumbnails, of round icon buttons, and of the rows of a list (clipboard, palette). WPF draws a radius bigger than half a control's height as an ellipse, so keep `ControlRadius` at 12 or less. |
 | `IslandRadiusScale` | double | Multiplies the corner radius of the island in every size it takes. `0` is square, `1` the default. |
 | `TerminalBackgroundBrush`, `TerminalForegroundBrush`, `TerminalCursorBrush`, `TerminalSelectionBrush` | Brush | Terminal colours. They default to `IslandBrush` and `TextBrush` (solid colours only). |
 | `TerminalAnsi0Brush` … `TerminalAnsi15Brush` | Brush | The terminal's 16 ANSI colours, black to bright white. Left out, they come from the base theme's palette. |

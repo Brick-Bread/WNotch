@@ -27,6 +27,15 @@ public sealed record Activity
     /// <summary>A Segoe Fluent Icons code point.</summary>
     public string? Glyph { get; init; }
 
+    /// <summary>
+    /// The coding agent this is about, by <see cref="Agents.AgentCatalog"/> id ("claude", "codex", ...). The pill
+    /// shows that agent's logo in place of <see cref="Glyph"/> when it has one.
+    /// </summary>
+    public string? AgentId { get; init; }
+
+    /// <summary>What that agent is doing, for an activity about an agent; null otherwise.</summary>
+    public Agents.AgentState? AgentState { get; init; }
+
     /// <summary>Encoded image bytes (PNG or JPEG) shown in place of <see cref="Glyph"/>, e.g. album art.</summary>
     public byte[]? Image { get; init; }
 

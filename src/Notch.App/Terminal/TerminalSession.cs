@@ -10,10 +10,6 @@ namespace Notch.App.Terminal;
 /// <summary>One tab in the built-in terminal: a profile running in a folder.</summary>
 internal sealed class TerminalSession : INotifyPropertyChanged
 {
-    private static readonly Brush WorkingBrush = Frozen(0x4C, 0xC2, 0xFF);
-    private static readonly Brush AttentionBrush = Frozen(0xFF, 0xB9, 0x00);
-    private static readonly Brush DoneBrush = Frozen(0x6C, 0xCB, 0x5F);
-
     private bool _isActive;
 
     public TerminalSession(TerminalProfile profile, string folder)
@@ -41,6 +37,11 @@ internal sealed class TerminalSession : INotifyPropertyChanged
 
     public string Glyph => Profile.Glyph;
 
+    /// <summary>The agent's logo for the session's tab, or null for a shell or an agent Notch has no logo for.</summary>
+    public Geometry? Logo => AgentCatalog.ForKind(Profile.Agent) is { } agent
+        ? System.Windows.Application.Current.TryFindResource("AgentLogo." + agent.Id) as Geometry
+        : null;
+
     public string Title => $"{Profile.DisplayName} · {FolderName}";
 
     public string FolderName => Path.GetFileName(Folder.TrimEnd('\\', '/')) is { Length: > 0 } name ? name : Folder;
@@ -61,16 +62,12 @@ internal sealed class TerminalSession : INotifyPropertyChanged
     /// <summary>Colour of the status dot on the session's tab; transparent when there is nothing to report.</summary>
     public Brush StatusBrush => Agent.State switch
     {
-        AgentState.Working => WorkingBrush,
-        AgentState.NeedsInput => AttentionBrush,
-        AgentState.Done => DoneBrush,
+        AgentState.Working => Themed("WorkingBrush"),
+        AgentState.NeedsInput => Themed("AttentionBrush"),
+        AgentState.Done => Themed("DoneBrush"),
         _ => Brushes.Transparent,
     };
 
-    private static Brush Frozen(byte r, byte g, byte b)
-    {
-        var brush = new SolidColorBrush(Color.FromRgb(r, g, b));
-        brush.Freeze();
-        return brush;
-    }
+    private static Brush Themed(string key) =>
+        System.Windows.Application.Current.TryFindResource(key) as Brush ?? Brushes.Transparent;
 }

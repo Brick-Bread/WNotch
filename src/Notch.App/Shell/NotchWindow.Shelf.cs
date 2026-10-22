@@ -87,7 +87,12 @@ public partial class NotchWindow
         ShelfItems.ItemsSource = tiles;
         _shelfCount = tiles.Length;
 
-        TabShelf.Content = tiles.Length > 0 ? $"Shelf {tiles.Length}" : "Shelf";
+        TabShelf.ToolTip = tiles.Length switch
+        {
+            0 => "Shelf",
+            1 => "Shelf, 1 item",
+            _ => $"Shelf, {tiles.Length} items",
+        };
         ShelfSummary.Text = tiles.Length switch
         {
             0 => "",

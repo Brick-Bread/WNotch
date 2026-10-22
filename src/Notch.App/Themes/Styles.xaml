@@ -44,14 +44,14 @@
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
         <Setter Property="Background" Value="{DynamicResource ControlBrush}" />
         <Setter Property="FontSize" Value="12" />
-        <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="Padding" Value="10,4" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Padding" Value="12,5" />
         <Setter Property="Margin" Value="6,0,0,0" />
         <Setter Property="Focusable" Value="False" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Grid>
+                    <Grid x:Name="Surface" RenderTransformOrigin="0.5,0.5">
                         <Border Background="{TemplateBinding Background}" CornerRadius="{DynamicResource ControlRadius}" />
                         <Border x:Name="Wash" Background="{DynamicResource TextBrush}" Opacity="0"
                                 CornerRadius="{DynamicResource ControlRadius}" />
@@ -64,6 +64,11 @@
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="Wash" Property="Opacity" Value="0.16" />
+                            <Setter TargetName="Surface" Property="RenderTransform">
+                                <Setter.Value>
+                                    <ScaleTransform ScaleX="0.96" ScaleY="0.96" />
+                                </Setter.Value>
+                            </Setter>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
@@ -80,10 +85,10 @@
         <Setter Property="CaretBrush" Value="{DynamicResource TextBrush}" />
         <Setter Property="SelectionBrush" Value="{DynamicResource AccentBrush}" />
         <Setter Property="Background" Value="{DynamicResource ControlBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="1.5" />
         <Setter Property="FontSize" Value="12" />
-        <Setter Property="Padding" Value="8,2" />
+        <Setter Property="Padding" Value="10,3" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
@@ -102,13 +107,15 @@
         </Style.Triggers>
     </Style>
 
-    <!-- The Home / Terminal / Stats headers: segments of one control. The tab strip is a capsule track in
-         ControlBrush, and the selected segment is raised out of it in SelectedBrush. -->
+    <!-- A tab at the top of the open notch: an icon (set FontFamily to IconFont, as the built-in tabs do) or,
+         for a plugin's page, its title. The selected one sits on a round SelectedBrush fill. -->
     <Style x:Key="TabButton" TargetType="RadioButton">
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
         <Setter Property="FontSize" Value="12" />
-        <Setter Property="Margin" Value="0" />
-        <Setter Property="Padding" Value="12,4" />
+        <Setter Property="Height" Value="24" />
+        <Setter Property="MinWidth" Value="24" />
+        <Setter Property="Margin" Value="0,0,2,0" />
+        <Setter Property="Padding" Value="10,0" />
         <Setter Property="Focusable" Value="False" />
         <Setter Property="Template">
             <Setter.Value>
@@ -116,21 +123,22 @@
                     <!-- Transparent background so the gaps inside the letters are clickable too. -->
                     <Border x:Name="Segment" Background="Transparent" CornerRadius="{DynamicResource ControlRadius}"
                             Padding="{TemplateBinding Padding}">
-                        <Grid>
+                        <Grid VerticalAlignment="Center">
                             <!-- An invisible semibold copy reserves the width, so selecting does not shift its neighbours. -->
                             <TextBlock FontWeight="SemiBold" Visibility="Hidden"
                                        Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}" />
-                            <TextBlock x:Name="Label" Opacity="0.6" FontWeight="Medium" HorizontalAlignment="Center"
+                            <TextBlock x:Name="Label" Foreground="{DynamicResource SecondaryTextBrush}" FontWeight="Medium"
+                                       HorizontalAlignment="Center"
                                        Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}" />
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Label" Property="Opacity" Value="0.9" />
+                            <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource TextBrush}" />
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="Segment" Property="Background" Value="{DynamicResource SelectedBrush}" />
-                            <Setter TargetName="Label" Property="Opacity" Value="1" />
+                            <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource TextBrush}" />
                             <Setter TargetName="Label" Property="FontWeight" Value="SemiBold" />
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -139,23 +147,23 @@
         </Setter>
     </Style>
 
-    <!-- A rounded panel on the Home and Stats tabs, with a hairline edge that lifts it off the island. -->
+    <!-- A group on the Home and Stats tabs: one faint fill, no edge unless a theme gives CardBorderBrush a colour. -->
     <Style x:Key="Card" TargetType="Border">
         <Setter Property="Background" Value="{DynamicResource CardBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource CardRadius}" />
-        <Setter Property="Padding" Value="16,11" />
+        <Setter Property="Padding" Value="14,11" />
     </Style>
     <Style x:Key="CardLabel" TargetType="TextBlock">
         <Setter Property="FontSize" Value="11" />
         <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Opacity" Value="0.5" />
+        <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
     </Style>
     <Style x:Key="CardValue" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{DynamicResource DisplayFontFamily}" />
-        <Setter Property="FontSize" Value="24" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontSize" Value="22" />
+        <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Typography.NumeralAlignment" Value="Tabular" />
         <Setter Property="Margin" Value="0,2,0,0" />
     </Style>
@@ -167,8 +175,8 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ProgressBar">
                     <Grid>
-                        <Border x:Name="PART_Track" Background="{TemplateBinding Background}" CornerRadius="3" />
-                        <Border x:Name="PART_Indicator" Background="{TemplateBinding Foreground}" CornerRadius="3"
+                        <Border x:Name="PART_Track" Background="{TemplateBinding Background}" CornerRadius="2.5" />
+                        <Border x:Name="PART_Indicator" Background="{TemplateBinding Foreground}" CornerRadius="2.5"
                                 HorizontalAlignment="Left" />
                     </Grid>
                 </ControlTemplate>

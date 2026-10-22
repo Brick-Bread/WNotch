@@ -26,57 +26,99 @@
         <Border x:Name="EdgeBridge" Background="#01000000" HorizontalAlignment="Center" VerticalAlignment="Top"
                 Visibility="Collapsed" />
 
+        <!-- A notch's shoulders: small inward curves where its sides meet the top of the screen, as on the
+             hardware. Only shown for a notch at the top; placed beside the island in ApplyShape. -->
+        <Path x:Name="ShoulderLeft" Width="10" Height="10" HorizontalAlignment="Center" VerticalAlignment="Top"
+              Data="M0,0 H10 V10 A10,10 0 0 0 0,0 Z" Fill="{DynamicResource IslandBrush}" IsHitTestVisible="False"
+              Visibility="Collapsed" />
+        <Path x:Name="ShoulderRight" Width="10" Height="10" HorizontalAlignment="Center" VerticalAlignment="Top"
+              Data="M10,0 H0 V10 A10,10 0 0 1 10,0 Z" Fill="{DynamicResource IslandBrush}" IsHitTestVisible="False"
+              Visibility="Collapsed" />
+
         <!-- Alignment and margins of the island, the glow and the bridge are set in code from the
              position and style settings; these are the values for a notch at the top. -->
         <Grid x:Name="Island" Width="180" Height="32"
               HorizontalAlignment="Center" VerticalAlignment="Top" Background="{DynamicResource IslandBrush}">
 
-            <Grid x:Name="CompactLayer" Margin="16,0" Opacity="0" IsHitTestVisible="False">
+            <!-- The pill: what it is on the left (an agent's logo, album art or a glyph), a line of text in the
+                 middle that scrolls when it is too long, and the state on the right. Filled in by Refresh. -->
+            <Grid x:Name="CompactLayer" Margin="14,0" Opacity="0" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
+                <Grid.RenderTransform>
+                    <ScaleTransform x:Name="CompactScale" />
+                </Grid.RenderTransform>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <TextBlock x:Name="CompactGlyph" FontFamily="{DynamicResource IconFont}" FontSize="15"
-                           VerticalAlignment="Center" />
-                <Border x:Name="CompactArt" Width="22" Height="22" CornerRadius="{DynamicResource SmallRadius}"
-                        VerticalAlignment="Center" Visibility="Collapsed" />
-                <TextBlock x:Name="CompactTitle" Grid.Column="1" Margin="10,0" VerticalAlignment="Center"
-                           FontSize="12.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                <TextBlock x:Name="CompactDetail" Grid.Column="2" VerticalAlignment="Center" Opacity="0.55" FontSize="12.5"
-                           MaxWidth="130" TextTrimming="CharacterEllipsis" />
-                <ProgressBar x:Name="CompactProgress" Grid.Column="2" Width="110" Height="5" Maximum="1"
-                             VerticalAlignment="Center"
-                             Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource TrackBrush}" />
+                <Grid Width="20" Height="20" VerticalAlignment="Center">
+                    <TextBlock x:Name="CompactGlyph" FontFamily="{DynamicResource IconFont}" FontSize="15"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <Path x:Name="CompactLogo" Width="16" Height="16" Stretch="Uniform" Fill="{DynamicResource TextBrush}"
+                          HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
+                    <Border x:Name="CompactArt" CornerRadius="{DynamicResource SmallRadius}" Visibility="Collapsed" />
+                </Grid>
+
+                <shell:Marquee Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
+                    <TextBlock FontSize="12" FontWeight="SemiBold">
+                        <Run x:Name="CompactTitle" /><Run x:Name="CompactSubtitle" FontWeight="Medium"
+                             Foreground="{DynamicResource SecondaryTextBrush}" />
+                    </TextBlock>
+                </shell:Marquee>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- An agent at work: three dots that blink in turn. -->
+                    <StackPanel x:Name="CompactDots" Orientation="Horizontal" Visibility="Collapsed">
+                        <Ellipse Width="5" Height="5" Margin="0,0,4,0" Fill="{DynamicResource WorkingBrush}" />
+                        <Ellipse Width="5" Height="5" Margin="0,0,4,0" Fill="{DynamicResource WorkingBrush}" />
+                        <Ellipse Width="5" Height="5" Fill="{DynamicResource WorkingBrush}" />
+                    </StackPanel>
+                    <!-- Music: four bars that move to it. -->
+                    <StackPanel x:Name="CompactWave" Orientation="Horizontal" Height="14" Visibility="Collapsed">
+                        <Rectangle Width="3" RadiusX="1.5" RadiusY="1.5" Margin="0,0,2.5,0" RenderTransformOrigin="0.5,0.5" />
+                        <Rectangle Width="3" RadiusX="1.5" RadiusY="1.5" Margin="0,0,2.5,0" RenderTransformOrigin="0.5,0.5" />
+                        <Rectangle Width="3" RadiusX="1.5" RadiusY="1.5" Margin="0,0,2.5,0" RenderTransformOrigin="0.5,0.5" />
+                        <Rectangle Width="3" RadiusX="1.5" RadiusY="1.5" RenderTransformOrigin="0.5,0.5" />
+                    </StackPanel>
+                    <TextBlock x:Name="CompactStateGlyph" FontFamily="{DynamicResource IconFont}" FontSize="11"
+                               Margin="0,0,5,0" VerticalAlignment="Center" Visibility="Collapsed" />
+                    <TextBlock x:Name="CompactDetail" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold"
+                               Foreground="{DynamicResource SecondaryTextBrush}" MaxWidth="130" TextTrimming="CharacterEllipsis" />
+                    <ProgressBar x:Name="CompactProgress" Width="84" Height="5" Maximum="1" VerticalAlignment="Center"
+                                 Foreground="{DynamicResource TextBrush}" Background="{DynamicResource TrackBrush}" />
+                    <TextBlock x:Name="CompactLevel" Width="22" Margin="8,0,0,0" TextAlignment="Right" VerticalAlignment="Center"
+                               FontSize="12" FontWeight="SemiBold" Typography.NumeralAlignment="Tabular" />
+                </StackPanel>
             </Grid>
 
             <!-- Fixed size per tab, so the content is revealed by the growing island instead of reflowing. -->
-            <Grid x:Name="ExpandedLayer" Width="600" Height="324" Margin="0,16,0,0"
-                  HorizontalAlignment="Center" VerticalAlignment="Top" Opacity="0" IsHitTestVisible="False">
+            <Grid x:Name="ExpandedLayer" Width="600" Height="324" Margin="0,14,0,0"
+                  HorizontalAlignment="Center" VerticalAlignment="Top" Opacity="0" IsHitTestVisible="False"
+                  RenderTransformOrigin="0.5,0">
+                <Grid.RenderTransform>
+                    <ScaleTransform x:Name="ExpandedScale" />
+                </Grid.RenderTransform>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <!-- A segmented control: the tabs sit in one capsule track. -->
-                <Border HorizontalAlignment="Left" VerticalAlignment="Center" Padding="2"
-                        Background="{DynamicResource ControlBrush}" CornerRadius="{DynamicResource ControlRadius}">
-                    <StackPanel x:Name="TabStrip" Orientation="Horizontal">
-                        <RadioButton x:Name="TabHome" Style="{DynamicResource TabButton}" Content="Home" IsChecked="True" />
-                        <RadioButton x:Name="TabTerminal" Style="{DynamicResource TabButton}" Content="Terminal" />
-                        <RadioButton x:Name="TabStats" Style="{DynamicResource TabButton}" Content="Stats" />
-                        <RadioButton x:Name="TabShelf" Style="{DynamicResource TabButton}" Content="Shelf" />
-                        <!-- Only shown while the clipboard history is switched on in settings. -->
-                        <RadioButton x:Name="TabClipboard" Style="{DynamicResource TabButton}" Content="Clipboard"
-                                     Visibility="Collapsed" />
-                        <!-- Only shown while a plugin has a card to put on it. -->
-                        <RadioButton x:Name="TabPlugins" Style="{DynamicResource TabButton}" Content="Plugins"
-                                     Visibility="Collapsed" />
-                    </StackPanel>
-                </Border>
+                <!-- A row of icons; a plugin's page adds its title after them. -->
+                <StackPanel x:Name="TabStrip" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                    <RadioButton x:Name="TabHome" Style="{DynamicResource TabButton}" FontFamily="{DynamicResource IconFont}" FontSize="13" Width="24" Padding="0" Content="&#xE80F;" ToolTip="Home" IsChecked="True" />
+                    <RadioButton x:Name="TabTerminal" Style="{DynamicResource TabButton}" FontFamily="{DynamicResource IconFont}" FontSize="13" Width="24" Padding="0" Content="&#xE756;" ToolTip="Terminal" />
+                    <RadioButton x:Name="TabStats" Style="{DynamicResource TabButton}" FontFamily="{DynamicResource IconFont}" FontSize="13" Width="24" Padding="0" Content="&#xE9D2;" ToolTip="Stats" />
+                    <RadioButton x:Name="TabShelf" Style="{DynamicResource TabButton}" FontFamily="{DynamicResource IconFont}" FontSize="13" Width="24" Padding="0" Content="&#xE7B8;" ToolTip="Shelf" />
+                    <!-- Only shown while the clipboard history is switched on in settings. -->
+                    <RadioButton x:Name="TabClipboard" Style="{DynamicResource TabButton}" FontFamily="{DynamicResource IconFont}" FontSize="13" Width="24" Padding="0" Content="&#xE77F;" ToolTip="Clipboard"
+                                 Visibility="Collapsed" />
+                    <!-- Only shown while a plugin has a card to put on it. -->
+                    <RadioButton x:Name="TabPlugins" Style="{DynamicResource TabButton}" FontFamily="{DynamicResource IconFont}" FontSize="13" Width="24" Padding="0" Content="&#xE71D;" ToolTip="Plugins"
+                                 Visibility="Collapsed" />
+                </StackPanel>
                 <Button x:Name="OpenSettingsButton" Style="{DynamicResource IconButton}" HorizontalAlignment="Right"
-                        VerticalAlignment="Center" Width="28" Height="28" FontSize="14" Opacity="0.75"
-                        Content="&#xE713;" ToolTip="Settings" />
+                        VerticalAlignment="Center" Width="24" Height="24" FontSize="13"
+                        Foreground="{DynamicResource SecondaryTextBrush}" Content="&#xE713;" ToolTip="Settings" />
 
                 <!-- Home: media, timer, calendar -->
                 <StackPanel x:Name="HomePanel" Grid.Row="1" Margin="0,16,0,0">
@@ -86,15 +128,32 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
-                        <Grid Width="112" Height="112">
+                        <!-- The artwork again, large and blurred, washing the island in its colour. -->
+                        <!-- On a canvas, which lets it spill past the card without being cut off at the card's edge. -->
+                        <Canvas Grid.ColumnSpan="2" IsHitTestVisible="False">
+                            <Border x:Name="MediaWash" Canvas.Left="-60" Canvas.Top="-50" Width="340" Height="240" Opacity="0.4">
+                                <Border.OpacityMask>
+                                    <RadialGradientBrush>
+                                        <GradientStop Color="#FF000000" Offset="0" />
+                                        <GradientStop Color="#66000000" Offset="0.45" />
+                                        <GradientStop Color="#00000000" Offset="1" />
+                                    </RadialGradientBrush>
+                                </Border.OpacityMask>
+                                <Border.Effect>
+                                    <BlurEffect Radius="40" RenderingBias="Performance" />
+                                </Border.Effect>
+                            </Border>
+                        </Canvas>
+
+                        <Grid Width="96" Height="96">
                             <Border CornerRadius="{DynamicResource CardRadius}" Background="{DynamicResource ControlBrush}">
-                                <TextBlock Text="&#xE8D6;" FontFamily="{DynamicResource IconFont}" FontSize="34"
+                                <TextBlock Text="&#xE8D6;" FontFamily="{DynamicResource IconFont}" FontSize="30"
                                            Opacity="0.35" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
                             <Border x:Name="MediaArt" CornerRadius="{DynamicResource CardRadius}" />
                         </Grid>
 
-                        <Grid Grid.Column="1" Margin="20,2,0,0">
+                        <Grid Grid.Column="1" Margin="18,0,0,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
@@ -102,34 +161,37 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <TextBlock x:Name="MediaTitle" FontFamily="{DynamicResource DisplayFontFamily}" FontSize="17"
-                                       FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                            <TextBlock x:Name="MediaArtist" Grid.Row="1" Margin="0,1,0,0" Opacity="0.55"
+                            <shell:Marquee HorizontalAlignment="Left">
+                                <TextBlock x:Name="MediaTitle" FontFamily="{DynamicResource DisplayFontFamily}" FontSize="15"
+                                           FontWeight="SemiBold" />
+                            </shell:Marquee>
+                            <TextBlock x:Name="MediaArtist" Grid.Row="1" Foreground="{DynamicResource SecondaryTextBrush}"
                                        TextTrimming="CharacterEllipsis" />
 
-                            <!-- The bar spans the column, with the times under its two ends. -->
-                            <Grid x:Name="MediaTimeline" Grid.Row="2" VerticalAlignment="Center" Margin="0,6,0,0">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
+                            <!-- The time gone and the time left on either side of the bar. -->
+                            <Grid x:Name="MediaTimeline" Grid.Row="2" VerticalAlignment="Center">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="MediaElapsed" FontSize="11" FontWeight="Medium" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource SecondaryTextBrush}" Typography.NumeralAlignment="Tabular" />
                                 <!-- Taller than the bar so it is easy to hit. -->
-                                <Border x:Name="MediaSeekArea" Height="14" Background="Transparent">
-                                    <ProgressBar x:Name="MediaProgress" Height="5" Maximum="1"
+                                <Border x:Name="MediaSeekArea" Grid.Column="1" Height="14" Margin="10,0" Background="Transparent">
+                                    <ProgressBar x:Name="MediaProgress" Height="4" Maximum="1"
                                                  VerticalAlignment="Center" IsHitTestVisible="False"
                                                  Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource TrackBrush}" />
                                 </Border>
-                                <TextBlock x:Name="MediaElapsed" Grid.Row="1" FontSize="10.5" FontWeight="Medium" Opacity="0.5"
-                                           Typography.NumeralAlignment="Tabular" />
-                                <TextBlock x:Name="MediaRemaining" Grid.Row="1" FontSize="10.5" FontWeight="Medium" Opacity="0.5"
-                                           Typography.NumeralAlignment="Tabular" HorizontalAlignment="Right" />
+                                <TextBlock x:Name="MediaRemaining" Grid.Column="2" FontSize="11" FontWeight="Medium" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource SecondaryTextBrush}" Typography.NumeralAlignment="Tabular" />
                             </Grid>
 
-                            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,-4">
-                                <Button x:Name="MediaPrevious" Style="{DynamicResource IconButton}" Content="&#xF8AC;" FontSize="17" />
+                            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,-6">
+                                <Button x:Name="MediaPrevious" Style="{DynamicResource IconButton}" Content="&#xF8AC;" FontSize="16" />
                                 <Button x:Name="MediaPlayPause" Style="{DynamicResource IconButton}" Content="&#xF5B0;"
-                                        Width="44" Height="44" FontSize="24" Margin="18,0" />
-                                <Button x:Name="MediaNext" Style="{DynamicResource IconButton}" Content="&#xF8AD;" FontSize="17" />
+                                        Width="40" Height="40" FontSize="22" Margin="14,0" />
+                                <Button x:Name="MediaNext" Style="{DynamicResource IconButton}" Content="&#xF8AD;" FontSize="16" />
                             </StackPanel>
                         </Grid>
                     </Grid>
@@ -141,27 +203,28 @@
                             <ItemsControl x:Name="AgentList" Margin="0,6,0,0">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="Transparent" Cursor="Hand" Height="24" Tag="{Binding}"
+                                        <Border Background="Transparent" Cursor="Hand" Height="28" Tag="{Binding}"
                                                 MouseLeftButtonDown="OnAgentRowClicked" ToolTip="{Binding Tip}">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="16" />
+                                                    <ColumnDefinition Width="22" />
                                                     <ColumnDefinition Width="Auto" />
                                                     <ColumnDefinition Width="*" />
                                                     <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
-                                                <Ellipse Width="7" Height="7" HorizontalAlignment="Left" VerticalAlignment="Center"
-                                                         Fill="{Binding Brush}" />
-                                                <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold"
+                                                <!-- The agent's logo, or its glyph when it has none. -->
+                                                <Path Width="13" Height="13" Stretch="Uniform" HorizontalAlignment="Left"
+                                                      VerticalAlignment="Center" Data="{Binding Logo}"
+                                                      Fill="{DynamicResource TextBrush}" />
+                                                <TextBlock Text="{Binding Glyph}" FontFamily="{DynamicResource IconFont}" FontSize="12"
+                                                           VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="13" FontWeight="SemiBold"
                                                            VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="260" />
-                                                <TextBlock Grid.Column="2" Text="{Binding Where}" FontSize="12" Opacity="0.5"
+                                                <TextBlock Grid.Column="2" Text="{Binding Where}" FontSize="13" Foreground="{DynamicResource SecondaryTextBrush}"
                                                            Margin="10,0,10,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                                <!-- A badge tinted with the state's own colour. -->
-                                                <Grid Grid.Column="3" VerticalAlignment="Center">
-                                                    <Border Background="{Binding Brush}" Opacity="0.16" CornerRadius="9" />
-                                                    <TextBlock Text="{Binding StateText}" Foreground="{Binding Brush}" FontSize="11"
-                                                               FontWeight="SemiBold" Margin="8,2" />
-                                                </Grid>
+                                                <!-- The state, in its own colour. -->
+                                                <TextBlock Grid.Column="3" Text="{Binding StateText}" Foreground="{Binding Brush}"
+                                                           FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
@@ -265,14 +328,32 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border x:Name="Tab" CornerRadius="{DynamicResource ControlRadius}" Margin="0,0,6,0" Padding="10,4,4,4"
+                                    <Border x:Name="Tab" CornerRadius="{DynamicResource ControlRadius}" Margin="0,0,6,0" Padding="10,3,4,3"
                                             Background="Transparent" Cursor="Hand" Tag="{Binding}"
                                             MouseLeftButtonDown="OnSessionTabClicked">
                                         <StackPanel Orientation="Horizontal">
-                                            <Ellipse Width="7" Height="7" Margin="0,0,7,0" VerticalAlignment="Center"
-                                                     Fill="{Binding StatusBrush}" />
-                                            <TextBlock Text="{Binding Title}" FontSize="12" VerticalAlignment="Center"
+                                            <!-- The agent's logo, or the profile's glyph for a shell or an agent without one. -->
+                                            <Grid Width="13" Height="13" Margin="0,0,7,0" VerticalAlignment="Center">
+                                                <Path Stretch="Uniform" Data="{Binding Logo}" Fill="{DynamicResource TextBrush}" />
+                                                <TextBlock Text="{Binding Glyph}" FontFamily="{DynamicResource IconFont}" FontSize="12"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Logo}" Value="{x:Null}">
+                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Grid>
+                                            <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"
                                                        MaxWidth="150" TextTrimming="CharacterEllipsis" />
+                                            <!-- What the agent is doing, in its colour; nothing for a shell. -->
+                                            <Ellipse Width="6" Height="6" Margin="7,0,0,0" VerticalAlignment="Center"
+                                                     Fill="{Binding StatusBrush}" />
                                             <Button Style="{DynamicResource IconButton}" Content="&#xE711;" FontSize="9"
                                                     Width="18" Height="18" Margin="6,0,0,0" Tag="{Binding}"
                                                     ToolTip="Close session" Click="OnSessionCloseClicked" />

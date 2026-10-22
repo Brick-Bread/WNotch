@@ -231,12 +231,17 @@ internal static class ThemeManager
             resources["AccentBrush"] = Brush(color);
             resources["AccentHoverBrush"] = Brush(color, 0x59);
             resources["AccentPressedBrush"] = Brush(color, 0x80);
+
+            // Black on a light accent (white, yellow), white on the rest.
+            double luminance = (0.2126 * color.R) + (0.7152 * color.G) + (0.0722 * color.B);
+            resources["OnAccentBrush"] = luminance > 160 ? Brushes.Black : Brushes.White;
         }
         else
         {
             resources.Remove("AccentBrush");
             resources.Remove("AccentHoverBrush");
             resources.Remove("AccentPressedBrush");
+            resources.Remove("OnAccentBrush");
         }
     }
 

@@ -27,9 +27,9 @@ internal static class ScreenshotRunner
         window.SavePicture(File("pill-media"));
 
         string agent = AgentActivities.IdFor("shot");
-        await Compact("pill-agent-working", AgentActivities.For("shot", "Claude", "", AgentState.Working)!);
-        await Compact("pill-agent-needs-input", AgentActivities.For("shot", "Claude", "", AgentState.NeedsInput)!);
-        await Compact("pill-agent-done", AgentActivities.For("shot", "Claude", "", AgentState.Done)!);
+        await Compact("pill-agent-working", AgentActivities.For("shot", "Claude", "", AgentState.Working, "notch", agentId: "claude")!);
+        await Compact("pill-agent-needs-input", AgentActivities.For("shot", "Codex", "", AgentState.NeedsInput, "site", agentId: "codex")!);
+        await Compact("pill-agent-done", AgentActivities.For("shot", "Claude", "", AgentState.Done, "notch", agentId: "claude")!);
         activities.Remove(agent);
         await Compact("pill-volume", HudActivities.Volume(0.6, muted: false));
         await Compact("pill-charging", HudActivities.Power(pluggedIn: true, percent: 82));
