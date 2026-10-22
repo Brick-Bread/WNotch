@@ -4,10 +4,16 @@
         Title="Browse plugins"
         Width="520" Height="560" MinHeight="320"
         WindowStartupLocation="CenterOwner">
+    <Window.Resources>
+        <ResourceDictionary Source="/Notch;component/Themes/Window.xaml" />
+    </Window.Resources>
+    <Window.Style>
+        <StaticResource ResourceKey="NotchWindow" />
+    </Window.Style>
     <DockPanel Margin="20,16,20,16">
         <TextBox x:Name="Search" DockPanel.Dock="Top"
                  ToolTip="Filters by name, author, description and tag." />
-        <TextBlock x:Name="Summary" DockPanel.Dock="Top" Opacity="0.7" Margin="0,8,0,8" TextWrapping="Wrap" />
+        <TextBlock x:Name="Summary" DockPanel.Dock="Top" Style="{StaticResource Help}" Margin="4,10,0,10" />
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <!-- One row per plugin, added in code. -->
             <StackPanel x:Name="Rows" />

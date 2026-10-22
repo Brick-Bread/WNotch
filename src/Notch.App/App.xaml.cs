@@ -339,7 +339,15 @@ public partial class App : Application
         // --screenshots=<folder> (with --demo) saves pictures of the notch for the website, then quits.
         if (demo && Option(e, "--screenshots=") is { } shots)
         {
-            _ = TakeScreenshotsAsync(window, shots);
+            // --with-settings adds pictures of each section of the settings window, for checking its look.
+            Func<SettingsWindow>? openSettings = HasFlag(e, "--with-settings")
+                ? () =>
+                {
+                    OpenSettings(window, settings, settingsStore);
+                    return _settingsWindow!;
+                }
+                : null;
+            _ = TakeScreenshotsAsync(window, shots, openSettings);
             return;
         }
 
@@ -475,12 +483,16 @@ public partial class App : Application
         }
     }
 
-    private async Task TakeScreenshotsAsync(NotchWindow window, string folder)
+    private async Task TakeScreenshotsAsync(NotchWindow window, string folder, Func<SettingsWindow>? openSettings)
     {
         int exitCode = 0;
         try
         {
             await ScreenshotRunner.RunAsync(window, _activities!, folder);
+            if (openSettings is not null)
+            {
+                await openSettings().SavePicturesAsync(folder);
+            }
         }
         catch (Exception ex)
         {
