@@ -16,9 +16,20 @@ internal sealed class Options
     public bool AddToPath { get; private set; }
     public string? InstallDir { get; private set; }
 
+    /// <summary>Whether anything at all was given on the command line.</summary>
+    public bool HasSwitches { get; private set; }
+
+    /// <summary>
+    /// What a setup file with no app attached should do. That is Uninstall.exe, which the uninstall entry starts
+    /// with <c>/uninstall</c> (an older installer's entry started it with nothing), but it is also a download
+    /// that was cut short. Run with install switches (<c>/S</c>, <c>/UPDATE</c>, <c>/D=</c>, <c>/PATH</c>),
+    /// such a file was meant to install, and uninstalling instead would take Notch away; it refuses.
+    /// </summary>
+    public bool UninstallsWithoutPayload => Uninstall || !HasSwitches;
+
     public static Options Parse(string[] args)
     {
-        var options = new Options();
+        var options = new Options { HasSwitches = args.Length > 0 };
         for (int i = 0; i < args.Length; i++)
         {
             string arg = args[i];

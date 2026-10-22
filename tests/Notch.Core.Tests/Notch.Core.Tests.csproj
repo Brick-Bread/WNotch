@@ -26,6 +26,7 @@
   <ItemGroup>
     <!-- The installer targets .NET Framework and cannot be referenced; its folder swap is plain System.IO, so the same file is compiled in here to be tested. -->
     <Compile Include="..\..\src\Notch.Setup\FolderSwap.cs" Link="Setup\FolderSwap.cs" />
+    <Compile Include="..\..\src\Notch.Setup\Options.cs" Link="Setup\Options.cs" />
   </ItemGroup>
 
 </Project>

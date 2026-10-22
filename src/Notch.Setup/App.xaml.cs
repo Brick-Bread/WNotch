@@ -24,6 +24,14 @@ public partial class App : Application
 
         if (!Installer.HasPayload)
         {
+            // Install switches on a file with no app inside: a download that was cut short. Uninstalling would
+            // take away the version that is there, so nothing is changed.
+            if (!options.UninstallsWithoutPayload)
+            {
+                Shutdown(RefuseIncomplete(options));
+                return;
+            }
+
             // Uninstall.exe, started the way an older installer's uninstall entry starts it (no switches):
             // a copy of setup with no app inside has nothing to install, so uninstalling is what it is for.
             Uninstall(options);
@@ -85,6 +93,35 @@ public partial class App : Application
 
             return 1;
         }
+    }
+
+    /// <summary>Says the setup file is incomplete and leaves Notch as it is. For the app's updater, puts Notch back on screen.</summary>
+    private static int RefuseIncomplete(Options options)
+    {
+        const string message = "This setup file is incomplete. Download it again.";
+        Machine.Log("Refused an incomplete setup file (" + Payload.SelfPath + "); nothing was changed.");
+        if (!options.Silent)
+        {
+            MessageBox.Show(message, "Notch setup", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return 1;
+        }
+
+        Machine.WriteUpdateError(message);
+        if (options.Update && (options.InstallDir ?? Machine.InstalledDir()) is { } dir
+            && File.Exists(Path.Combine(dir, Machine.AppExe)))
+        {
+            try
+            {
+                // The app's updater closed Notch to run this; the version that is there is untouched.
+                Installer.Launch(dir, false);
+            }
+            catch (Exception launch)
+            {
+                Machine.Log("Could not restart the installed version: " + launch.Message);
+            }
+        }
+
+        return 1;
     }
 
     private void Uninstall(Options options)
