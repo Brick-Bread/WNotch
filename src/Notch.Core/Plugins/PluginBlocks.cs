@@ -145,6 +145,12 @@ public sealed record PluginTextField : PluginBlock
     /// <summary>Empties the box once its text is submitted, for a field that takes one thing after another. API version 9.</summary>
     public bool ClearOnSubmit { get; init; }
 
+    /// <summary>
+    /// How many lines tall the box is, 1 to 12. Above 1, Enter starts a new line, the text wraps, and Ctrl+Enter
+    /// or the button submits it. Ignored for a <see cref="Secret"/> field. API version 9.
+    /// </summary>
+    public int Lines { get; init; } = 1;
+
     /// <summary>Greyed text in the empty box.</summary>
     public string? Hint { get; init; }
 

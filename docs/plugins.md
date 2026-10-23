@@ -471,7 +471,7 @@ The body of a page is one of: the list (`Choices`), the blocks (`Blocks`), or th
 | `PluginToggle` | A switch. `Changed(bool)` is called when the user flips it. |
 | `PluginSlider` | A slider with `Min`, `Max`, `Step` and `Unit`. `Changed(double)` is called when the user lets go. |
 | `PluginSelect` | A row of choices; `Changed(string)` is called with the one picked. |
-| `PluginTextField` | A text box with a button (and Enter) that calls `Submitted(string)`. `Secret = true` hides the text. `ClearOnSubmit = true` empties the box once it is submitted, for a field that takes one thing after another (API 9). `Changed(string)` is called as the user types, once they pause for about 150 ms, for a list that filters as they type (API 9). |
+| `PluginTextField` | A text box with a button (and Enter) that calls `Submitted(string)`. `Secret = true` hides the text. `ClearOnSubmit = true` empties the box once it is submitted, for a field that takes one thing after another (API 9). `Changed(string)` is called as the user types, once they pause for about 150 ms, for a list that filters as they type (API 9). `Lines = 4` makes a box of several lines, where Enter starts a new line and Ctrl+Enter submits (API 9). |
 | `PluginImage` | A picture from bytes (PNG, JPEG, ...). |
 | `PluginSeparator` | A thin line. |
 

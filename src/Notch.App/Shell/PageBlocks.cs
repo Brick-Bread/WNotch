@@ -545,9 +545,11 @@ internal sealed class PageBlocks(Panel host)
         submit.Click += (_, _) => Send();
         foreach (Control control in new Control[] { plain, secret })
         {
-            control.KeyDown += (_, e) =>
+            control.PreviewKeyDown += (_, e) =>
             {
-                if (e.Key == Key.Enter)
+                // In a box of several lines Enter is a new line, and Ctrl+Enter sends.
+                bool several = control == plain && plain.AcceptsReturn;
+                if (e.Key == Key.Enter && (!several || Keyboard.Modifiers.HasFlag(ModifierKeys.Control)))
                 {
                     e.Handled = true;
                     Send();
@@ -565,6 +567,17 @@ internal sealed class PageBlocks(Panel host)
             submit.Content = current.SubmitLabel ?? "Save";
             plain.Visibility = current.Secret ? Visibility.Collapsed : Visibility.Visible;
             secret.Visibility = current.Secret ? Visibility.Visible : Visibility.Collapsed;
+
+            int lines = current.Secret ? 1 : Math.Clamp(current.Lines, 1, 12);
+            plain.AcceptsReturn = lines > 1;
+            plain.TextWrapping = lines > 1 ? TextWrapping.Wrap : TextWrapping.NoWrap;
+            plain.VerticalScrollBarVisibility = lines > 1 ? ScrollBarVisibility.Auto : ScrollBarVisibility.Hidden;
+            plain.VerticalContentAlignment = lines > 1 ? VerticalAlignment.Top : VerticalAlignment.Center;
+            plain.Height = lines > 1 ? (lines * 18) + 12 : double.NaN;
+            hint.VerticalAlignment = lines > 1 ? VerticalAlignment.Top : VerticalAlignment.Center;
+            hint.Margin = new Thickness(12, lines > 1 ? 6 : 0, 0, 0);
+            submit.VerticalAlignment = lines > 1 ? VerticalAlignment.Bottom : VerticalAlignment.Stretch;
+            submit.ToolTip = lines > 1 ? "Ctrl+Enter" : null;
 
             // Leave alone what the user is typing; only take the plugin's text when they are not in the box.
             if (!current.Secret && !plain.IsKeyboardFocusWithin && current.Value is { } value && plain.Text != value)
