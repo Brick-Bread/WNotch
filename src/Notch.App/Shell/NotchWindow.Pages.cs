@@ -145,6 +145,9 @@ public partial class NotchWindow
 
         PageBack.Visibility = page.Back is null ? Visibility.Collapsed : Visibility.Visible;
         PageBack.Content = "‹  " + (page.BackLabel ?? "Back");
+        PageStatus.Text = page.Status ?? "";
+        PageStatus.ToolTip = page.Status;
+        PageStatus.Visibility = string.IsNullOrWhiteSpace(page.Status) ? Visibility.Collapsed : Visibility.Visible;
 
         bool listed = page.Choices.Count > 0;
         bool blocks = !listed && page.Blocks.Count > 0;

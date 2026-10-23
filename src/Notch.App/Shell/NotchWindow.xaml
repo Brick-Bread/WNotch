@@ -730,10 +730,12 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,6">
-                        <Button x:Name="PageBack" DockPanel.Dock="Left" Margin="0"
+                    <DockPanel Grid.Row="0" Margin="0,0,0,6">
+                        <Button x:Name="PageBack" DockPanel.Dock="Left" Margin="0,0,10,0"
                                 Style="{DynamicResource PillButton}" Visibility="Collapsed" />
                         <StackPanel x:Name="PageActions" DockPanel.Dock="Right" Orientation="Horizontal" />
+                        <TextBlock x:Name="PageStatus" VerticalAlignment="Center" FontSize="12" Opacity="0.6"
+                                   TextTrimming="CharacterEllipsis" Margin="2,0,10,0" Visibility="Collapsed" />
                     </DockPanel>
 
                     <ItemsControl x:Name="PageStats" Grid.Row="1" Margin="-4,0,-4,0">
