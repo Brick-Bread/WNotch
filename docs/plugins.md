@@ -386,6 +386,16 @@ host.Widgets.Show(widget.Id, new PluginWidgetContent { View = view });
 text.Dispatcher.Invoke(() => text.Text = "42");
 ```
 
+**Theme files and `UseWPF`.** With `<UseWPF>true</UseWPF>` the SDK compiles every `*.xaml` in the project into the assembly, so a theme file you ship next to it (as the Neon sample does with `None ... CopyToOutputDirectory`) silently stops being copied, and Notch falls back to its own look. Keep it a loose file:
+
+```xml
+<ItemGroup>
+  <Page Remove="themes\*.xaml" />
+  <None Remove="themes\*.xaml" />
+  <None Include="themes\*.xaml" CopyToOutputDirectory="PreserveNewest" />
+</ItemGroup>
+```
+
 Blocks are the better choice when they will do: they cannot break the notch, and they keep up with its look as it changes. A view that throws, or returns something that is not an element, shows an error in the widget instead.
 
 All callbacks run on a background thread, and an exception from one is logged. When your plugin stops, its widgets stay where the user put them and say that the plugin is not running; they come back to life when it starts again.
@@ -507,7 +517,7 @@ public void Start(IPluginHost host) =>
     });
 ```
 
-The theme itself is a XAML file whose root element is a `ResourceDictionary`. Ship it in the plugin folder (in the project file: `<None Include="themes\*.xaml" CopyToOutputDirectory="PreserveNewest" />`). Notch merges it after its own dictionaries, so it only has to say what is different: **every key it leaves out comes from the base theme.** Nothing in the notch is drawn from a value that a theme cannot replace.
+The theme itself is a XAML file whose root element is a `ResourceDictionary`. Ship it in the plugin folder (in the project file: `<None Include="themes\*.xaml" CopyToOutputDirectory="PreserveNewest" />`; a project with `<UseWPF>true</UseWPF>` also needs `<Page Remove="themes\*.xaml" />`, see [Widgets](#widgets-the-home-tab)). Notch merges it after its own dictionaries, so it only has to say what is different: **every key it leaves out comes from the base theme.** Nothing in the notch is drawn from a value that a theme cannot replace.
 
 | Key | Type | What it changes |
 |---|---|---|
