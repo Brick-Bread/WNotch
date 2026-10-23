@@ -457,7 +457,7 @@ A page can do more than show figures and a console:
 | `Actions` | Up to six buttons in the top right, e.g. Start, Stop, Restart. Each has a `Label`, `Color`, `Enabled`, `Hint` (tooltip) and `Clicked`. Set `Confirm = true` on one that cannot be undone: the first click changes its label to "Click again" for a few seconds, and only a second click runs it. API 5. |
 | `Blocks` | Free-form content in a scrolling column, shown in place of the console (a page with `Choices` shows those instead). Up to 100 blocks. API 5. |
 
-The body of a page is one of: the list (`Choices`), the blocks (`Blocks`), or the console, in that order of precedence.
+The body of a page is one of: the list (`Choices`), the blocks (`Blocks`), or the console, in that order of precedence. For rows together with other content, put a `PluginChoices` block among the blocks instead of using `Choices`.
 
 **Blocks** are plain records; Notch draws them in its own style:
 
@@ -469,6 +469,7 @@ The body of a page is one of: the list (`Choices`), the blocks (`Blocks`), or th
 | `PluginTable` | A header row and rows of text, up to 8 columns and 200 rows. |
 | `PluginChart` | A line chart of `Values`, oldest on the left, up to 240 points. `Max` sets the top. |
 | `PluginButtons` | A row of `PluginAction` buttons. |
+| `PluginChoices` | Clickable rows (`PluginChoice`, the same as a page's `Choices`) among the other blocks, e.g. under a `PluginSelect` picker or after a message. Up to 200 rows. API 9. |
 | `PluginToggle` | A switch. `Changed(bool)` is called when the user flips it. |
 | `PluginSlider` | A slider with `Min`, `Max`, `Step` and `Unit`. `Changed(double)` is called when the user lets go. |
 | `PluginSelect` | A row of choices; `Changed(string)` is called with the one picked. |

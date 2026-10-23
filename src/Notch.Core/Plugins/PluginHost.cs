@@ -127,6 +127,7 @@ internal sealed class PluginHost : IPluginHost
     private static PluginBlock GuardBlock(PluginBlock block, Action<Action> run) => block switch
     {
         PluginButtons b => b with { Actions = GuardActions(b.Actions, run) },
+        PluginChoices b => b with { Choices = [.. b.Choices.Select(c => c with { Clicked = c.Clicked is { } clicked ? () => run(clicked) : null })] },
         PluginToggle b => b with { Changed = b.Changed is { } changed ? value => run(() => changed(value)) : null },
         PluginSlider b => b with { Changed = b.Changed is { } changed ? value => run(() => changed(value)) : null },
         PluginSelect b => b with { Changed = b.Changed is { } changed ? value => run(() => changed(value)) : null },

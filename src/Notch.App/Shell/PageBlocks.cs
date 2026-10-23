@@ -77,6 +77,7 @@ internal sealed class PageBlocks(Panel host)
         PluginTable b => Table(b),
         PluginChart b => Chart(b),
         PluginButtons b => Buttons(b),
+        PluginChoices b => Choices(b),
         PluginToggle b => Toggle(b),
         PluginSlider b => SliderBlock(b),
         PluginSelect b => Select(b),
@@ -290,6 +291,46 @@ internal sealed class PageBlocks(Panel host)
         };
         Apply(initial);
         return new Slot(initial, row, Apply);
+    }
+
+    private static Slot Choices(PluginChoices initial)
+    {
+        var rows = new StackPanel { Margin = new Thickness(0, 0, 0, 10) };
+
+        void Apply(PluginBlock block)
+        {
+            var b = (PluginChoices)block;
+            rows.Children.Clear();
+            foreach (PluginChoice choice in b.Choices.Take(200))
+            {
+                var value = new TextBlock { Text = choice.Value, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0, 0, 0), Foreground = Tint(choice.Color) };
+                DockPanel.SetDock(value, Dock.Right);
+                var texts = new StackPanel();
+                texts.Children.Add(new TextBlock { Text = choice.Label, FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
+                if (!string.IsNullOrEmpty(choice.Detail))
+                {
+                    texts.Children.Add(new TextBlock { Text = choice.Detail, FontSize = 11, Opacity = 0.55, TextTrimming = TextTrimming.CharacterEllipsis });
+                }
+
+                var dock = new DockPanel { LastChildFill = true };
+                dock.Children.Add(value);
+                dock.Children.Add(texts);
+                var row = new Button
+                {
+                    Style = (Style)Application.Current.FindResource("PillButton"),
+                    HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                    Margin = new Thickness(0, 0, 0, 4),
+                    Padding = new Thickness(12, 8, 12, 8),
+                    Content = dock,
+                    Cursor = choice.Clicked is null ? Cursors.Arrow : Cursors.Hand,
+                };
+                row.Click += (_, _) => choice.Clicked?.Invoke();
+                rows.Children.Add(row);
+            }
+        }
+
+        Apply(initial);
+        return new Slot(initial, rows, Apply);
     }
 
     private static Slot Toggle(PluginToggle initial)

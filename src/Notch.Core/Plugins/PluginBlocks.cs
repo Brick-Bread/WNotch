@@ -179,5 +179,14 @@ public sealed record PluginImage : PluginBlock
     public double Height { get; init; } = 120;
 }
 
+/// <summary>
+/// Clickable rows, like a page's <see cref="PluginPage.Choices"/>, that can sit among other blocks: under a
+/// picker, after a message or above a table. Up to 200 rows are drawn. API version 9.
+/// </summary>
+public sealed record PluginChoices : PluginBlock
+{
+    public required IReadOnlyList<PluginChoice> Choices { get; init; }
+}
+
 /// <summary>A thin line between groups of blocks.</summary>
 public sealed record PluginSeparator : PluginBlock;

@@ -261,12 +261,14 @@ public sealed class PluginApiTests : IDisposable
             [
                 new PluginToggle { Label = "T", Changed = on => ran.SetResult(on) },
                 new PluginButtons { Actions = [new PluginAction { Label = "B", Clicked = () => throw new InvalidOperationException("boom") }] },
+                new PluginChoices { Choices = [new PluginChoice { Label = "Row", Clicked = () => throw new InvalidOperationException("boom") }] },
             ],
         });
 
         PluginPage page = manager.Pages.Snapshot().Single().Page;
         page.Actions[0].Clicked!();
         ((PluginButtons)page.Blocks[1]).Actions[0].Clicked!();
+        ((PluginChoices)page.Blocks[2]).Choices[0].Clicked!();
         ((PluginToggle)page.Blocks[0]).Changed!(true);
 
         Assert.True(await ran.Task.WaitAsync(TimeSpan.FromSeconds(5)));
