@@ -56,7 +56,12 @@ public sealed class PluginManager : IDisposable
     private readonly PluginLog _log;
     private readonly Func<PluginManifest, string, Func<INotchPlugin>> _loader;
     private readonly PluginChecks? _checks;
+    private readonly Dictionary<string, BuildWatch> _buildWatches = new(StringComparer.OrdinalIgnoreCase);
+    private int _buildCopies;
     private bool _disposed;
+
+    /// <summary>How long a development build's folder must stay unchanged before it is reloaded: a build writes many files.</summary>
+    private static readonly TimeSpan BuildSettleTime = TimeSpan.FromSeconds(1.5);
 
     /// <param name="pluginsDirectory">Each subfolder with a <c>plugin.json</c> is a plugin. Need not exist.</param>
     /// <param name="dataDirectory">Parent of the per-plugin data folders.</param>
@@ -80,6 +85,15 @@ public sealed class PluginManager : IDisposable
         Palette.ProviderFailed = (pluginId, e) => _log.Write(pluginId, "error", "The palette search failed.", e);
         Hotkeys.Refused = (pluginId, message) => _log.Write(pluginId, "warn", message);
     }
+
+    /// <summary>
+    /// Where <c>--plugin=</c> builds are copied before they are loaded, so the build's own folder is never locked and
+    /// rebuilding it works while Notch runs. Each load gets a fresh copy.
+    /// </summary>
+    public string BuildCopiesDirectory { get; init; } = Path.Combine(Path.GetTempPath(), "Notch", "plugin-builds", Environment.ProcessId.ToString());
+
+    /// <summary>When true, a <c>--plugin=</c> build is started again, from a fresh copy, whenever its folder changes.</summary>
+    public bool ReloadBuilds { get; init; } = true;
 
     /// <summary>When true, no plugin is started: the way back into Notch after a plugin broke it.</summary>
     public bool SafeMode { get; set; }
@@ -177,6 +191,7 @@ public sealed class PluginManager : IDisposable
             foreach (string directory in _pinnedDirectories)
             {
                 Add(directory, pinned: true);
+                WatchBuild(directory);
             }
 
             foreach (string directory in Subdirectories(PluginsDirectory))
@@ -364,7 +379,194 @@ public sealed class PluginManager : IDisposable
             {
                 Stop(slot);
             }
+
+            foreach (BuildWatch watch in _buildWatches.Values)
+            {
+                watch.Dispose();
+            }
+
+            _buildWatches.Clear();
         }
+
+        // Copies of the builds this run loaded; the assemblies in them stay locked until Notch exits, so this only
+        // clears what it can. The next run clears the rest.
+        DeleteOldBuildCopies(includeOwn: true);
+    }
+
+    /// <summary>
+    /// Starts a <c>--plugin=</c> build again from a fresh copy of its folder, after it was rebuilt: stops it, reads its
+    /// manifest again and starts the new code. Does nothing for a folder that is not a development build.
+    /// </summary>
+    public void ReloadBuild(string directory)
+    {
+        string? id;
+        lock (_gate)
+        {
+            if (_disposed || _slots.FirstOrDefault(s => s.Pinned && string.Equals(s.Directory, Path.GetFullPath(directory), StringComparison.OrdinalIgnoreCase)) is not { } slot)
+            {
+                return;
+            }
+
+            if (slot.Status == PluginStatus.Running)
+            {
+                Stop(slot);
+            }
+
+            // A new copy in a new load context: the old code cannot be unloaded, but it is no longer called.
+            slot.Factory = null;
+            slot.Status = PluginStatus.Disabled;
+            slot.Error = null;
+            try
+            {
+                PluginManifest manifest = PluginManifest.Parse(File.ReadAllText(Path.Combine(slot.Directory, PluginManifest.FileName)));
+                slot.DataId = slot.DataId == slot.Manifest?.Id || slot.DataId is null ? manifest.Id : slot.DataId;
+                slot.Manifest = manifest;
+                if (!SafeMode)
+                {
+                    Start(slot, manifest);
+                }
+            }
+            catch (Exception e) when (e is PluginLoadException or IOException or UnauthorizedAccessException)
+            {
+                slot.Status = PluginStatus.Failed;
+                slot.Error = e.Message;
+            }
+
+            id = slot.Manifest?.Id;
+            _log.Write(LogSource, slot.Status == PluginStatus.Running ? "info" : "warn", $"Reloaded the build in {slot.Directory}: {slot.Status}{(slot.Error is { } error ? ". " + error : "")}");
+        }
+
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>The folder a plugin's code is loaded from: its own, or for a development build a fresh copy of it.</summary>
+    private string LoadDirectory(Slot slot)
+    {
+        if (!slot.Pinned)
+        {
+            return slot.Directory;
+        }
+
+        string copy = Path.Combine(BuildCopiesDirectory, $"{slot.Manifest?.Id}-{Interlocked.Increment(ref _buildCopies)}");
+        try
+        {
+            CopyFolder(slot.Directory, copy);
+            return copy;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // Loading from the build itself still works; only rebuilding it while Notch runs does not.
+            _log.Write(LogSource, "warn", $"Could not copy the build in {slot.Directory} ({e.Message}); loading it from there, which locks it.");
+            return slot.Directory;
+        }
+    }
+
+    private static void CopyFolder(string from, string to)
+    {
+        Directory.CreateDirectory(to);
+        foreach (string file in Directory.EnumerateFiles(from, "*", SearchOption.AllDirectories))
+        {
+            string target = Path.Combine(to, Path.GetRelativePath(from, file));
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            File.Copy(file, target, overwrite: true);
+        }
+    }
+
+    /// <summary>
+    /// Removes copies of development builds that no running Notch is using any more. Each run copies into a folder
+    /// named after its process, and a folder of a process that is still running is left alone.
+    /// </summary>
+    private void DeleteOldBuildCopies(bool includeOwn = false)
+    {
+        string? root = Path.GetDirectoryName(BuildCopiesDirectory);
+        if (root is null || !Directory.Exists(root))
+        {
+            return;
+        }
+
+        foreach (string folder in Directory.GetDirectories(root))
+        {
+            bool own = string.Equals(folder, BuildCopiesDirectory, StringComparison.OrdinalIgnoreCase);
+            if (own ? !includeOwn : !int.TryParse(Path.GetFileName(folder), out int process) || IsRunning(process))
+            {
+                continue;
+            }
+
+            try
+            {
+                Directory.Delete(folder, recursive: true);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                // Still loaded by a running copy of Notch.
+            }
+        }
+    }
+
+    private static bool IsRunning(int processId)
+    {
+        try
+        {
+            using var process = System.Diagnostics.Process.GetProcessById(processId);
+            return !process.HasExited;
+        }
+        catch (Exception e) when (e is ArgumentException or InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>Watches a development build's folder and reloads it once a rebuild has settled.</summary>
+    private void WatchBuild(string directory)
+    {
+        if (!ReloadBuilds || _buildWatches.ContainsKey(directory) || !Directory.Exists(directory))
+        {
+            return;
+        }
+
+        if (_buildWatches.Count == 0)
+        {
+            DeleteOldBuildCopies();
+        }
+
+        _buildWatches[directory] = new BuildWatch(directory, BuildSettleTime, () => ReloadBuild(directory));
+    }
+
+    private sealed class BuildWatch : IDisposable
+    {
+        private readonly FileSystemWatcher _watcher;
+        private readonly Timer _settle;
+        private readonly TimeSpan _wait;
+
+        public BuildWatch(string directory, TimeSpan wait, Action changed)
+        {
+            _wait = wait;
+            _settle = new Timer(_ =>
+            {
+                try
+                {
+                    changed();
+                }
+                catch (Exception)
+                {
+                    // Plugin code ran in there; nothing it does may end the app.
+                }
+            });
+            _watcher = new FileSystemWatcher(directory) { IncludeSubdirectories = true, NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.Size };
+            _watcher.Changed += (_, _) => Restart();
+            _watcher.Created += (_, _) => Restart();
+            _watcher.Deleted += (_, _) => Restart();
+            _watcher.Renamed += (_, _) => Restart();
+            _watcher.EnableRaisingEvents = true;
+        }
+
+        public void Dispose()
+        {
+            _watcher.Dispose();
+            _settle.Dispose();
+        }
+
+        private void Restart() => _settle.Change(_wait, Timeout.InfiniteTimeSpan);
     }
 
     private static IEnumerable<string> Subdirectories(string directory)
@@ -445,7 +647,7 @@ public sealed class PluginManager : IDisposable
                 return;
             }
 
-            slot.Factory ??= _loader(manifest, slot.Directory);
+            slot.Factory ??= _loader(manifest, LoadDirectory(slot));
             slot.Host = new PluginHost(
                 manifest, slot.Directory, Path.Combine(_dataDirectory, slot.DataId ?? manifest.Id), _activities, _cards, Pages, Themes, Glow, Audio, ShellState, Bus, _log, Widgets, Palette, Hotkeys);
             slot.Instance = slot.Factory();

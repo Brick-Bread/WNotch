@@ -769,7 +769,7 @@ A debug build of Notch runs side by side with an installed copy; two release cop
 
 To use a debugger, start Notch with `--plugin=` and attach to the `Notch` process, or set Notch.exe as the plugin project's start program with the flag as its argument. Breakpoints in plugin code work as long as the plugin's `.pdb` is in its folder.
 
-Rebuilding the plugin while Notch has it loaded fails because the `.dll` is locked; quit Notch first.
+A plugin run with `--plugin=` is loaded from a copy of its folder, so its build output is never locked, and Notch watches the folder: rebuild, and a moment after the build finishes Notch stops the plugin and starts the new build (from Notch 0.19; `plugins.log` says when). Each reload's old code stays in memory until Notch quits, which is fine for a development session. An installed plugin is still loaded from its own folder.
 
 ## Plugin checks
 

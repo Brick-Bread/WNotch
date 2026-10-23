@@ -97,6 +97,7 @@ public sealed class PluginManagerTests : IDisposable
     private readonly ActivityManager _activities = new(new FakeTimeProvider());
     private readonly PluginCardBoard _cards = new();
     private readonly Dictionary<string, FakePlugin> _fakes = [];
+    private readonly List<string> _loadedFrom = [];
 
     private string PluginsDirectory => Path.Combine(_root, "plugins");
 
@@ -289,6 +290,42 @@ public sealed class PluginManagerTests : IDisposable
     }
 
     [Fact]
+    public void A_development_build_is_loaded_from_a_copy_and_reloaded_after_a_rebuild()
+    {
+        string build = Install("dev", parent: Path.Combine(_root, "build"));
+        File.WriteAllText(Path.Combine(build, "Plugin.dll"), "first build");
+        using PluginManager manager = CreateManager();
+        manager.Discover([build]);
+        manager.SetEnabled([]);
+        FakePlugin first = _fakes["dev"];
+
+        string copy = Assert.Single(_loadedFrom);
+        Assert.NotEqual(build, copy);
+        Assert.Equal("first build", File.ReadAllText(Path.Combine(copy, "Plugin.dll")));
+
+        File.WriteAllText(Path.Combine(build, "Plugin.dll"), "second build");
+        manager.ReloadBuild(build);
+
+        Assert.True(first.Stopped);
+        Assert.NotSame(first, _fakes["dev"]);
+        Assert.Equal(PluginStatus.Running, Assert.Single(manager.Plugins).Status);
+        Assert.Equal("second build", File.ReadAllText(Path.Combine(_loadedFrom[1], "Plugin.dll")));
+    }
+
+    [Fact]
+    public void An_installed_plugin_is_loaded_from_its_own_folder()
+    {
+        string folder = Install("a");
+        using PluginManager manager = CreateManager();
+        manager.Discover();
+        manager.SetEnabled(["a"]);
+
+        Assert.Equal(folder, Assert.Single(_loadedFrom));
+        manager.ReloadBuild(folder);
+        Assert.Single(_loadedFrom);
+    }
+
+    [Fact]
     public void A_development_build_of_its_own_uses_its_id_for_its_data()
     {
         string build = Install("fresh", parent: Path.Combine(_root, "build"));
@@ -322,7 +359,15 @@ public sealed class PluginManagerTests : IDisposable
         _activities,
         _cards,
         new PluginLog(Path.Combine(_root, "plugins.log")),
-        (manifest, _) => () => _fakes[manifest.Id] = new FakePlugin(fail: manifest.Id == failing));
+        (manifest, directory) =>
+        {
+            _loadedFrom.Add(directory);
+            return () => _fakes[manifest.Id] = new FakePlugin(fail: manifest.Id == failing);
+        })
+    {
+        BuildCopiesDirectory = Path.Combine(_root, "copies", Environment.ProcessId.ToString()),
+        ReloadBuilds = false,
+    };
 
     /// <summary>Writes a plugin folder holding only a manifest and returns its path.</summary>
     private string Install(string id, string? folder = null, string? parent = null, string assembly = "Plugin.dll")
