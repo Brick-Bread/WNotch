@@ -39,6 +39,9 @@ public partial class NotchWindow : Window
     // How far outside the island, in DIPs, the pointer still counts as on it.
     private const double HoverMargin = 2;
 
+    // A click this soon after the pointer opened the notch was aimed at the pill, before Home had faded in.
+    private static readonly TimeSpan PillClickGrace = TimeSpan.FromMilliseconds(600);
+
     // In DIPs. Large fits the biggest expanded tab; small fits the pill plus room for its glow.
     // Both are the same width: a resize that moved the left edge would show the previous frame
     // in the wrong place until the next one is drawn, leaving nothing under the pointer.
@@ -80,6 +83,10 @@ public partial class NotchWindow : Window
     private GlowColor? _artAccent;
     private bool _largeWindow;
     private bool _hiddenForFullscreen;
+
+    /// <summary>What the pill showed when the notch last opened, and when that was, for a click aimed at the pill.</summary>
+    private Activity? _pillAtExpand;
+    private DateTime _expandedAt;
 
     internal NotchWindow(
         ActivityManager activities,
@@ -601,6 +608,14 @@ public partial class NotchWindow : Window
     private void OnIslandClicked(object sender, MouseButtonEventArgs e)
     {
         _hoverTimer.Stop();
+
+        // A plugin's activity may say which of its pages a click on the pill opens.
+        Activity? clicked = !_expanded ? _pillActivity : DateTime.UtcNow - _expandedAt < PillClickGrace ? _pillAtExpand : null;
+        if (clicked?.OpensPage is { } page && OpenPluginPage(page))
+        {
+            _pillAtExpand = null;
+        }
+
         SetExpanded(true);
     }
 
@@ -680,6 +695,8 @@ public partial class NotchWindow : Window
             HoverTrace.Write($"expanded={expanded}");
             if (expanded)
             {
+                _pillAtExpand = _pillActivity;
+                _expandedAt = DateTime.UtcNow;
                 UpdateCalendar();
                 PruneShelf();
                 _mouseWasDown = OverlayWindow.IsAnyMouseButtonDown();

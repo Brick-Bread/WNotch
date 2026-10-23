@@ -131,6 +131,18 @@ public sealed class PluginManager : IDisposable
     /// <summary>The id a plugin's activity gets in the <see cref="ActivityManager"/>.</summary>
     public static string ActivityIdFor(string pluginId, string activityId) => $"plugin.{pluginId}.{activityId}";
 
+    /// <summary>How a page is named from outside its plugin: "plugin-id/page-id". Plugin ids have no slash.</summary>
+    public static string PageKeyFor(string pluginId, string pageId) => $"{pluginId}/{pageId}";
+
+    /// <summary>Splits <see cref="PageKeyFor"/>'s result; false when it is not one.</summary>
+    public static bool TryParsePageKey(string? key, out string pluginId, out string pageId)
+    {
+        int slash = key?.IndexOf('/') ?? -1;
+        pluginId = slash > 0 ? key![..slash] : "";
+        pageId = slash > 0 ? key![(slash + 1)..] : "";
+        return pluginId.Length > 0 && pageId.Length > 0;
+    }
+
     /// <summary>
     /// Reads the manifests of plugins that have not been loaded, so new and replaced ones show
     /// up; plugins that have run are left alone. This only lists them: <see cref="SetEnabled"/>

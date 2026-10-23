@@ -147,7 +147,9 @@ internal sealed class PluginHost : IPluginHost
 
                 string id = PluginManager.ActivityIdFor(pluginId, activity.Id);
                 _ids.Add(id);
-                manager.Publish(activity with { Id = id });
+
+                // A page can only be one of the plugin's own, so the shell is told whose.
+                manager.Publish(activity with { Id = id, OpensPage = activity.OpensPage is { Length: > 0 } page ? PluginManager.PageKeyFor(pluginId, page) : null });
             }
         }
 

@@ -180,6 +180,21 @@ public sealed class PluginApiTests : IDisposable
     }
 
     [Fact]
+    public void An_activity_can_only_open_a_page_of_its_own_plugin()
+    {
+        using PluginManager manager = Manager();
+        manager.Discover();
+        manager.SetEnabled(["a"]);
+
+        _probes["a"].Host!.Activities.Publish(new Activity { Id = "timer", Tier = ActivityTier.Ongoing, Title = "Tracking", OpensPage = "timer" });
+
+        Assert.Equal("a/timer", Assert.Single(_activities.Snapshot()).OpensPage);
+        Assert.True(PluginManager.TryParsePageKey("a/timer", out string plugin, out string page));
+        Assert.Equal(("a", "timer"), (plugin, page));
+        Assert.False(PluginManager.TryParsePageKey("timer", out _, out _));
+    }
+
+    [Fact]
     public void A_page_keeps_the_view_its_plugin_draws_itself()
     {
         using PluginManager manager = Manager();

@@ -47,4 +47,10 @@ public sealed record Activity
 
     /// <summary>Only used by <see cref="ActivityTier.Transient"/>; defaults to <see cref="ActivityManager.DefaultTransientLifetime"/>.</summary>
     public TimeSpan? Lifetime { get; init; }
+
+    /// <summary>
+    /// For a plugin's activity: the <see cref="Plugins.PluginPage.Id"/> of one of the plugin's pages, which clicking the
+    /// pill opens while this activity is showing, instead of Home. Null opens Home as usual. API version 9.
+    /// </summary>
+    public string? OpensPage { get; init; }
 }

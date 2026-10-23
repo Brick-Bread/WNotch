@@ -170,6 +170,22 @@ public partial class NotchWindow
         }
     }
 
+    /// <summary>
+    /// Switches to a plugin's page, named "plugin-id/page-id", without opening the notch. False when there is no
+    /// such page, for instance because its plugin is not running.
+    /// </summary>
+    public bool OpenPluginPage(string key)
+    {
+        if (!PluginManager.TryParsePageKey(key, out string pluginId, out string pageId)
+            || !_pageTabs.TryGetValue((pluginId, pageId), out RadioButton? tab))
+        {
+            return false;
+        }
+
+        tab.IsChecked = true;
+        return true;
+    }
+
     /// <summary>Fills the page from its current state: stats, input line and the whole console.</summary>
     private void ShowPage()
     {
