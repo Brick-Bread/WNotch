@@ -77,7 +77,7 @@ internal sealed class TerminalBridge
 
     private async Task InitializeCoreAsync()
     {
-        string dataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Notch", "WebView2");
+        string dataFolder = Path.Combine(Notch.Core.Settings.DataFolders.Local, "WebView2");
         CoreWebView2Environment environment = await CoreWebView2Environment.CreateAsync(null, dataFolder);
         await Control.EnsureCoreWebView2Async(environment);
 

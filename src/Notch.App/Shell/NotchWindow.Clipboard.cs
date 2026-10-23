@@ -20,7 +20,7 @@ public partial class NotchWindow
 
     private readonly ClipboardHistory _clipboard = new();
     private readonly string _clipboardPinsFile = System.IO.Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Notch", "clipboard-pins.json");
+        Notch.Core.Settings.DataFolders.Roaming, "clipboard-pins.json");
 
     private bool _clipboardRegistered;
 

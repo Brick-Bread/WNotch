@@ -8,7 +8,7 @@ internal static class WebhookInfo
 {
     public static int Print()
     {
-        string file = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Notch", "settings.json");
+        string file = Path.Combine(DataFolders.Roaming, "settings.json");
         AppSettings settings = new SettingsStore(file).Load();
 
         if (!settings.WebhookEnabled)

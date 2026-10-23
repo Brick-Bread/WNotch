@@ -14,7 +14,7 @@ internal static class HoverTrace
     {
         try
         {
-            string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Notch");
+            string folder = Notch.Core.Settings.DataFolders.Local;
             Directory.CreateDirectory(folder);
             _writer = new StreamWriter(Path.Combine(folder, "hover.log"), append: false) { AutoFlush = true };
         }

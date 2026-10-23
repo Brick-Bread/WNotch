@@ -110,8 +110,10 @@ public partial class App : Application
         }
 
 
-        var settingsStore = new SettingsStore(Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Notch", "settings.json"));
+        // A debug build has folders of its own, so it cannot overwrite the installed copy's settings (--shared-data
+        // uses the installed copy's). Its first run starts from a copy of the installed copy's settings.
+        DataFolders.SeedSettings();
+        var settingsStore = new SettingsStore(Path.Combine(DataFolders.Roaming, "settings.json"));
         AppSettings settings = settingsStore.Load();
 
         _activities = new ActivityManager();
@@ -136,7 +138,7 @@ public partial class App : Application
 
         // Plugins are looked over before they start: what the user approved, what the registry withdrew,
         // and what is inside them. See "Plugin checks" in docs/plugins.md.
-        string localData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Notch");
+        string localData = DataFolders.Local;
         string registryCache = Path.Combine(appData, "registry.json");
         string trustFile = Path.Combine(appData, "plugin-trust.json");
         bool firstCheckedRun = !File.Exists(trustFile);
@@ -651,7 +653,7 @@ public partial class App : Application
     {
         try
         {
-            string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Notch");
+            string folder = DataFolders.Local;
             Directory.CreateDirectory(folder);
             File.AppendAllText(Path.Combine(folder, "errors.log"), $"{DateTimeOffset.Now:u} {exception}{Environment.NewLine}{Environment.NewLine}");
         }

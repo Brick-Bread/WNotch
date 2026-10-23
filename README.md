@@ -100,6 +100,7 @@ Development flags for `Notch.exe`:
 | `--plugin-theme=<plugin id>/<theme id>` | Show a theme a plugin offers for this run (see the plugin guide) |
 | `--style=notch\|island`, `--position=topcenter\|taskbarleft` | Show that style or position for this run without changing the saved settings |
 | `--display=<n>` | Use display *n* (as numbered in settings) for this run, e.g. to keep a debug build off the screen an installed copy is on |
+| `--shared-data` | Debug builds only: use the installed copy's settings, plugins and data instead of their own (`%AppData%\Notch-Debug`). Two copies then overwrite each other's settings, so do not run both. |
 | `--plugin=<folder>` | Load a plugin from its build output and run it whether or not it is enabled; can be repeated |
 | `--trace-hover` | Log pointer enter/leave, opening, closing, window resizes and the hotkey to `%LocalAppData%\Notch\hover.log`, to diagnose hover problems |
 | `--software-render` | Draw without the GPU, which makes rendering-timing problems easier to reproduce |

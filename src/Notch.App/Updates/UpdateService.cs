@@ -36,7 +36,7 @@ internal sealed class UpdateService : IDisposable
     private readonly HttpClient _http = new() { Timeout = TimeSpan.FromMinutes(10) };
     private readonly DispatcherTimer _timer = new();
     private readonly string _downloadFolder = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Notch", "updates");
+        DataFolders.Local, "updates");
 
     private ReleaseInfo? _pendingRelease;
     private string? _pendingInstaller;
@@ -95,7 +95,7 @@ internal sealed class UpdateService : IDisposable
     public static void AnnounceFailedUpdateIfAny(ActivityManager activities)
     {
         string file = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Notch", "update-error.txt");
+            DataFolders.Local, "update-error.txt");
         try
         {
             if (!File.Exists(file))

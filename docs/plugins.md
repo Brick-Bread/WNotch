@@ -765,7 +765,7 @@ Useful flags to combine with it (see the README for all of them):
 | `--display=2` | Use another display, away from an installed copy |
 | `--plugin-theme=<plugin id>/<theme id>` | Show a plugin's theme for this run, whatever is saved |
 
-A debug build of Notch runs side by side with an installed copy; two release copies cannot.
+A debug build of Notch runs side by side with an installed copy; two release copies cannot. A debug build keeps its settings, plugins, plugin data and logs in folders of its own, `%AppData%\Notch-Debug` and `%LocalAppData%\Notch-Debug`, so the two never overwrite each other's settings. Its first run starts from a copy of the installed copy's settings, with the webhook and the coding agents' hooks off, since those reach outside Notch. `--shared-data` makes a debug run use the installed copy's folders instead.
 
 To use a debugger, start Notch with `--plugin=` and attach to the `Notch` process, or set Notch.exe as the plugin project's start program with the flag as its argument. Breakpoints in plugin code work as long as the plugin's `.pdb` is in its folder.
 

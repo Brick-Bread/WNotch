@@ -44,7 +44,7 @@ internal sealed class TerminalController : IDisposable
         _quietTimer.Start();
 
         _claudeSettingsFile = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Notch", "claude-hooks.json");
+            Notch.Core.Settings.DataFolders.Local, "claude-hooks.json");
     }
 
     public TerminalBridge Bridge { get; } = new();
