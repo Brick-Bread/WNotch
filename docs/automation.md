@@ -8,6 +8,7 @@ Three ways to tell a running Notch what to do. They share one list of commands, 
 | `timer stop` / `pause` / `resume` | Controls the running timer. |
 | `toast "Build done"` | A short notice in the pill. Options: `detail`, `glyph`, `color` (a name such as `green`, or `#rrggbb`), `lifetime` (such as `5s`, at most 30 s). |
 | `open stats` | Opens the notch on a tab: `home`, `terminal`, `stats`, `shelf`, `plugins`, `clipboard`. |
+| `open page <plugin-id>/<page-id>` | Opens the notch on a plugin's page, e.g. `open page acme.tool/main`. Refused when the page is not there (its plugin is off, say). As a link `notch://open?page=acme.tool/main`, on the webhook `{ "command": "open", "page": "acme.tool/main" }`. |
 | `install <plugin-id>` | Asks to install a plugin from the plugin list. Notch shows a confirmation window first. |
 | `plugin <plugin-id> --enable true` | Switches an installed plugin on or off. Switching on asks first. |
 | `palette`, `settings` | Opens the command palette or Settings. |

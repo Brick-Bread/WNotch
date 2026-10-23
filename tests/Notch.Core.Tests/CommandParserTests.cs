@@ -35,6 +35,9 @@ public class CommandParserTests
     [InlineData("notch://timer?d=48h")]
     [InlineData("notch://timer?d=soon")]
     [InlineData("notch://open?tab=secrets")]
+    [InlineData("notch://open?page=chomp")]
+    [InlineData("notch://open?page=Bad%20Id/main")]
+    [InlineData("notch://open?page=acme/%0Amain")]
     [InlineData("notch://plugin?id=a")]
     [InlineData("")]
     public void Anything_unknown_or_malformed_is_refused(string url)
@@ -86,6 +89,16 @@ public class CommandParserTests
     {
         Assert.Equal(new OpenTabCommand("stats"), Url("notch://open?tab=Stats"));
         Assert.Equal(new OpenTabCommand("clipboard"), Args("open", "clipboard"));
+    }
+
+    [Fact]
+    public void A_plugins_page_is_opened_by_its_plugin_and_page_id()
+    {
+        Assert.Equal(new OpenPageCommand("chomp.desk/chomp"), Url("notch://open?page=chomp.desk/chomp"));
+        Assert.Equal(new OpenPageCommand("chomp.desk/Time Sheet"), Url("notch://open?page=chomp.desk%2FTime%20Sheet"));
+        Assert.Equal(new OpenPageCommand("chomp.desk/chomp"), Args("open", "page", "chomp.desk/chomp"));
+        Assert.Equal(new OpenPageCommand("chomp.desk/chomp"), Args("open", "chomp.desk/chomp"));
+        Assert.Equal(new OpenPageCommand("chomp.desk/chomp"), Args("open", "--page", "chomp.desk/chomp"));
     }
 
     [Fact]

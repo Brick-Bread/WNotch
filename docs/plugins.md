@@ -437,6 +437,7 @@ host.Pages.Open("server");
 | `Status` | One line of quiet text at the top of the page, beside the back button, such as "10 open, 20 done". |
 
 - `Append(pageId, line)` adds a console line; the newest 500 are kept. The console follows new lines unless the user has scrolled up. `ClearConsole(pageId)` empties it.
+- Outside Notch, `notchctl open page <your-plugin-id>/<page-id>`, `notch://open?page=...` and the webhook open it too, for a Stream Deck button or a script (see [Automation](automation.md)).
 - `Open(pageId)` expands the notch on the page. Use it for something the user asked for (a click), not to interrupt them.
 - Updating a page with `Set` is cheap; do it as often as the figures change, but not faster than once a second.
 - The input line takes keyboard focus while the page is showing, like the Terminal tab. Notch does not echo what the user types: append it yourself if you want it in the console.

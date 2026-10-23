@@ -29,6 +29,9 @@ public sealed record TimerActionCommand(TimerAction Action) : NotchCommand;
 /// <summary>Opens the notch on a tab: <c>home</c>, <c>terminal</c>, <c>stats</c>, <c>shelf</c>, <c>plugins</c> or <c>clipboard</c>.</summary>
 public sealed record OpenTabCommand(string Tab) : NotchCommand;
 
+/// <summary>Opens the notch on a plugin's page, named <c>plugin-id/page-id</c>. Ignored when that page is not there.</summary>
+public sealed record OpenPageCommand(string Page) : NotchCommand;
+
 /// <summary>A short notice in the pill.</summary>
 public sealed record ToastCommand(string Title, string? Detail, string? Glyph, GlowColor? Color, TimeSpan? Lifetime) : NotchCommand;
 

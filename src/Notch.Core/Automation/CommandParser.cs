@@ -19,6 +19,7 @@ public static partial class CommandParser
     public const int MaxTitleLength = 120;
     public const int MaxDetailLength = 300;
     public const int MaxGlyphLength = 8;
+    public const int MaxPageIdLength = 64;
     public static readonly TimeSpan MaxTimer = TimeSpan.FromHours(24);
     public static readonly TimeSpan MaxToastLifetime = TimeSpan.FromSeconds(30);
 
@@ -92,6 +93,11 @@ public static partial class CommandParser
             {
                 values[main] = argument;
             }
+            else if (verb == "open" && !values.ContainsKey("page"))
+            {
+                // open page chomp.desk/chomp
+                values["page"] = argument;
+            }
         }
 
         return Build(verb, values, out command, out error);
@@ -137,9 +143,23 @@ public static partial class CommandParser
 
             case "open":
                 string tab = Get("tab").ToLowerInvariant();
+                string page = Get("page");
+                if (page.Length > 0 || tab == "page" || tab.Contains('/'))
+                {
+                    page = page.Length > 0 ? page : Get("tab");
+                    if (!IsPageKey(page))
+                    {
+                        error = "open page needs a plugin's page as plugin-id/page-id, e.g. acme.tool/main.";
+                        return false;
+                    }
+
+                    command = new OpenPageCommand(page);
+                    return true;
+                }
+
                 if (!Tabs.Contains(tab))
                 {
-                    error = $"open needs a tab: {string.Join(", ", Tabs)}.";
+                    error = $"open needs a tab: {string.Join(", ", Tabs)}, or page plugin-id/page-id.";
                     return false;
                 }
 
@@ -296,6 +316,19 @@ public static partial class CommandParser
 
     /// <summary>The id rule plugin manifests use: lowercase letters and digits in groups split by dots or dashes.</summary>
     public static bool IsPluginId(string? id) => id is { Length: > 0 and <= 64 } && PluginIdPattern().IsMatch(id);
+
+    /// <summary>A plugin's id, a slash and one of its page ids: printable, without line breaks, of a sensible length.</summary>
+    public static bool IsPageKey(string? key)
+    {
+        int slash = key?.IndexOf('/') ?? -1;
+        if (slash <= 0)
+        {
+            return false;
+        }
+
+        string page = key![(slash + 1)..];
+        return IsPluginId(key[..slash]) && page.Length is > 0 and <= MaxPageIdLength && !page.Any(char.IsControl) && page.Trim() == page;
+    }
 
     private static bool TryBool(string text, out bool value)
     {

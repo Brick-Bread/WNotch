@@ -19,6 +19,7 @@ if (arguments.Length == 0 || arguments[0] is "-h" or "--help" or "help" or "/?")
           timer 5m | stop | pause | resume      start or control the timer
           toast "Title" [--detail t] [--glyph g] [--color green|#rrggbb] [--lifetime 5s]
           open home|terminal|stats|shelf|plugins|clipboard
+          open page <plugin-id>/<page-id>       open a plugin's page
           install <plugin-id>                   ask to install a plugin from the registry
           plugin <plugin-id> --enable true|false
           palette | settings

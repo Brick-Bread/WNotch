@@ -81,6 +81,15 @@ internal sealed class CommandDispatcher(
                     window.OpenOnTab(tab.Tab);
                     return new CommandResult(true);
 
+                case OpenPageCommand page:
+                    if (!window.OpenPluginPage(page.Page))
+                    {
+                        return new CommandResult(false, $"There is no page {page.Page}. Is its plugin switched on?");
+                    }
+
+                    window.RevealNotch();
+                    return new CommandResult(true);
+
                 case ToastCommand toast:
                     window.ShowNotice(toast);
                     return new CommandResult(true);
