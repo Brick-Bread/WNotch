@@ -82,6 +82,16 @@ public sealed record PluginPage
     /// no <see cref="Choices"/>, which win). Up to 100 blocks. API version 5.
     /// </summary>
     public IReadOnlyList<PluginBlock> Blocks { get; init; } = [];
+
+    /// <summary>
+    /// Instead of the figures, list, blocks and console, a body the plugin draws itself: a function that returns a
+    /// <c>System.Windows.FrameworkElement</c>, with the same rules as <see cref="PluginWidgetContent.View"/>. Notch
+    /// calls it on the UI thread when the page is first shown and again whenever a page with a different function
+    /// is set, and puts the element below the page's top row, where it fills the rest of the page. The title,
+    /// <see cref="Back"/>, <see cref="Status"/>, <see cref="Actions"/> and <see cref="Input"/> still work around it.
+    /// A click in one of its text boxes gives the notch the keyboard. API version 9.
+    /// </summary>
+    public Func<object>? View { get; init; }
 }
 
 /// <summary>A button on a page.</summary>

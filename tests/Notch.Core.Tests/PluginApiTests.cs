@@ -180,6 +180,19 @@ public sealed class PluginApiTests : IDisposable
     }
 
     [Fact]
+    public void A_page_keeps_the_view_its_plugin_draws_itself()
+    {
+        using PluginManager manager = Manager();
+        manager.Discover();
+        manager.SetEnabled(["a"]);
+        Func<object> view = () => new object();
+
+        _probes["a"].Host!.Pages.Set(new PluginPage { Id = "desk", Title = "Desk", View = view });
+
+        Assert.Same(view, Assert.Single(manager.Pages.Snapshot()).Page.View);
+    }
+
+    [Fact]
     public async Task Page_callbacks_are_run_off_the_callers_thread_and_cannot_throw_into_it()
     {
         using PluginManager manager = Manager();

@@ -484,6 +484,18 @@ host.Pages.Set(new PluginPage
 });
 ```
 
+### Drawing a page yourself
+
+For a layout blocks cannot make, such as a list on the left and the open item on the right, set `View` on the page (API 9). It works like a widget's `View` (see [Widgets](#widgets-the-home-tab)): a function that returns a `System.Windows.FrameworkElement`, called on the UI thread when the page is first shown and again when you set the page with a different function. The element fills the page below its top row, in place of the figures, list, blocks and console; `Back`, `Status`, `Actions` and `Input` still work around it. The area is about 880 by 500 device-independent pixels, so let the element stretch rather than fixing its size. A click in one of its text boxes gives the notch the keyboard, as on Home, and the notch gives it back when the box loses focus.
+
+```csharp
+var desk = new DeskView();                 // your own UserControl
+Func<object> view = () => desk;
+host.Pages.Set(new PluginPage { Id = "desk", Title = "Chomp", View = view, Actions = [newProject] });
+```
+
+Keep the function and change the element (on its `Dispatcher`) rather than setting the page with a new function for each update, which would build the element again.
+
 ## The notch's state, notices and messages between plugins
 
 `host.Shell` (API 5) tells a plugin what the notch is doing, so it can poll quickly only while someone is looking:

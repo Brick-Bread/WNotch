@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Notch.Core.Plugins;
+using Notch.Platform.Display;
 
 namespace Notch.App.Shell;
 
@@ -21,13 +22,20 @@ public partial class NotchWindow
     /// <summary>The label of the action that asked to be clicked again, or null.</summary>
     private string? _armedAction;
 
+    /// <summary>The function that made the element a page of the plugin's own is showing, or null.</summary>
+    private Func<object>? _shownPageView;
+
+    /// <summary>A text box in a page the plugin draws itself has the keyboard.</summary>
+    private bool _pageViewKeyboard;
+
     /// <summary>The page the tab is showing, or null when another tab is.</summary>
     private PluginPageEntry? CurrentPage => _pageKey is { } key
         ? _pluginPages.Snapshot().FirstOrDefault(e => e.PluginId == key.PluginId && e.Page.Id == key.PageId)
         : null;
 
     /// <summary>The page is showing and has an input line, so keystrokes must reach the window.</summary>
-    private bool PageTakesInput => _tab == NotchTab.Page && CurrentPage?.Page is { } p && (p.Input is not null || (p.Choices.Count == 0 && p.Blocks.Any(b => b is PluginTextField)));
+    private bool PageTakesInput => _tab == NotchTab.Page && CurrentPage?.Page is { } p
+        && (p.Input is not null || (p.View is null ? p.Choices.Count == 0 && p.Blocks.Any(b => b is PluginTextField) : _pageViewKeyboard));
 
     private void InitializePages()
     {
@@ -39,7 +47,50 @@ public partial class NotchWindow
             PageInputHint.Visibility = PageInput.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
         PageSend.Click += (_, _) => SubmitPageInput();
         PageBack.Click += (_, _) => CurrentPage?.Page.Back?.Invoke();
+
+        // A click in a box of the plugin's own view asks for the keyboard, as one in a widget on Home does.
+        PageViewHost.AddHandler(PreviewMouseLeftButtonDownEvent, new MouseButtonEventHandler((_, e) =>
+        {
+            if (e.OriginalSource is DependencyObject source && PluginViews.FindTextBox(source) is { } box)
+            {
+                SetPageViewKeyboard(true);
+                box.Focus();
+            }
+        }), handledEventsToo: true);
+        PageViewHost.AddHandler(LostKeyboardFocusEvent, new KeyboardFocusChangedEventHandler((_, e) =>
+        {
+            if (e.OriginalSource is TextBox && !(e.NewFocus is DependencyObject next && PageViewHost.IsAncestorOf(next)))
+            {
+                SetPageViewKeyboard(false);
+            }
+        }), handledEventsToo: true);
         SyncPageTabs();
+    }
+
+    /// <summary>The notch takes the keyboard while a box in a page's own view is being typed into, and gives it back after.</summary>
+    private void SetPageViewKeyboard(bool on)
+    {
+        if (_pageViewKeyboard == on)
+        {
+            return;
+        }
+
+        _pageViewKeyboard = on;
+        if (on)
+        {
+            NoteForegroundWindow();
+            UpdateKeyboardInteraction();
+            Activate();
+        }
+        else
+        {
+            bool handBack = IsActive && _lastOtherWindow != 0 && !KeyboardInUse;
+            UpdateKeyboardInteraction();
+            if (handBack)
+            {
+                OverlayWindow.SetForeground(_lastOtherWindow);
+            }
+        }
     }
 
     private void OnPluginPagesChanged(object? sender, PluginPageChangedEventArgs e) =>
@@ -140,14 +191,16 @@ public partial class NotchWindow
             return;
         }
 
-        PageStats.ItemsSource = page.Stats.Select(s => new PageStatRow(s)).ToList();
-        PageInputRow.Visibility = page.Input is null ? Visibility.Collapsed : Visibility.Visible;
+        if (page.View is { } view)
+        {
+            ShowPageView(page, view);
+            return;
+        }
 
-        PageBack.Visibility = page.Back is null ? Visibility.Collapsed : Visibility.Visible;
-        PageBack.Content = "‹  " + (page.BackLabel ?? "Back");
-        PageStatus.Text = page.Status ?? "";
-        PageStatus.ToolTip = page.Status;
-        PageStatus.Visibility = string.IsNullOrWhiteSpace(page.Status) ? Visibility.Collapsed : Visibility.Visible;
+        _shownPageView = null;
+        PageViewHost.Child = null;
+        PageViewHost.Visibility = Visibility.Collapsed;
+        PageStats.ItemsSource = page.Stats.Select(s => new PageStatRow(s)).ToList();
 
         bool listed = page.Choices.Count > 0;
         bool blocks = !listed && page.Blocks.Count > 0;
@@ -160,9 +213,35 @@ public partial class NotchWindow
             _pageBlocks.Render(page.Blocks);
         }
         PageStats.Visibility = page.Stats.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+        ShowPageChrome(page);
+    }
+
+    /// <summary>What every page has around its body: the back button, the status line, the buttons and the input line.</summary>
+    private void ShowPageChrome(PluginPage page)
+    {
+        PageBack.Visibility = page.Back is null ? Visibility.Collapsed : Visibility.Visible;
+        PageBack.Content = "‹  " + (page.BackLabel ?? "Back");
+        PageStatus.Text = page.Status ?? "";
+        PageStatus.ToolTip = page.Status;
+        PageStatus.Visibility = string.IsNullOrWhiteSpace(page.Status) ? Visibility.Collapsed : Visibility.Visible;
+        PageInputRow.Visibility = page.Input is null ? Visibility.Collapsed : Visibility.Visible;
         PageInputHint.Text = page.InputHint ?? "";
         ShowActions(page.Actions);
         UpdateKeyboardInteraction();
+    }
+
+    /// <summary>A page the plugin draws itself: its element in place of the figures and the body, with the top row and input line around it.</summary>
+    private void ShowPageView(PluginPage page, Func<object> view)
+    {
+        if (!ReferenceEquals(view, _shownPageView))
+        {
+            _shownPageView = view;
+            PageViewHost.Child = PluginViews.Create(view);
+        }
+
+        PageViewHost.Visibility = Visibility.Visible;
+        PageStats.Visibility = PageChoicesScroll.Visibility = PageBlocksScroll.Visibility = PageConsoleCard.Visibility = Visibility.Collapsed;
+        ShowPageChrome(page);
     }
 
     /// <summary>Rebuilds the page's button row. Called on every update of the page, so the armed state is kept across it.</summary>

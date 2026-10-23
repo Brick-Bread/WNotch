@@ -791,6 +791,9 @@
                         <StackPanel x:Name="PageBlockStack" Margin="2,4,2,0" />
                     </ScrollViewer>
 
+                    <!-- A page the plugin draws itself (PluginPage.View) takes the figures' and the body's place. -->
+                    <Border x:Name="PageViewHost" Grid.Row="1" Grid.RowSpan="2" Margin="0,6,0,0" Visibility="Collapsed" />
+
                     <Border x:Name="PageConsoleCard" Grid.Row="2" Style="{DynamicResource Card}" Margin="0,6,0,0" Padding="12,8">
                         <TextBox x:Name="PageConsole" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True"
                                  FontFamily="{DynamicResource CodeFontFamily}" FontSize="12" BorderThickness="0"

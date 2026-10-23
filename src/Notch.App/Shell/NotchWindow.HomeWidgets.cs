@@ -1156,7 +1156,7 @@ public partial class NotchWindow
             // Boxes in the widget, the plugin's own or a text field block, take typing like a note does.
             _card.AddHandler(PreviewMouseLeftButtonDownEvent, new MouseButtonEventHandler((_, e) =>
             {
-                if (e.OriginalSource is DependencyObject source && FindTextBox(source) is { } box)
+                if (e.OriginalSource is DependencyObject source && PluginViews.FindTextBox(source) is { } box)
                 {
                     Owner.SetHomeKeyboard(true);
                     box.Focus();
@@ -1198,7 +1198,7 @@ public partial class NotchWindow
                 if (!ReferenceEquals(view, _shownView))
                 {
                     _shownView = view;
-                    _nativeHost.Child = NativeView(view);
+                    _nativeHost.Child = PluginViews.Create(view);
                 }
 
                 Show(_nativeHost);
@@ -1230,39 +1230,6 @@ public partial class NotchWindow
             {
                 each.Visibility = each == part ? Visibility.Visible : Visibility.Collapsed;
             }
-        }
-
-        /// <summary>The plugin's own element. Plugin code, so it may throw or hand back something that is not an element.</summary>
-        private static UIElement NativeView(Func<object> view)
-        {
-            try
-            {
-                if (view() is UIElement element)
-                {
-                    // An element can only be in one place; one the plugin reuses comes out of where it was.
-                    (VisualTreeHelper.GetParent(element) as Decorator)?.Child = null;
-                    return element;
-                }
-
-                return Secondary("The plugin's view is not a WPF element.", 12);
-            }
-            catch (Exception)
-            {
-                return Secondary("The plugin's view could not be drawn.", 12);
-            }
-        }
-
-        private static TextBox? FindTextBox(DependencyObject? from)
-        {
-            for (DependencyObject? d = from; d is not null; d = d is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d))
-            {
-                if (d is TextBox box)
-                {
-                    return box;
-                }
-            }
-
-            return null;
         }
     }
 

@@ -120,6 +120,9 @@ public partial class NotchWindow
     private void SelectTab(NotchTab tab)
     {
         _tab = tab;
+
+        // Whatever box of a page's own view had the keyboard is gone with the page.
+        _pageViewKeyboard = false;
         HomePanel.Visibility = tab == NotchTab.Home ? Visibility.Visible : Visibility.Collapsed;
         TerminalPanel.Visibility = tab == NotchTab.Terminal ? Visibility.Visible : Visibility.Collapsed;
         StatsPanel.Visibility = tab == NotchTab.Stats ? Visibility.Visible : Visibility.Collapsed;

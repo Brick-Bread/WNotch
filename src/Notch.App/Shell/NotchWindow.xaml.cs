@@ -689,6 +689,7 @@ public partial class NotchWindow : Window
             {
                 _pointerWatch.Stop();
                 _hotkeyHold = false;
+                _pageViewKeyboard = false;
                 SetTimerEntryOpen(false);
                 LeaveHomeEditing();
             }
