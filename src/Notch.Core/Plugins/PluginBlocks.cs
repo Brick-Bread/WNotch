@@ -156,6 +156,12 @@ public sealed record PluginTextField : PluginBlock
 
     /// <summary>Called on a background thread with the text when the user presses the button or Enter.</summary>
     public Action<string>? Submitted { get; init; }
+
+    /// <summary>
+    /// Called on a background thread with the text as the user types, once they pause for a moment (about
+    /// 150 ms), for a list that filters as they type. Not called for text the plugin sets. API version 9.
+    /// </summary>
+    public Action<string>? Changed { get; init; }
 }
 
 /// <summary>A picture. PNG, JPEG or any other format WPF reads.</summary>

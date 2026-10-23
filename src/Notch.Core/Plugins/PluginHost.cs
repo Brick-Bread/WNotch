@@ -105,6 +105,27 @@ internal sealed class PluginHost : IPluginHost
         _shell.Close();
     }
 
+    private static PluginAction[] GuardActions(IReadOnlyList<PluginAction> actions, Action<Action> run) =>
+        [.. actions.Select(a => a with { Clicked = a.Clicked is { } clicked ? () => run(clicked) : null })];
+
+    /// <summary>
+    /// Wraps the callbacks of a block, on a page or in a widget, so the shell calls them on the UI thread and the
+    /// plugin's code runs elsewhere, unable to throw into it.
+    /// </summary>
+    private static PluginBlock GuardBlock(PluginBlock block, Action<Action> run) => block switch
+    {
+        PluginButtons b => b with { Actions = GuardActions(b.Actions, run) },
+        PluginToggle b => b with { Changed = b.Changed is { } changed ? value => run(() => changed(value)) : null },
+        PluginSlider b => b with { Changed = b.Changed is { } changed ? value => run(() => changed(value)) : null },
+        PluginSelect b => b with { Changed = b.Changed is { } changed ? value => run(() => changed(value)) : null },
+        PluginTextField b => b with
+        {
+            Submitted = b.Submitted is { } submitted ? value => run(() => submitted(value)) : null,
+            Changed = b.Changed is { } typed ? value => run(() => typed(value)) : null,
+        },
+        _ => block,
+    };
+
     private sealed class ScopedActivities(string pluginId, ActivityManager manager) : IPluginActivities
     {
         private readonly Lock _gate = new();
@@ -259,7 +280,12 @@ internal sealed class PluginHost : IPluginHost
             {
                 if (!_closed)
                 {
-                    board.Show(pluginId, widgetId, content with { Clicked = content.Clicked is { } clicked ? () => Run(clicked, $"widget '{widgetId}'") : null });
+                    string what = $"widget '{widgetId}'";
+                    board.Show(pluginId, widgetId, content with
+                    {
+                        Clicked = content.Clicked is { } clicked ? () => Run(clicked, what) : null,
+                        Blocks = [.. content.Blocks.Take(PluginPageBoard.MaxBlocks).Select(b => GuardBlock(b, action => Run(action, what)))],
+                    });
                 }
             }
         }
@@ -486,19 +512,9 @@ internal sealed class PluginHost : IPluginHost
             }
         }
 
-        private PluginAction[] GuardActions(string pageId, IReadOnlyList<PluginAction> actions) =>
-            [.. actions.Select(a => a with { Clicked = a.Clicked is { } clicked ? () => Run(pageId, clicked) : null })];
+        private PluginAction[] GuardActions(string pageId, IReadOnlyList<PluginAction> actions) => PluginHost.GuardActions(actions, action => Run(pageId, action));
 
-        /// <summary>Wraps the callbacks of a block, the same way as the page's own.</summary>
-        private PluginBlock GuardBlock(string pageId, PluginBlock block) => block switch
-        {
-            PluginButtons b => b with { Actions = GuardActions(pageId, b.Actions) },
-            PluginToggle b => b with { Changed = b.Changed is { } changed ? value => Run(pageId, () => changed(value)) : null },
-            PluginSlider b => b with { Changed = b.Changed is { } changed ? value => Run(pageId, () => changed(value)) : null },
-            PluginSelect b => b with { Changed = b.Changed is { } changed ? value => Run(pageId, () => changed(value)) : null },
-            PluginTextField b => b with { Submitted = b.Submitted is { } submitted ? value => Run(pageId, () => submitted(value)) : null },
-            _ => block,
-        };
+        private PluginBlock GuardBlock(string pageId, PluginBlock block) => PluginHost.GuardBlock(block, action => Run(pageId, action));
 
         private void Run(string pageId, Action action) => Task.Run(() =>
         {

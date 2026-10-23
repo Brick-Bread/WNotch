@@ -504,8 +504,28 @@ internal sealed class PageBlocks(Panel host)
 
         string Text() => current.Secret ? secret.Password : plain.Text;
         void UpdateHint() => hint.Visibility = Text().Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        // Typing is reported once the user pauses, so a plugin filtering a list is not asked on every key.
+        var typing = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
+        bool applying = false;
+        typing.Tick += (_, _) =>
+        {
+            typing.Stop();
+            current.Changed?.Invoke(Text());
+        };
+        void Typed()
+        {
+            UpdateHint();
+            if (!applying && current.Changed is not null)
+            {
+                typing.Stop();
+                typing.Start();
+            }
+        }
+
         void Send()
         {
+            typing.Stop();
             string text = Text();
             current.Submitted?.Invoke(text);
             if (current.Secret)
@@ -520,8 +540,8 @@ internal sealed class PageBlocks(Panel host)
             UpdateHint();
         }
 
-        plain.TextChanged += (_, _) => UpdateHint();
-        secret.PasswordChanged += (_, _) => UpdateHint();
+        plain.TextChanged += (_, _) => Typed();
+        secret.PasswordChanged += (_, _) => Typed();
         submit.Click += (_, _) => Send();
         foreach (Control control in new Control[] { plain, secret })
         {
@@ -549,7 +569,9 @@ internal sealed class PageBlocks(Panel host)
             // Leave alone what the user is typing; only take the plugin's text when they are not in the box.
             if (!current.Secret && !plain.IsKeyboardFocusWithin && current.Value is { } value && plain.Text != value)
             {
+                applying = true;
                 plain.Text = value;
+                applying = false;
             }
 
             UpdateHint();

@@ -117,6 +117,46 @@ public sealed class PluginWidgetTests : IDisposable
     }
 
     [Fact]
+    public async Task The_callbacks_of_a_widgets_blocks_run_off_the_callers_thread_and_cannot_throw_into_it()
+    {
+        using PluginManager manager = Manager();
+        manager.SetEnabled(["a"]);
+        manager.Widgets.Place(OnHome("a/counter"));
+        WaitFor(() => manager.Widgets.ContentFor("w1") is not null);
+        var typed = new TaskCompletionSource<string>();
+
+        _plugins["a"].Host!.Widgets.Show("w1", new PluginWidgetContent
+        {
+            Blocks =
+            [
+                new PluginToggle { Label = "T", Changed = _ => throw new InvalidOperationException("boom") },
+                new PluginTextField { Label = "Find", Changed = typed.SetResult },
+            ],
+        });
+
+        IReadOnlyList<PluginBlock> blocks = manager.Widgets.ContentFor("w1")!.Blocks;
+        ((PluginToggle)blocks[0]).Changed!(true);
+        ((PluginTextField)blocks[1]).Changed!("ban");
+
+        Assert.Equal("ban", await typed.Task.WaitAsync(TimeSpan.FromSeconds(5)));
+        WaitFor(() => LogContains("widget 'w1'"));
+    }
+
+    /// <summary>The log may be in the middle of being written; that read just counts as not yet.</summary>
+    private bool LogContains(string text)
+    {
+        try
+        {
+            string log = Path.Combine(_root, "plugins.log");
+            return File.Exists(log) && File.ReadAllText(log).Contains(text, StringComparison.Ordinal);
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+    }
+
+    [Fact]
     public void A_throwing_callback_is_logged_not_raised()
     {
         using PluginManager manager = Manager();
