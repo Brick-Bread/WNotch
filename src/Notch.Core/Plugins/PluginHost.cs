@@ -19,6 +19,7 @@ internal sealed class PluginHost : IPluginHost
     private readonly ScopedShell _shell;
     private readonly ScopedBus _bus;
     private readonly ScopedWidgets _widgets;
+    private readonly ScopedPalette _palette;
 
     public PluginHost(
         PluginManifest manifest,
@@ -33,7 +34,8 @@ internal sealed class PluginHost : IPluginHost
         PluginShellState shell,
         PluginBus bus,
         PluginLog log,
-        PluginWidgetBoard? widgets = null)
+        PluginWidgetBoard? widgets = null,
+        PluginPaletteBoard? palette = null)
     {
         Manifest = manifest;
         PluginDirectory = pluginDirectory;
@@ -50,6 +52,7 @@ internal sealed class PluginHost : IPluginHost
         Shell = _shell = new ScopedShell(manifest.Id, shell, Activities);
         Bus = _bus = new ScopedBus(manifest.Id, bus, scopedLog);
         Widgets = _widgets = new ScopedWidgets(manifest.Id, widgets ?? new PluginWidgetBoard(), scopedLog);
+        Palette = _palette = new ScopedPalette(manifest.Id, manifest.Name, palette ?? new PluginPaletteBoard(), scopedLog);
         Settings = SettingsStore = new PluginSettingsStore(Path.Combine(dataDirectory, "settings.json"));
     }
 
@@ -74,6 +77,8 @@ internal sealed class PluginHost : IPluginHost
 
     public IPluginWidgets Widgets { get; }
 
+    public IPluginPalette Palette { get; }
+
     public IPluginThemes Themes { get; }
 
     public IPluginGlow Glow { get; }
@@ -97,6 +102,7 @@ internal sealed class PluginHost : IPluginHost
         _activities.Close();
         _cards.Close();
         _widgets.Close();
+        _palette.Close();
         _pages.Close();
         _themes.Close();
         _glow.Close();
@@ -316,6 +322,74 @@ internal sealed class PluginHost : IPluginHost
                 log.Error($"A callback of {what} failed.", e);
             }
         });
+    }
+
+    private sealed class ScopedPalette(string pluginId, string pluginName, PluginPaletteBoard board, ScopedLog log) : IPluginPalette
+    {
+        private readonly Lock _gate = new();
+        private bool _closed;
+
+        public void Set(PluginPaletteEntry entry)
+        {
+            ArgumentNullException.ThrowIfNull(entry);
+            lock (_gate)
+            {
+                if (!_closed)
+                {
+                    board.Set(pluginId, pluginName, Guard(entry));
+                }
+            }
+        }
+
+        public bool Remove(string id) => board.Remove(pluginId, id);
+
+        public void Clear() => board.RemoveAll(pluginId, provider: false);
+
+        public void SetProvider(Func<string, CancellationToken, Task<IReadOnlyList<PluginPaletteEntry>>>? provider)
+        {
+            lock (_gate)
+            {
+                if (_closed)
+                {
+                    return;
+                }
+
+                board.SetProvider(pluginId, pluginName, provider is null ? null : async (query, token) =>
+                {
+                    IReadOnlyList<PluginPaletteEntry> results = await provider(query, token);
+                    return [.. (results ?? []).Where(r => r?.Invoke is not null).Select(Guard)];
+                });
+            }
+        }
+
+        public void Close()
+        {
+            lock (_gate)
+            {
+                _closed = true;
+                board.RemoveAll(pluginId);
+            }
+        }
+
+        /// <summary>The palette runs the entry on the UI thread; the plugin's code runs elsewhere and cannot throw into it.</summary>
+        private PluginPaletteEntry Guard(PluginPaletteEntry entry)
+        {
+            Action invoke = entry.Invoke;
+            return entry with
+            {
+                Invoke = () => Task.Run(() =>
+                {
+                    try
+                    {
+                        invoke();
+                    }
+                    catch (Exception e)
+                    {
+                        log.Error($"The palette entry '{entry.Id}' failed.", e);
+                    }
+                }),
+            };
+        }
     }
 
     private sealed class ScopedThemes(string pluginId, string pluginDirectory, PluginThemeBoard board) : IPluginThemes

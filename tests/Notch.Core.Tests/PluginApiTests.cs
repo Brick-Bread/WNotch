@@ -195,6 +195,23 @@ public sealed class PluginApiTests : IDisposable
     }
 
     [Fact]
+    public void Palette_entries_cannot_throw_into_the_palette_and_go_when_their_plugin_stops()
+    {
+        using PluginManager manager = Manager();
+        manager.Discover();
+        manager.SetEnabled(["a"]);
+
+        _probes["a"].Host!.Palette.Set(new PluginPaletteEntry { Id = "add", Title = "Add a to-do", Invoke = () => throw new InvalidOperationException("boom") });
+        PluginPaletteItem item = Assert.Single(manager.Palette.Entries());
+        Assert.Equal("a", item.PluginName);
+        item.Entry.Invoke();
+
+        manager.SetEnabled([]);
+        Assert.Empty(manager.Palette.Entries());
+        Assert.False(manager.Palette.HasProviders);
+    }
+
+    [Fact]
     public void A_page_keeps_the_view_its_plugin_draws_itself()
     {
         using PluginManager manager = Manager();

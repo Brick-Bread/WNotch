@@ -13,7 +13,9 @@ namespace Notch.App.Shell;
 /// <summary>One thing the command palette can do.</summary>
 /// <param name="Subtitle">A word or two on the right: where it goes, or what kind of thing it is.</param>
 /// <param name="Keywords">Extra words that find it, such as "preferences" for the settings.</param>
-public sealed record PaletteEntry(string Title, string? Subtitle, string? Keywords, Action Run);
+/// <param name="Glyph">A Segoe Fluent Icons glyph on the left; only plugins' entries have one so far.</param>
+/// <param name="Image">A picture on the left in place of the glyph.</param>
+public sealed record PaletteEntry(string Title, string? Subtitle, string? Keywords, Action Run, string? Glyph = null, byte[]? Image = null);
 
 // The command palette: a search box over everything the notch can do, opened by its own hotkey.
 public partial class NotchWindow
@@ -29,6 +31,14 @@ public partial class NotchWindow
     private PaletteEntry[] _paletteShown = [];
     private int _paletteIndex;
 
+    // Plugins' live results for what is typed, asked for once the user pauses.
+    private readonly System.Windows.Threading.DispatcherTimer _paletteAsk = new() { Interval = TimeSpan.FromMilliseconds(120) };
+    private CancellationTokenSource? _paletteAsking;
+    private PaletteEntry[] _paletteLive = [];
+
+    /// <summary>What plugins add to the palette; set by the app.</summary>
+    internal Notch.Core.Plugins.PluginPaletteBoard? PluginPalette { get; set; }
+
     /// <summary>What the palette lists beyond the notch's own entries (plugins, say). Asked each time it opens.</summary>
     public Func<IEnumerable<PaletteEntry>>? PaletteExtras { get; set; }
 
@@ -43,7 +53,13 @@ public partial class NotchWindow
         {
             PaletteHint.Visibility = PaletteInput.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
             _paletteIndex = 0;
+            AskPluginsSoon();
             ShowPaletteRows();
+        };
+        _paletteAsk.Tick += (_, _) =>
+        {
+            _paletteAsk.Stop();
+            _ = AskPluginsAsync(PaletteInput.Text);
         };
         PaletteInput.PreviewKeyDown += OnPaletteKeyDown;
     }
@@ -182,6 +198,64 @@ public partial class NotchWindow
         }
     }
 
+    /// <summary>The results plugins gave for older text no longer apply; new ones are asked for once typing pauses.</summary>
+    private void AskPluginsSoon()
+    {
+        _paletteAsking?.Cancel();
+        _paletteAsking = null;
+        _paletteLive = [];
+        _paletteAsk.Stop();
+        if (PluginPalette is { HasProviders: true } && PaletteInput.Text.Trim().Length > 0)
+        {
+            _paletteAsk.Start();
+        }
+    }
+
+    private async Task AskPluginsAsync(string query)
+    {
+        if (PluginPalette is not { } board)
+        {
+            return;
+        }
+
+        var asking = new CancellationTokenSource();
+        _paletteAsking = asking;
+        try
+        {
+            IReadOnlyList<Notch.Core.Plugins.PluginPaletteItem> results = await board.QueryAsync(query.Trim(), asking.Token);
+
+            // Back on the UI thread; the text may have changed, or the palette closed, while the plugins thought.
+            if (asking.IsCancellationRequested || !PaletteShowing || PaletteInput.Text != query)
+            {
+                return;
+            }
+
+            _paletteLive = [.. results.Select(ToPaletteEntry)];
+            ShowPaletteRows();
+        }
+        catch (OperationCanceledException)
+        {
+            // Superseded by newer text.
+        }
+        finally
+        {
+            if (_paletteAsking == asking)
+            {
+                _paletteAsking = null;
+            }
+
+            asking.Dispose();
+        }
+    }
+
+    private static PaletteEntry ToPaletteEntry(Notch.Core.Plugins.PluginPaletteItem item) => new(
+        item.Entry.Title,
+        item.Entry.Detail ?? item.PluginName,
+        item.Entry.Keywords,
+        item.Entry.Invoke,
+        item.Entry.Glyph,
+        item.Entry.Image);
+
     private void MovePalette(int step)
     {
         if (_paletteShown.Length == 0)
@@ -197,7 +271,11 @@ public partial class NotchWindow
     {
         string query = PaletteInput.Text;
         IReadOnlyList<PaletteEntry> all = BuildPaletteEntries(query);
-        _paletteShown = [.. PaletteSearch.Rank(all, query, entry => entry.Title, entry => entry.Keywords, PaletteRows)];
+
+        // Plugins' live results already match what was typed in their own way, so they are not ranked again;
+        // they keep a place below the best of the rest.
+        PaletteEntry[] live = [.. _paletteLive.Take(PaletteRows - 2)];
+        _paletteShown = [.. PaletteSearch.Rank(all, query, entry => entry.Title, entry => entry.Keywords, PaletteRows - live.Length), .. live];
         _paletteIndex = Math.Clamp(_paletteIndex, 0, Math.Max(0, _paletteShown.Length - 1));
 
         PaletteList.ItemsSource = _paletteShown
@@ -293,6 +371,11 @@ public partial class NotchWindow
             entries.AddRange(extras());
         }
 
+        if (PluginPalette is { } board)
+        {
+            entries.AddRange(board.Entries().Select(ToPaletteEntry));
+        }
+
         return entries;
     }
 
@@ -347,6 +430,12 @@ public partial class NotchWindow
         public string Title => Entry.Title;
 
         public string? Subtitle => Entry.Subtitle;
+
+        public string? Glyph => Entry.Image is null ? Entry.Glyph : null;
+
+        public ImageSource? Icon { get; } = ImageLoader.Decode(entry.Image, 40);
+
+        public Visibility IconVisibility => Entry.Glyph is { Length: > 0 } || Entry.Image is not null ? Visibility.Visible : Visibility.Collapsed;
 
         /// <summary>The chosen row is lit; the others are clear.</summary>
         public Brush Background => selected

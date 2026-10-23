@@ -399,6 +399,7 @@ public partial class App : Application
             () => OpenSettings(window, settings, settingsStore),
             window.TogglePalette);
         window.PaletteExtras = () => PluginPaletteEntries(settings, settingsStore);
+        window.PluginPalette = _plugins!.Palette;
         _commandPipe = new CommandPipe(_commands.HandleArgumentsAsync);
 
         _webhook = new WebhookService(settings, settingsStore, _activities!, _commands);

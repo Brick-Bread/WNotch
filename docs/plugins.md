@@ -18,7 +18,9 @@ This guide walks through a first plugin, then documents every part of the API. A
 - [Lifecycle](#lifecycle)
 - [Activities: the pill](#activities-the-pill)
 - [Cards: the Plugins tab](#cards-the-plugins-tab)
+- [Widgets: the Home tab](#widgets-the-home-tab)
 - [Pages: tabs with a console](#pages-tabs-with-a-console)
+- [The command palette](#the-command-palette)
 - [The notch's state, notices and messages between plugins](#the-notchs-state-notices-and-messages-between-plugins)
 - [Themes: restyling the whole notch](#themes-restyling-the-whole-notch)
 - [The glow and the sound: visualisers](#the-glow-and-the-sound-visualisers)
@@ -225,6 +227,8 @@ Things to know:
 | `Activities` | [Activities: the pill](#activities-the-pill) |
 | `Cards` | [Cards: the Plugins tab](#cards-the-plugins-tab) |
 | `Pages` | [Pages: tabs with a console](#pages-tabs-with-a-console) |
+| `Widgets` | [Widgets: the Home tab](#widgets-the-home-tab) |
+| `Palette` | [The command palette](#the-command-palette) |
 | `Shell` | [The notch's state, notices and messages between plugins](#the-notchs-state-notices-and-messages-between-plugins) |
 | `Bus` | [The notch's state, notices and messages between plugins](#the-notchs-state-notices-and-messages-between-plugins) |
 | `Themes` | [Themes: restyling the whole notch](#themes-restyling-the-whole-notch) |
@@ -496,6 +500,41 @@ host.Pages.Set(new PluginPage { Id = "desk", Title = "Chomp", View = view, Actio
 ```
 
 Keep the function and change the element (on its `Dispatcher`) rather than setting the page with a new function for each update, which would build the element again.
+
+## The command palette
+
+`host.Palette` (API 9) puts your commands in the palette, which opens with its own hotkey and finds things as the user types.
+
+**Fixed entries** are ranked with Notch's own by what the user types: the title, then `Keywords`.
+
+```csharp
+host.Palette.Set(new PluginPaletteEntry
+{
+    Id = "add-todo",
+    Title = "Add a to-do",
+    Detail = "Chomp",                  // the grey word on the right; defaults to your plugin's name
+    Keywords = "task new",
+    Glyph = "\uE710",
+    Invoke = () => host.Pages.Open("todos"),
+});
+```
+
+**Live results** are for what cannot be listed up front, such as files, a project by name or a sum. Set one provider; Notch calls it on a background thread each time the user pauses typing, and shows up to five of its results below the best fixed matches, in your order, without ranking them again. The token is cancelled when the text changes, and an answer that takes longer than about two seconds is dropped, so return quickly and pass the token on.
+
+```csharp
+host.Palette.SetProvider(async (query, token) =>
+{
+    var projects = await FindProjectsAsync(query, token);
+    return [.. projects.Select(p => new PluginPaletteEntry
+    {
+        Id = p.Id,
+        Title = $"Start timer on {p.Name}",
+        Invoke = () => StartTimer(p),
+    })];
+});
+```
+
+`Image` shows a picture in place of the glyph, such as an app's icon. `Invoke` runs on a background thread once the palette has closed, and an exception it throws is logged. Notch removes your entries and provider when the plugin stops; `Remove(id)`, `Clear()` and `SetProvider(null)` do it sooner.
 
 ## The notch's state, notices and messages between plugins
 

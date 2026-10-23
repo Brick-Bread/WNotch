@@ -77,6 +77,7 @@ public sealed class PluginManager : IDisposable
         _log = log;
         _checks = checks;
         _loader = loader ?? PluginLoader.Load;
+        Palette.ProviderFailed = (pluginId, e) => _log.Write(pluginId, "error", "The palette search failed.", e);
     }
 
     /// <summary>When true, no plugin is started: the way back into Notch after a plugin broke it.</summary>
@@ -92,6 +93,9 @@ public sealed class PluginManager : IDisposable
 
     /// <summary>The widgets plugins offer for Home, and what each one on Home shows.</summary>
     public PluginWidgetBoard Widgets { get; } = new();
+
+    /// <summary>What plugins add to the command palette.</summary>
+    public PluginPaletteBoard Palette { get; } = new();
 
     /// <summary>The themes plugins offer.</summary>
     public PluginThemeBoard Themes { get; } = new();
@@ -423,7 +427,7 @@ public sealed class PluginManager : IDisposable
 
             slot.Factory ??= _loader(manifest, slot.Directory);
             slot.Host = new PluginHost(
-                manifest, slot.Directory, Path.Combine(_dataDirectory, manifest.Id), _activities, _cards, Pages, Themes, Glow, Audio, ShellState, Bus, _log, Widgets);
+                manifest, slot.Directory, Path.Combine(_dataDirectory, manifest.Id), _activities, _cards, Pages, Themes, Glow, Audio, ShellState, Bus, _log, Widgets, Palette);
             slot.Instance = slot.Factory();
             slot.Instance.Start(slot.Host);
 

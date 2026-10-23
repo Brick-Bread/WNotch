@@ -607,6 +607,11 @@
                                         Background="{Binding Background}" Cursor="Hand" Tag="{Binding}"
                                         MouseLeftButtonDown="OnPaletteRowClicked">
                                     <DockPanel Margin="12,0">
+                                        <Grid DockPanel.Dock="Left" Width="20" Height="20" Margin="0,0,10,0" Visibility="{Binding IconVisibility}">
+                                            <TextBlock Text="{Binding Glyph}" FontFamily="{DynamicResource IconFont}" FontSize="14"
+                                                       Opacity="0.7" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            <Image Source="{Binding Icon}" Stretch="Uniform" />
+                                        </Grid>
                                         <TextBlock DockPanel.Dock="Right" Text="{Binding Subtitle}" FontSize="11" Opacity="0.5"
                                                    VerticalAlignment="Center" Margin="10,0,0,0" TextTrimming="CharacterEllipsis" MaxWidth="220" />
                                         <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="Medium" VerticalAlignment="Center"
