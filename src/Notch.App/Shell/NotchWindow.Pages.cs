@@ -28,6 +28,11 @@ public partial class NotchWindow
     /// <summary>A text box in a page the plugin draws itself has the keyboard.</summary>
     private bool _pageViewKeyboard;
 
+    /// <summary>The page that went away while it was open, and when: its plugin may be restarting, and it comes back to it.</summary>
+    private ((string PluginId, string PageId) Key, DateTime At)? _pageLost;
+
+    private static readonly TimeSpan PageReturnTime = TimeSpan.FromSeconds(5);
+
     private const double LargePageWidth = 920;
     private const double LargePageHeight = 540;
     private const double CompactPageWidth = 640;
@@ -148,11 +153,19 @@ public partial class NotchWindow
         {
             case PluginPageChange.Pages:
                 SyncPageTabs();
-                if (_tab == NotchTab.Page)
+                if (_tab == NotchTab.Home && _expanded && _pageLost is { } lost && DateTime.UtcNow - lost.At < PageReturnTime
+                    && _pageTabs.TryGetValue(lost.Key, out RadioButton? back))
+                {
+                    // A plugin restarted (a rebuild, or new options) and its page is back: so is the notch.
+                    _pageLost = null;
+                    back.IsChecked = true;
+                }
+                else if (_tab == NotchTab.Page)
                 {
                     if (CurrentPage is null)
                     {
                         // The page went away (its plugin was switched off, or it closed the page) while it was open.
+                        _pageLost = _pageKey is { } gone ? (gone, DateTime.UtcNow) : null;
                         TabHome.IsChecked = true;
                     }
                     else
