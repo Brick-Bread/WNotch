@@ -181,7 +181,7 @@ Notch reads the manifest to list a plugin in Settings before running any of its 
 | `id` | yes | Unique, permanent identifier. Lowercase letters and digits in groups separated by `.` or `-`, at most 64 characters, e.g. `yourname.build-status`. Prefix it with your name to avoid clashes. It names the plugin's data folder, so changing it loses the plugin's settings. |
 | `name` | yes | Shown in Settings. |
 | `assembly` | yes | File name of the plugin's `.dll`, in the same folder. No paths. |
-| `apiVersion` | yes | The plugin API version the plugin was written for. Currently `7`. See [Compatibility](#compatibility). |
+| `apiVersion` | yes | The plugin API version the plugin was written for. Currently `9`. See [Compatibility](#compatibility). |
 | `version` | no | The plugin's own version, shown in Settings. |
 | `author` | no | Shown in the plugin's tooltip in Settings. |
 | `description` | no | Shown in the plugin's tooltip in Settings. |
@@ -924,6 +924,7 @@ The plugin API is `Notch.Core.Plugins` plus the types in `Notch.Core.Activities`
 | 6 | `IPluginHost.Themes`: themes that restyle the whole notch. |
 | 7 | `IPluginHost.Glow` (draw the light around the pill, in segments if you like) and `IPluginHost.Audio` (loudness of the PC's sound by pitch). The `audio` permission. |
 | 8 | `IPluginHost.Widgets`: widgets for the Home tab, drawn with blocks or with WPF. |
+| 9 | `IPluginHost.Palette` (commands and live results in the command palette) and `IPluginHost.Hotkeys`. Pages: `View` (a page drawn with WPF), `Size`, `Accept`. Blocks: `PluginChoices`; `PluginTextField.Changed`, `ClearOnSubmit` and `Lines`. `Activity.OpensPage`, and `CountingFrom` on activities, cards and figures. `IPluginShell.IsCardVisible`. Notch's own `notch.timer` and `notch.media` messages on the bus. |
 
 ## Troubleshooting
 
