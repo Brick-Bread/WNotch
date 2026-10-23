@@ -142,6 +142,9 @@ public sealed record PluginTextField : PluginBlock
     /// </summary>
     public string? Value { get; init; }
 
+    /// <summary>Empties the box once its text is submitted, for a field that takes one thing after another. API version 9.</summary>
+    public bool ClearOnSubmit { get; init; }
+
     /// <summary>Greyed text in the empty box.</summary>
     public string? Hint { get; init; }
 

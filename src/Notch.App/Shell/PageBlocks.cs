@@ -512,6 +512,10 @@ internal sealed class PageBlocks(Panel host)
             {
                 secret.Clear();
             }
+            else if (current.ClearOnSubmit)
+            {
+                plain.Clear();
+            }
 
             UpdateHint();
         }
