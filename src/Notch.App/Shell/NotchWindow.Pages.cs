@@ -418,7 +418,7 @@ public partial class NotchWindow
     {
         public string Label => stat.Label;
 
-        public string? Value => stat.Value;
+        public string? Value => stat.CountingFrom is { } from ? Notch.Core.Activities.ElapsedClock.Since(from) : stat.Value;
 
         public string? Detail => stat.Detail;
 

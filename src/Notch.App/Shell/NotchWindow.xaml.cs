@@ -468,6 +468,7 @@ public partial class NotchWindow : Window
         }
 
         NoteForegroundWindow();
+        TickPluginClocks();
 
         // Not while the user is typing into the notch: then it is the foreground window, by their choice.
         // Nor in the middle of a drag out of it, which may well end on a fullscreen app.

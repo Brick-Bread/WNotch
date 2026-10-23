@@ -141,6 +141,9 @@ public sealed record PluginStat
 
     public string? Value { get; init; }
 
+    /// <summary>A clock counting up from this moment, shown in place of <see cref="Value"/> and kept ticking by Notch. API version 9.</summary>
+    public DateTimeOffset? CountingFrom { get; init; }
+
     public string? Detail { get; init; }
 
     /// <summary>0..1 draws a bar along the bottom; null for none.</summary>

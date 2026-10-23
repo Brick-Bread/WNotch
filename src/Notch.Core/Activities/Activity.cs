@@ -53,4 +53,11 @@ public sealed record Activity
     /// pill opens while this activity is showing, instead of Home. Null opens Home as usual. API version 9.
     /// </summary>
     public string? OpensPage { get; init; }
+
+    /// <summary>
+    /// A clock that counts up from this moment, shown in place of <see cref="Detail"/>. Notch keeps it ticking, so a
+    /// running stopwatch needs no update each second. To pause, publish again with the time it stopped at as the
+    /// detail and no clock. API version 9.
+    /// </summary>
+    public DateTimeOffset? CountingFrom { get; init; }
 }

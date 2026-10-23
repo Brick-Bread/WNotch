@@ -148,6 +148,9 @@ public sealed record PluginCard
     /// <summary>The headline, shown large on one line. Keep it to a few characters.</summary>
     public string? Value { get; init; }
 
+    /// <summary>A clock counting up from this moment, shown in place of <see cref="Value"/> and kept ticking by Notch. API version 9.</summary>
+    public DateTimeOffset? CountingFrom { get; init; }
+
     /// <summary>Secondary text under the value; wraps to two lines.</summary>
     public string? Detail { get; init; }
 

@@ -1281,7 +1281,7 @@ public partial class NotchWindow
             }
 
             _label.Text = card.Label;
-            _value.Text = card.Value;
+            _value.Text = card.CountingFrom is { } from ? ElapsedClock.Since(from) : card.Value;
             _detail.Text = card.Detail;
             if (card.Color is { } color)
             {

@@ -62,7 +62,7 @@ public partial class NotchWindow
 
         CompactTitle.Text = top.Title;
         CompactSubtitle.Text = "";
-        CompactDetail.Text = top.Detail;
+        CompactDetail.Text = top.CountingFrom is { } from ? ElapsedClock.Since(from) : top.Detail;
         CompactDetail.SetResourceReference(ForegroundProperty, "SecondaryTextBrush");
         CompactStateGlyph.Visibility = Visibility.Collapsed;
         bool dots = false;

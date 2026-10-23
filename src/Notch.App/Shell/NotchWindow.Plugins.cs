@@ -62,6 +62,43 @@ public partial class NotchWindow
         }
     }
 
+    /// <summary>
+    /// Moves on the clocks plugins asked Notch to keep (<c>CountingFrom</c>) on whatever is showing: the pill, the cards
+    /// and a page's figures. Runs every second.
+    /// </summary>
+    private void TickPluginClocks()
+    {
+        if (!_expanded && _pillActivity is { CountingFrom: { } from, AgentState: null } && !IsMedia(_pillActivity))
+        {
+            CompactDetail.Text = Notch.Core.Activities.ElapsedClock.Since(from);
+            CompactDetail.Visibility = Visibility.Visible;
+        }
+
+        if (!_expanded)
+        {
+            return;
+        }
+
+        bool cardsCount = _pluginCards.Snapshot().Any(e => e.Card.CountingFrom is not null);
+        if (cardsCount && _tab == NotchTab.Plugins)
+        {
+            PluginCards.ItemsSource = _pluginCards.Snapshot().Select(e => new PluginCardRow(e.Card)).ToList();
+        }
+
+        if (cardsCount && _tab == NotchTab.Home)
+        {
+            foreach (HomeView view in HomeViewsOf<PluginCardView>())
+            {
+                view.Refresh();
+            }
+        }
+
+        if (_tab == NotchTab.Page && CurrentPage?.Page is { View: null } page && page.Stats.Any(s => s.CountingFrom is not null))
+        {
+            PageStats.ItemsSource = page.Stats.Select(s => new PageStatRow(s)).ToList();
+        }
+    }
+
     private void OnPluginCardClicked(object sender, MouseButtonEventArgs e)
     {
         if (((FrameworkElement)sender).Tag is PluginCardRow row)
@@ -76,7 +113,7 @@ public partial class NotchWindow
 
         public string Label => Card.Label;
 
-        public string? Value => Card.Value;
+        public string? Value => Card.CountingFrom is { } from ? Notch.Core.Activities.ElapsedClock.Since(from) : Card.Value;
 
         public string? Detail => Card.Detail;
 

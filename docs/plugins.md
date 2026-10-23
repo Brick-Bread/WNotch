@@ -268,6 +268,7 @@ host.Activities.Remove("build");
 | `Progress` | 0 to 1. On a `Transient` activity it draws a bar in place of `Detail`. |
 | `Glow` | The light around the pill while this activity is the one showing. Null for none. |
 | `Lifetime` | `Transient` only: how long it shows. Default 2 seconds. |
+| `CountingFrom` | A moment, such as when a stopwatch started. Notch shows the time since then, such as "1:23:45", and keeps it ticking in place of `Detail`, so a running clock needs no update each second. To pause it, publish again with the stopped time as `Detail` and no clock. Also on `PluginCard` and `PluginStat`, in place of `Value`. API 9. |
 | `OpensPage` | The `Id` of one of your pages. Clicking the pill while this activity shows opens that page instead of Home (also when the pointer has just opened the notch on its way to the click). API 9. |
 
 **Tiers** decide which activity the pill shows. A higher tier always wins; within a tier, the most recently published wins. Updating an activity does not count as publishing it again, so a ticking progress value will not push your activity in front of others.
