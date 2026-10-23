@@ -30,7 +30,7 @@ notchctl install acme.build-status
 notchctl webhook          # shows the webhook address and token
 ```
 
-Exit code 0 means Notch did it, 1 means Notch refused (the reason is printed), 2 means Notch is not running. Add `--start` to start Notch first.
+Exit code 0 means Notch did it, 1 means Notch refused (the reason is printed), 2 means Notch is not running, and 3 means Notch got the command but did not answer within 10 minutes. A command that needs your answer, such as switching on a plugin whose files changed, waits until you have clicked. Add `--start` to start Notch first.
 
 ## Webhook
 

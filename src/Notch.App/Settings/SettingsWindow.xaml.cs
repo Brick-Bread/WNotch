@@ -80,6 +80,8 @@ public partial class SettingsWindow : Window
         ShowTheme();
         ThemeManager.Changed += OnThemeChanged;
         Closed += (_, _) => ThemeManager.Changed -= OnThemeChanged;
+        _installFlow.EnabledChanged += OnPluginSwitchedElsewhere;
+        Closed += (_, _) => _installFlow.EnabledChanged -= OnPluginSwitchedElsewhere;
 
         Position.SelectedIndex = (int)settings.Position;
         IslandStyle.SelectedIndex = (int)settings.Style;
@@ -467,18 +469,32 @@ public partial class SettingsWindow : Window
         _settings.CalendarFeeds = [.. CalendarFeeds.Text
             .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Distinct(StringComparer.OrdinalIgnoreCase)];
-        // A plugin being switched on for the first time (or after its files changed) is asked about; if the user says no it stays off.
+        // A plugin being switched on for the first time, or one left on whose files changed since, is asked about;
+        // if the user says no it is switched off.
         HashSet<string> wanted = TickedPlugins();
-        foreach (string pluginId in wanted.Where(id => !_settings.EnabledPlugins.Contains(id)).ToList())
+        List<string> heldBack = [];
+        foreach (string pluginId in wanted.Where(id => !_settings.EnabledPlugins.Contains(id) || _plugins.Review(id) is { Approved: false }).ToList())
         {
+            bool wasOn = _settings.EnabledPlugins.Contains(pluginId);
             if (!ApprovePlugin(pluginId))
             {
                 wanted.Remove(pluginId);
+            }
+            else if (wasOn)
+            {
+                heldBack.Add(pluginId);
             }
         }
 
         _settings.EnabledPlugins = [.. wanted];
         _store.Save(_settings);
+
+        // Those were on already, so switching plugins on does not start them; now that they are approved, they start.
+        if (heldBack.Count > 0)
+        {
+            PluginManager manager = _plugins;
+            _ = Task.Run(() => heldBack.ForEach(manager.Retry));
+        }
 
         // Plugin options go to each plugin's own settings file. A running plugin is told, or restarted,
         // which runs its code, so not on this thread.
@@ -691,7 +707,11 @@ public partial class SettingsWindow : Window
                 });
             }
 
-            if (plugin is { Status: PluginStatus.Failed or PluginStatus.Invalid, Error: { } error })
+            if (plugin is { Status: PluginStatus.Failed, Id: { } heldId, AlwaysEnabled: false } && _plugins.Review(heldId) is { Approved: false, FilesChanged: true } review)
+            {
+                PluginList.Children.Add(ReviewRow(review));
+            }
+            else if (plugin is { Status: PluginStatus.Failed or PluginStatus.Invalid, Error: { } error })
             {
                 PluginList.Children.Add(new TextBlock
                 {
@@ -718,6 +738,59 @@ public partial class SettingsWindow : Window
                 PluginList.Children.Add(UpdateRow(update));
             }
         }
+    }
+
+    /// <summary>"Changed since you approved it" and a button that shows the review, then starts the plugin when approved.</summary>
+    private UIElement ReviewRow(PluginReview review)
+    {
+        string id = review.Info.Id!;
+        var button = new Button { Content = "Review…", Padding = new Thickness(10, 3, 10, 3) };
+        button.Click += async (_, _) =>
+        {
+            if (!PluginReviewPrompt.Ask(this, review, "Run"))
+            {
+                return;
+            }
+
+            _plugins.Approve(id, "approved in Settings after its files changed");
+            button.IsEnabled = false;
+            PluginManager plugins = _plugins;
+            await Task.Run(() => plugins.Retry(id));
+            ListPlugins(TickedPlugins());
+        };
+
+        return new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Margin = new Thickness(28, 0, 0, 8),
+            Children =
+            {
+                new TextBlock
+                {
+                    Text = "Changed since you approved it, so it is not running.",
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Opacity = 0.7,
+                    Margin = new Thickness(0, 0, 10, 0),
+                },
+                button,
+            },
+        };
+    }
+
+    /// <summary>A plugin was switched on or off by a command or the palette while this window is open: show it, so saving keeps it.</summary>
+    private void OnPluginSwitchedElsewhere(string pluginId, bool on)
+    {
+        HashSet<string> ticked = TickedPlugins();
+        if (on)
+        {
+            ticked.Add(pluginId);
+        }
+        else
+        {
+            ticked.Remove(pluginId);
+        }
+
+        ListPlugins(ticked);
     }
 
     /// <summary>"Update available" and a button that installs it and restarts Notch.</summary>

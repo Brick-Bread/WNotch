@@ -7,6 +7,11 @@ namespace Notch.Core.Automation;
 /// <summary>What the running notch answered to a command sent through <see cref="CommandPipe"/>.</summary>
 public sealed record CommandResult(bool Ok, string? Message = null);
 
+/// <summary>How sending a command went.</summary>
+/// <param name="Connected">A notch was listening, whether or not it answered.</param>
+/// <param name="Result">Its answer; null when none came.</param>
+public sealed record PipeExchange(bool Connected, CommandResult? Result);
+
 /// <summary>
 /// How a second copy of Notch, a <c>notch://</c> link and the command line tool talk to the notch
 /// that is already running: one request line (a JSON array of arguments), one answer line.
@@ -46,25 +51,38 @@ public sealed class CommandPipe : IDisposable
     /// Sends the arguments to the running notch and returns its answer, or null when none is
     /// listening (or it does not answer in time).
     /// </summary>
-    public static async Task<CommandResult?> SendAsync(string[] arguments, TimeSpan timeout, string name = DefaultName)
+    public static async Task<CommandResult?> SendAsync(string[] arguments, TimeSpan timeout, string name = DefaultName) =>
+        (await ExchangeAsync(arguments, timeout, timeout, name)).Result;
+
+    /// <summary>
+    /// Sends the arguments to the running notch and waits for its answer. Some commands wait on the user (a
+    /// plugin's review, say), so once the pipe is connected the answer may take up to <paramref name="answerTimeout"/>.
+    /// </summary>
+    /// <returns>The answer, or null with <see cref="PipeExchange.Connected"/> telling "not running" from "did not answer".</returns>
+    public static async Task<PipeExchange> ExchangeAsync(string[] arguments, TimeSpan connectTimeout, TimeSpan answerTimeout, string name = DefaultName)
     {
+        bool connected = false;
         try
         {
             using var pipe = new NamedPipeClientStream(".", name, PipeDirection.InOut, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
-            using var cancel = new CancellationTokenSource(timeout);
-            await pipe.ConnectAsync(cancel.Token);
+            using (var connecting = new CancellationTokenSource(connectTimeout))
+            {
+                await pipe.ConnectAsync(connecting.Token);
+            }
 
+            connected = true;
+            using var cancel = new CancellationTokenSource(answerTimeout);
             byte[] request = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(arguments) + "\n");
             await pipe.WriteAsync(request, cancel.Token);
             await pipe.FlushAsync(cancel.Token);
 
             using var reader = new StreamReader(pipe, Encoding.UTF8);
             string? answer = await reader.ReadLineAsync(cancel.Token);
-            return answer is null ? new CommandResult(true) : JsonSerializer.Deserialize<CommandResult>(answer, Json);
+            return new PipeExchange(true, answer is null ? new CommandResult(true) : JsonSerializer.Deserialize<CommandResult>(answer, Json));
         }
         catch (Exception e) when (e is IOException or OperationCanceledException or JsonException or TimeoutException)
         {
-            return null;
+            return new PipeExchange(connected, null);
         }
     }
 

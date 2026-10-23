@@ -5,7 +5,7 @@ using Notch.Core.Automation;
 // notchctl: tells the running Notch what to do.
 //   notchctl timer 5m          notchctl toast "Build done" --color green
 //   notchctl install <plugin>  notchctl open stats        notchctl webhook
-// Exit code 0 when Notch did it, 1 when it refused, 2 when it could not be reached.
+// Exit code 0 when Notch did it, 1 when it refused, 2 when it could not be reached, 3 when it did not answer in time.
 
 string[] arguments = args;
 bool start = arguments.Contains("--start", StringComparer.OrdinalIgnoreCase);
@@ -41,18 +41,26 @@ if (!CommandParser.TryParseArguments(arguments, out _, out string? problem))
     return 1;
 }
 
-CommandResult? result = await CommandPipe.SendAsync(arguments, TimeSpan.FromSeconds(3));
-if (result is null && start && StartNotch())
+// Once Notch has the command it may be waiting on the user, such as a plugin's review, so the answer can take a while.
+TimeSpan answerTimeout = TimeSpan.FromMinutes(10);
+PipeExchange exchange = await CommandPipe.ExchangeAsync(arguments, TimeSpan.FromSeconds(3), answerTimeout);
+if (!exchange.Connected && start && StartNotch())
 {
-    for (int attempt = 0; attempt < 40 && result is null; attempt++)
+    for (int attempt = 0; attempt < 40 && !exchange.Connected; attempt++)
     {
         await Task.Delay(250);
-        result = await CommandPipe.SendAsync(arguments, TimeSpan.FromSeconds(1));
+        exchange = await CommandPipe.ExchangeAsync(arguments, TimeSpan.FromSeconds(1), answerTimeout);
     }
 }
 
-if (result is null)
+if (exchange.Result is not { } result)
 {
+    if (exchange.Connected)
+    {
+        Console.Error.WriteLine("Notch did not answer in time. It may still be waiting for you to answer a question it asked.");
+        return 3;
+    }
+
     Console.Error.WriteLine("Notch is not running. Start it, or use --start.");
     return 2;
 }

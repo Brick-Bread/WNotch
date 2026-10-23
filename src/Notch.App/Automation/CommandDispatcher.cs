@@ -99,6 +99,9 @@ internal sealed class CommandDispatcher(
         });
     }
 
+    /// <summary>A question about switching a plugin on is on screen; a second command must not stack another.</summary>
+    private bool _asking;
+
     private CommandResult SetPluginEnabled(SetPluginEnabledCommand toggle)
     {
         PluginInfo? plugin = plugins.Plugins.FirstOrDefault(p => p.Id == toggle.PluginId);
@@ -106,6 +109,25 @@ internal sealed class CommandDispatcher(
         {
             return new CommandResult(false, $"{toggle.PluginId} is not installed.");
         }
+
+        if (_asking)
+        {
+            return new CommandResult(false, "Notch is already asking about a plugin. Answer that first.");
+        }
+
+        try
+        {
+            _asking = true;
+            return SetPluginEnabledAsked(toggle, plugin);
+        }
+        finally
+        {
+            _asking = false;
+        }
+    }
+
+    private CommandResult SetPluginEnabledAsked(SetPluginEnabledCommand toggle, PluginInfo plugin)
+    {
 
         // Switching a plugin on runs its code, so that is always the user's own decision.
         if (toggle.Enabled)
@@ -139,6 +161,6 @@ internal sealed class CommandDispatcher(
             install.Disable(toggle.PluginId);
         }
 
-        return new CommandResult(true);
+        return new CommandResult(true, $"{plugin.Name} is switched {(toggle.Enabled ? "on" : "off")}.");
     }
 }

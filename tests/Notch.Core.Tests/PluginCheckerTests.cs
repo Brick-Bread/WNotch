@@ -59,6 +59,30 @@ public sealed class PluginCheckerTests : IDisposable
     }
 
     [Fact]
+    public void A_plugin_held_back_after_its_files_changed_starts_once_approved_without_being_switched_off()
+    {
+        string folder = Install("a");
+        var trust = new PluginTrustStore(Path.Combine(_root, "trust.json"));
+        using PluginManager manager = CreateManager(trust: trust);
+        manager.Discover();
+        manager.Approve("a");
+        File.WriteAllText(Path.Combine(folder, "Plugin.dll"), "updated by hand");
+
+        manager.SetEnabled(["a"]);
+        Assert.Equal(PluginStatus.Failed, manager.Plugins[0].Status);
+        Assert.Equal("a", Assert.Single(manager.HeldBack()).Id);
+
+        // Still ticked: switching it on again changes nothing, so approving it has to start it.
+        manager.Approve("a");
+        manager.SetEnabled(["a"]);
+        Assert.Equal(PluginStatus.Failed, manager.Plugins[0].Status);
+        manager.Retry("a");
+
+        Assert.Equal(PluginStatus.Running, manager.Plugins[0].Status);
+        Assert.Empty(manager.HeldBack());
+    }
+
+    [Fact]
     public void Review_tells_the_user_what_they_are_approving()
     {
         Install("a", permissions: """["network"]""");

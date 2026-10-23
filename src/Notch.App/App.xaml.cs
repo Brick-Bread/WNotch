@@ -318,6 +318,21 @@ public partial class App : Application
                 DeleteQuietly(startMarker);
             }
 
+            // A plugin updated by hand is held back until the user looks at its new files; say where.
+            if (plugins.HeldBack() is { Count: > 0 } held)
+            {
+                activities.Publish(new Notch.Core.Activities.Activity
+                {
+                    Id = "notice.plugins-changed",
+                    Tier = ActivityTier.Transient,
+                    Title = held.Count == 1 ? $"{held[0].Name} changed" : $"{held.Count} plugins changed",
+                    Detail = "Review it in Settings > Plugins to run it again.",
+                    Glyph = "",
+                    Glow = new Glow(GlowColor.Orange, GlowPattern.Flash),
+                    Lifetime = TimeSpan.FromSeconds(8),
+                });
+            }
+
             // The plugin list also names plugins withdrawn for being harmful; one already running is stopped.
             if (!demo && settings.NotifyOfUpdates && _installFlow is { } flow)
             {

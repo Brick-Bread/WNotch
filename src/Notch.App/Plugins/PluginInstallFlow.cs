@@ -152,11 +152,15 @@ public sealed class PluginInstallFlow(
         }
 
         store.Save(settings);
+        EnabledChanged?.Invoke(pluginId, true);
         string[] enabled = [.. settings.EnabledPlugins];
         _ = Task.Run(() =>
         {
             plugins.Discover();
             plugins.SetEnabled(enabled);
+
+            // A plugin that was ticked already but held back (its files changed) starts now that it is approved.
+            plugins.Retry(pluginId);
         });
     }
 
@@ -165,7 +169,14 @@ public sealed class PluginInstallFlow(
     {
         settings.EnabledPlugins.RemoveAll(id => id == pluginId);
         store.Save(settings);
+        EnabledChanged?.Invoke(pluginId, false);
         string[] enabled = [.. settings.EnabledPlugins];
         _ = Task.Run(() => plugins.SetEnabled(enabled));
     }
+
+    /// <summary>
+    /// Raised on the UI thread when a plugin was switched on or off from outside the Settings window, so an
+    /// open one shows it, and saving it does not put back what it showed before.
+    /// </summary>
+    public event Action<string, bool>? EnabledChanged;
 }

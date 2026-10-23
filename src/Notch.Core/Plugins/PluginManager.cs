@@ -259,6 +259,42 @@ public sealed class PluginManager : IDisposable
         }
     }
 
+    /// <summary>
+    /// Tries again to start a plugin that is switched on but failed or was held back, e.g. right after the user
+    /// approved its changed files. Does nothing for one that is running or switched off.
+    /// </summary>
+    public void Retry(string pluginId)
+    {
+        lock (_gate)
+        {
+            if (_disposed || SafeMode || _slots.FirstOrDefault(s => s.Manifest?.Id == pluginId && s.Status == PluginStatus.Failed) is not { } slot)
+            {
+                return;
+            }
+
+            slot.Status = PluginStatus.Disabled;
+            slot.Error = null;
+            Start(slot, slot.Manifest!);
+        }
+
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>The plugins that are switched on but held back because their files changed since the user approved them.</summary>
+    public IReadOnlyList<PluginInfo> HeldBack()
+    {
+        List<PluginInfo> held = [];
+        foreach (PluginInfo plugin in Plugins.Where(p => p is { Status: PluginStatus.Failed, Id: not null, AlwaysEnabled: false }))
+        {
+            if (Review(plugin.Id!) is { Approved: false, FilesChanged: true })
+            {
+                held.Add(plugin);
+            }
+        }
+
+        return held;
+    }
+
     /// <summary>Stops a running plugin and starts a fresh instance of it. Does nothing for one that is not running.</summary>
     public void Restart(string pluginId)
     {
