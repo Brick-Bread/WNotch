@@ -168,8 +168,7 @@ public sealed class PluginWidgetTests : IDisposable
         manager.Widgets.SetVisible(true);
         manager.Widgets.Unplace("w1");
 
-        WaitFor(() => File.Exists(Path.Combine(_root, "plugins.log"))
-            && File.ReadAllText(Path.Combine(_root, "plugins.log")).Contains("widget type 'counter'", StringComparison.Ordinal));
+        WaitFor(() => LogContains("widget type 'counter'"));
     }
 
     [Fact]
