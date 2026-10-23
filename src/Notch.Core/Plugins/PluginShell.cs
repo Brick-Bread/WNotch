@@ -14,8 +14,14 @@ public interface IPluginShell
     /// <summary>True while the notch is expanded on one of this plugin's pages. Use it to poll faster only while someone is looking.</summary>
     bool IsPageVisible(string pageId);
 
-    /// <summary>True while the notch is expanded on the Plugins tab, where this plugin's cards are.</summary>
+    /// <summary>
+    /// True while any of this plugin's cards is on screen: the notch is expanded on the Plugins tab, or on
+    /// Home with one of the plugin's cards placed there.
+    /// </summary>
     bool AreCardsVisible { get; }
+
+    /// <summary>True while the card with this id is on screen, on the Plugins tab or on Home. API version 9.</summary>
+    bool IsCardVisible(string cardId);
 
     /// <summary>True when the notch is drawn dark. Colours given to Notch adapt by themselves; this is for plugins that draw their own, such as images.</summary>
     bool IsDark { get; }
@@ -64,6 +70,7 @@ public sealed class PluginShellState
     private bool _expanded;
     private (string PluginId, string PageId)? _page;
     private bool _cards;
+    private IReadOnlySet<(string PluginId, string CardId)> _homeCards = new HashSet<(string, string)>();
     private bool _dark = true;
     private GlowColor? _accent;
 
@@ -77,9 +84,21 @@ public sealed class PluginShellState
         get { lock (_gate) { return _expanded; } }
     }
 
-    public bool CardsVisible
+    /// <summary>The Plugins tab is showing, or Home with one of the plugin's cards on it.</summary>
+    public bool CardsVisible(string pluginId)
     {
-        get { lock (_gate) { return _expanded && _cards; } }
+        lock (_gate)
+        {
+            return _expanded && (_cards || _homeCards.Any(c => c.PluginId == pluginId));
+        }
+    }
+
+    public bool IsCardVisible(string pluginId, string cardId)
+    {
+        lock (_gate)
+        {
+            return _expanded && (_cards || _homeCards.Contains((pluginId, cardId)));
+        }
     }
 
     public bool IsDark
@@ -101,11 +120,19 @@ public sealed class PluginShellState
     }
 
     /// <summary>Called by the shell. <paramref name="page"/> is the plugin page the tab shows, or null.</summary>
-    public void Update(bool expanded, (string PluginId, string PageId)? page, bool cardsTab, bool dark, GlowColor? accent)
+    /// <param name="homeCards">The plugin cards Home is showing; empty while another tab is.</param>
+    public void Update(
+        bool expanded,
+        (string PluginId, string PageId)? page,
+        bool cardsTab,
+        bool dark,
+        GlowColor? accent,
+        IReadOnlyCollection<(string PluginId, string CardId)>? homeCards = null)
     {
+        HashSet<(string, string)> onHome = [.. homeCards ?? []];
         lock (_gate)
         {
-            if (_expanded == expanded && _page == page && _cards == cardsTab && _dark == dark && _accent == accent)
+            if (_expanded == expanded && _page == page && _cards == cardsTab && _dark == dark && _accent == accent && _homeCards.SetEquals(onHome))
             {
                 return;
             }
@@ -113,6 +140,7 @@ public sealed class PluginShellState
             _expanded = expanded;
             _page = page;
             _cards = cardsTab;
+            _homeCards = onHome;
             _dark = dark;
             _accent = accent;
         }

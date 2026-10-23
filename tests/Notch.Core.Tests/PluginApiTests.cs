@@ -229,6 +229,30 @@ public sealed class PluginApiTests : IDisposable
     }
 
     [Fact]
+    public void A_card_placed_on_Home_counts_as_visible_while_Home_shows()
+    {
+        using PluginManager manager = Manager();
+        manager.Discover();
+        manager.SetEnabled(["a", "b"]);
+        IPluginShell a = _probes["a"].Host!.Shell;
+        IPluginShell b = _probes["b"].Host!.Shell;
+
+        manager.ShellState.Update(expanded: true, null, cardsTab: false, dark: true, accent: null, homeCards: [("a", "timer")]);
+
+        Assert.True(a.AreCardsVisible);
+        Assert.True(a.IsCardVisible("timer"));
+        Assert.False(a.IsCardVisible("other"));
+        Assert.False(b.AreCardsVisible);
+
+        manager.ShellState.Update(expanded: true, null, cardsTab: true, dark: true, accent: null);
+        Assert.True(b.AreCardsVisible);
+        Assert.True(a.IsCardVisible("other"));
+
+        manager.ShellState.Update(expanded: false, null, cardsTab: false, dark: true, accent: null, homeCards: [("a", "timer")]);
+        Assert.False(a.IsCardVisible("timer"));
+    }
+
+    [Fact]
     public void Notify_shows_a_transient_notice_in_the_pill()
     {
         using PluginManager manager = Manager();

@@ -571,7 +571,9 @@ internal sealed class PluginHost : IPluginHost
 
         public bool IsPageVisible(string pageId) => _state.IsPageVisible(_pluginId, pageId);
 
-        public bool AreCardsVisible => _state.CardsVisible;
+        public bool AreCardsVisible => _state.CardsVisible(_pluginId);
+
+        public bool IsCardVisible(string cardId) => _state.IsCardVisible(_pluginId, cardId);
 
         public bool IsDark => _state.IsDark;
 

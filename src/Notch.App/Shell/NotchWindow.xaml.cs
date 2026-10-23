@@ -701,7 +701,18 @@ public partial class NotchWindow : Window
         _tab == NotchTab.Page ? _pageKey : null,
         _tab == NotchTab.Plugins,
         !ThemeManager.IsLight,
-        GlowColor.FromName(_settings.AccentColor));
+        GlowColor.FromName(_settings.AccentColor),
+        _tab == NotchTab.Home ? HomePluginCards() : null);
+
+    /// <summary>The plugin cards placed on Home, by plugin and card id.</summary>
+    private List<(string PluginId, string CardId)> HomePluginCards() =>
+    [
+        .. HomeWidgets
+            .Where(w => w.Kind == WidgetKinds.Plugin)
+            .Select(w => w.Option("card"))
+            .Where(key => key.IndexOf('/') > 0)
+            .Select(key => (key[..key.IndexOf('/')], key[(key.IndexOf('/') + 1)..])),
+    ];
 
     private void Refresh()
     {

@@ -482,7 +482,8 @@ host.Pages.Set(new PluginPage
 |---|---|
 | `IsExpanded` | The notch is expanded. |
 | `IsPageVisible(pageId)` | The notch is expanded on one of your pages. |
-| `AreCardsVisible` | The notch is expanded on the Plugins tab. |
+| `AreCardsVisible` | One of your cards is on screen: the notch is expanded on the Plugins tab, or on Home with one of your cards placed there. |
+| `IsCardVisible(cardId)` | That card is on screen, on the Plugins tab or on Home. API 9. |
 | `IsDark`, `Accent` | The theme and the accent colour the user chose (null when switched off). Colours you give Notch adapt by themselves; this is for plugins that draw their own, such as images. |
 | `Changed` | Raised, on a background thread, when any of the above changed. |
 | `Notify(title, detail, glyph, color, lifetime)` | A short notice in the pill, without the bookkeeping of publishing a transient activity. |
