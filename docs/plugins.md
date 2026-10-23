@@ -746,7 +746,7 @@ Two rules follow:
 
 ## Developing and debugging
 
-Run a plugin from its build output with `--plugin=<folder>`; the flag can be repeated for several plugins. Such plugins are always enabled, show as "(development)" in Settings, and do not change the saved list of enabled plugins.
+Run a plugin from its build output with `--plugin=<folder>`; the flag can be repeated for several plugins. Such plugins are always enabled, show as "(development)" in Settings, and do not change the saved list of enabled plugins. A build with the same id as a plugin you have installed runs in its place, but keeps its options and files in `plugin-data\<id>.dev` (from Notch 0.19), so trying it out cannot touch the installed copy's.
 
 From a clone of this repository, building the solution also builds the sample:
 

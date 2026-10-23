@@ -275,6 +275,32 @@ public sealed class PluginManagerTests : IDisposable
     }
 
     [Fact]
+    public void A_development_build_of_an_installed_plugin_keeps_its_own_data()
+    {
+        Install("chomp");
+        string build = Install("chomp", parent: Path.Combine(_root, "build"));
+        using PluginManager manager = CreateManager();
+
+        manager.Discover([build]);
+        manager.SetEnabled([]);
+
+        Assert.Equal(Path.Combine(_root, "data", "chomp.dev"), _fakes["chomp"].Host!.DataDirectory);
+        Assert.Contains("chomp.dev", File.ReadAllText(Path.Combine(_root, "plugins.log")));
+    }
+
+    [Fact]
+    public void A_development_build_of_its_own_uses_its_id_for_its_data()
+    {
+        string build = Install("fresh", parent: Path.Combine(_root, "build"));
+        using PluginManager manager = CreateManager();
+
+        manager.Discover([build]);
+        manager.SetEnabled([]);
+
+        Assert.Equal(Path.Combine(_root, "data", "fresh"), _fakes["fresh"].Host!.DataDirectory);
+    }
+
+    [Fact]
     public void A_missing_assembly_is_reported()
     {
         Install("disk", assembly: "Missing.dll");

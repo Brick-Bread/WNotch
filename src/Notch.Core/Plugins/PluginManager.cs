@@ -139,6 +139,9 @@ public sealed class PluginManager : IDisposable
     /// <summary>The id a plugin's activity gets in the <see cref="ActivityManager"/>.</summary>
     public static string ActivityIdFor(string pluginId, string activityId) => $"plugin.{pluginId}.{activityId}";
 
+    /// <summary>The data folder's name for a <c>--plugin=</c> build that has an installed plugin's id.</summary>
+    public static string DevelopmentDataId(string pluginId) => pluginId + ".dev";
+
     /// <summary>How a page is named from outside its plugin: "plugin-id/page-id". Plugin ids have no slash.</summary>
     public static string PageKeyFor(string pluginId, string pageId) => $"{pluginId}/{pageId}";
 
@@ -343,7 +346,7 @@ public sealed class PluginManager : IDisposable
         {
             Slot? slot = _slots.FirstOrDefault(s => s.Manifest?.Id == pluginId);
             manifest = slot?.Manifest;
-            return slot?.Host?.SettingsStore ?? new PluginSettingsStore(Path.Combine(_dataDirectory, pluginId, "settings.json"));
+            return slot?.Host?.SettingsStore ?? new PluginSettingsStore(Path.Combine(_dataDirectory, slot?.DataId ?? pluginId, "settings.json"));
         }
     }
 
@@ -406,10 +409,19 @@ public sealed class PluginManager : IDisposable
             PluginManifest manifest = PluginManifest.Parse(File.ReadAllText(manifestPath));
             if (_slots.FirstOrDefault(s => s.Manifest?.Id == manifest.Id) is { } other)
             {
+                // A --plugin= build of an installed plugin runs in its place, but must not touch the real copy's
+                // options and data: it gets a folder of its own.
+                if (other.Pinned && !pinned && other.DataId == manifest.Id)
+                {
+                    other.DataId = DevelopmentDataId(manifest.Id);
+                    _log.Write(LogSource, "warn", $"The build in {other.Directory} has the id of the installed {manifest.Id}; it keeps its options and files in plugin-data\\{other.DataId} so the installed copy's are left alone.");
+                }
+
                 throw new PluginLoadException($"Its id '{manifest.Id}' is already used by the plugin in {other.Directory}.");
             }
 
             slot.Manifest = manifest;
+            slot.DataId = manifest.Id;
         }
         catch (Exception e) when (e is PluginLoadException or IOException or UnauthorizedAccessException)
         {
@@ -435,7 +447,7 @@ public sealed class PluginManager : IDisposable
 
             slot.Factory ??= _loader(manifest, slot.Directory);
             slot.Host = new PluginHost(
-                manifest, slot.Directory, Path.Combine(_dataDirectory, manifest.Id), _activities, _cards, Pages, Themes, Glow, Audio, ShellState, Bus, _log, Widgets, Palette, Hotkeys);
+                manifest, slot.Directory, Path.Combine(_dataDirectory, slot.DataId ?? manifest.Id), _activities, _cards, Pages, Themes, Glow, Audio, ShellState, Bus, _log, Widgets, Palette, Hotkeys);
             slot.Instance = slot.Factory();
             slot.Instance.Start(slot.Host);
 
@@ -658,6 +670,9 @@ public sealed class PluginManager : IDisposable
         public bool Pinned { get; } = pinned;
 
         public PluginManifest? Manifest { get; set; }
+
+        /// <summary>The name of its folder under plugin-data: its id, unless it is a development build of an installed plugin.</summary>
+        public string? DataId { get; set; }
 
         public PluginStatus Status { get; set; } = PluginStatus.Disabled;
 
