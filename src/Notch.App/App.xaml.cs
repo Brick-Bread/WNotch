@@ -400,6 +400,7 @@ public partial class App : Application
             window.TogglePalette);
         window.PaletteExtras = () => PluginPaletteEntries(settings, settingsStore);
         window.PluginPalette = _plugins!.Palette;
+        window.PluginHotkeys = _plugins.Hotkeys;
         _commandPipe = new CommandPipe(_commands.HandleArgumentsAsync);
 
         _webhook = new WebhookService(settings, settingsStore, _activities!, _commands);

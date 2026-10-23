@@ -722,6 +722,16 @@ public partial class SettingsWindow : Window
                 });
             }
 
+            if (plugin.Id is { } hotkeysOf && _plugins.Hotkeys.ChordsOf(hotkeysOf) is { Count: > 0 } chords)
+            {
+                PluginList.Children.Add(new TextBlock
+                {
+                    Text = (chords.Count == 1 ? "Hotkey: " : "Hotkeys: ") + string.Join(", ", chords),
+                    Opacity = 0.7,
+                    Margin = new Thickness(28, 0, 0, 6),
+                });
+            }
+
             if (plugin is { Id: { } optionsId, Settings.Count: > 0 })
             {
                 // Made once, so what the user typed survives the list being drawn again.

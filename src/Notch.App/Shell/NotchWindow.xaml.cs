@@ -230,6 +230,7 @@ public partial class NotchWindow : Window
         Reposition();
         RegisterOpenHotkey();
         RegisterPaletteHotkey();
+        SyncPluginHotkeys();
         _housekeepingTimer.Start();
 
         // The periodic check alone would leave the notch over a game for up to a second after it starts.
@@ -270,6 +271,8 @@ public partial class NotchWindow : Window
             Keyboard.UnregisterHotkey(_hwnd, PaletteHotkeyId);
         }
 
+        UnregisterPluginHotkeys();
+
         if (_clipboardRegistered)
         {
             ClipboardListener.Unregister(_hwnd);
@@ -289,6 +292,10 @@ public partial class NotchWindow : Window
         else if (msg == Keyboard.HotkeyMessage && wParam == PaletteHotkeyId)
         {
             TogglePalette();
+            handled = true;
+        }
+        else if (msg == Keyboard.HotkeyMessage && OnPluginHotkey(wParam))
+        {
             handled = true;
         }
         else if (msg == ClipboardListener.UpdateMessage)

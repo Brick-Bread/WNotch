@@ -20,6 +20,7 @@ internal sealed class PluginHost : IPluginHost
     private readonly ScopedBus _bus;
     private readonly ScopedWidgets _widgets;
     private readonly ScopedPalette _palette;
+    private readonly ScopedHotkeys _hotkeys;
 
     public PluginHost(
         PluginManifest manifest,
@@ -35,7 +36,8 @@ internal sealed class PluginHost : IPluginHost
         PluginBus bus,
         PluginLog log,
         PluginWidgetBoard? widgets = null,
-        PluginPaletteBoard? palette = null)
+        PluginPaletteBoard? palette = null,
+        PluginHotkeyBoard? hotkeys = null)
     {
         Manifest = manifest;
         PluginDirectory = pluginDirectory;
@@ -53,6 +55,7 @@ internal sealed class PluginHost : IPluginHost
         Bus = _bus = new ScopedBus(manifest.Id, bus, scopedLog);
         Widgets = _widgets = new ScopedWidgets(manifest.Id, widgets ?? new PluginWidgetBoard(), scopedLog);
         Palette = _palette = new ScopedPalette(manifest.Id, manifest.Name, palette ?? new PluginPaletteBoard(), scopedLog);
+        Hotkeys = _hotkeys = new ScopedHotkeys(manifest.Id, hotkeys ?? new PluginHotkeyBoard(), scopedLog);
         Settings = SettingsStore = new PluginSettingsStore(Path.Combine(dataDirectory, "settings.json"));
     }
 
@@ -79,6 +82,8 @@ internal sealed class PluginHost : IPluginHost
 
     public IPluginPalette Palette { get; }
 
+    public IPluginHotkeys Hotkeys { get; }
+
     public IPluginThemes Themes { get; }
 
     public IPluginGlow Glow { get; }
@@ -103,6 +108,7 @@ internal sealed class PluginHost : IPluginHost
         _cards.Close();
         _widgets.Close();
         _palette.Close();
+        _hotkeys.Close();
         _pages.Close();
         _themes.Close();
         _glow.Close();
@@ -389,6 +395,65 @@ internal sealed class PluginHost : IPluginHost
                     }
                 }),
             };
+        }
+    }
+
+    private sealed class ScopedHotkeys(string pluginId, PluginHotkeyBoard board, ScopedLog log) : IPluginHotkeys
+    {
+        private readonly Lock _gate = new();
+        private bool _closed;
+
+        public IDisposable Register(string chord, Action pressed)
+        {
+            ArgumentNullException.ThrowIfNull(pressed);
+            if (!global::Notch.Core.Shell.Hotkey.TryParse(chord, out global::Notch.Core.Shell.Hotkey hotkey))
+            {
+                throw new ArgumentException($"\"{chord}\" is not a hotkey Notch can read. Write it like Alt+Shift+C.", nameof(chord));
+            }
+
+            lock (_gate)
+            {
+                if (_closed)
+                {
+                    return new Release(null);
+                }
+
+                // The shell calls this on the UI thread; plugin code runs elsewhere and cannot throw into it.
+                PluginHotkey? added = board.Add(pluginId, hotkey, () => Task.Run(() =>
+                {
+                    try
+                    {
+                        pressed();
+                    }
+                    catch (Exception e)
+                    {
+                        log.Error($"The hotkey {hotkey} failed.", e);
+                    }
+                }), out string? refusal);
+                if (added is null)
+                {
+                    log.Warn($"The hotkey {hotkey} was not registered. {refusal}");
+                    return new Release(null);
+                }
+
+                return new Release(() => board.Remove(added.Id));
+            }
+        }
+
+        public void Close()
+        {
+            lock (_gate)
+            {
+                _closed = true;
+                board.RemoveAll(pluginId);
+            }
+        }
+
+        private sealed class Release(Action? release) : IDisposable
+        {
+            private Action? _release = release;
+
+            public void Dispose() => Interlocked.Exchange(ref _release, null)?.Invoke();
         }
     }
 

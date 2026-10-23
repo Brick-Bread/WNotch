@@ -73,6 +73,9 @@ public interface IPluginHost
     /// <summary>Commands and live search results in the command palette. API version 9.</summary>
     IPluginPalette Palette { get; }
 
+    /// <summary>Keyboard shortcuts that work from any app. API version 9.</summary>
+    IPluginHotkeys Hotkeys { get; }
+
     /// <summary>Looks for the whole notch that the user can pick in Settings. API version 6.</summary>
     IPluginThemes Themes { get; }
 

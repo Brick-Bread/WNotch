@@ -11,6 +11,36 @@ public partial class NotchWindow
 {
     private const int OpenHotkeyId = 1;
 
+    // Plugins' hotkeys are registered with Windows under this number plus their own.
+    private const int PluginHotkeyIdBase = 1000;
+
+    private readonly HashSet<int> _pluginHotkeysRegistered = [];
+
+    /// <summary>The hotkeys plugins hold; set by the app.</summary>
+    internal Notch.Core.Plugins.PluginHotkeyBoard? PluginHotkeys
+    {
+        get => _pluginHotkeys;
+        set
+        {
+            if (_pluginHotkeys is not null)
+            {
+                _pluginHotkeys.Changed -= OnPluginHotkeysChanged;
+            }
+
+            _pluginHotkeys = value;
+            if (value is not null)
+            {
+                // Asked while a plugin starts, off the UI thread; it only reads two strings of the settings.
+                value.UsedByNotch = IsNotchHotkey;
+                value.Changed += OnPluginHotkeysChanged;
+            }
+
+            SyncPluginHotkeys();
+        }
+    }
+
+    private Notch.Core.Plugins.PluginHotkeyBoard? _pluginHotkeys;
+
     private readonly CapsLockHudTracker _capsLock = new();
 
     // No keyboard hook: those slow every keystroke down and look like a cheat to some games.
@@ -69,6 +99,54 @@ public partial class NotchWindow
         {
             HotkeyProblem = $"{hotkey} is already used by Windows or another app.";
         }
+    }
+
+    private bool IsNotchHotkey(Hotkey hotkey) =>
+        (Hotkey.TryParse(_settings.OpenHotkey, out Hotkey open) && open == hotkey)
+        || (Hotkey.TryParse(_settings.PaletteHotkey, out Hotkey palette) && palette == hotkey);
+
+    private void OnPluginHotkeysChanged(object? sender, EventArgs e) => Dispatcher.BeginInvoke(SyncPluginHotkeys);
+
+    /// <summary>Registers plugins' new hotkeys with Windows and gives back the ones they let go of.</summary>
+    private void SyncPluginHotkeys()
+    {
+        if (_hwnd == 0 || _pluginHotkeys is not { } board)
+        {
+            return;
+        }
+
+        IReadOnlyList<Notch.Core.Plugins.PluginHotkey> wanted = board.Snapshot();
+        foreach (int id in _pluginHotkeysRegistered.Except(wanted.Select(h => h.Id)).ToList())
+        {
+            Keyboard.UnregisterHotkey(_hwnd, PluginHotkeyIdBase + id);
+            _pluginHotkeysRegistered.Remove(id);
+        }
+
+        foreach (Notch.Core.Plugins.PluginHotkey hotkey in wanted.Where(h => !_pluginHotkeysRegistered.Contains(h.Id)))
+        {
+            if (Keyboard.RegisterHotkey(_hwnd, PluginHotkeyIdBase + hotkey.Id, hotkey.Hotkey))
+            {
+                _pluginHotkeysRegistered.Add(hotkey.Id);
+            }
+            else
+            {
+                board.Fail(hotkey.Id);
+            }
+        }
+    }
+
+    /// <summary>A hotkey arrived; true when it was one of a plugin's.</summary>
+    private bool OnPluginHotkey(nint id) =>
+        id > PluginHotkeyIdBase && _pluginHotkeys?.Press((int)(id - PluginHotkeyIdBase)) == true;
+
+    private void UnregisterPluginHotkeys()
+    {
+        foreach (int id in _pluginHotkeysRegistered)
+        {
+            Keyboard.UnregisterHotkey(_hwnd, PluginHotkeyIdBase + id);
+        }
+
+        _pluginHotkeysRegistered.Clear();
     }
 
     /// <summary>The hotkey opens the notch and holds it open; pressed again, it closes it.</summary>

@@ -212,6 +212,27 @@ public sealed class PluginApiTests : IDisposable
     }
 
     [Fact]
+    public void A_plugins_hotkeys_are_given_back_when_disposed_or_when_it_stops()
+    {
+        using PluginManager manager = Manager();
+        manager.Discover();
+        manager.SetEnabled(["a"]);
+        IPluginHotkeys hotkeys = _probes["a"].Host!.Hotkeys;
+
+        Assert.Throws<ArgumentException>(() => hotkeys.Register("Alt+Banana", () => { }));
+        IDisposable first = hotkeys.Register("Alt+Shift+C", () => { });
+        hotkeys.Register("Alt+Shift+T", () => { });
+        Assert.Equal(["Alt+Shift+C", "Alt+Shift+T"], manager.Hotkeys.ChordsOf("a"));
+
+        first.Dispose();
+        first.Dispose();
+        Assert.Equal(["Alt+Shift+T"], manager.Hotkeys.ChordsOf("a"));
+
+        manager.SetEnabled([]);
+        Assert.Empty(manager.Hotkeys.Snapshot());
+    }
+
+    [Fact]
     public void A_page_keeps_the_view_its_plugin_draws_itself()
     {
         using PluginManager manager = Manager();

@@ -21,6 +21,7 @@ This guide walks through a first plugin, then documents every part of the API. A
 - [Widgets: the Home tab](#widgets-the-home-tab)
 - [Pages: tabs with a console](#pages-tabs-with-a-console)
 - [The command palette](#the-command-palette)
+- [Hotkeys](#hotkeys)
 - [The notch's state, notices and messages between plugins](#the-notchs-state-notices-and-messages-between-plugins)
 - [Themes: restyling the whole notch](#themes-restyling-the-whole-notch)
 - [The glow and the sound: visualisers](#the-glow-and-the-sound-visualisers)
@@ -229,6 +230,7 @@ Things to know:
 | `Pages` | [Pages: tabs with a console](#pages-tabs-with-a-console) |
 | `Widgets` | [Widgets: the Home tab](#widgets-the-home-tab) |
 | `Palette` | [The command palette](#the-command-palette) |
+| `Hotkeys` | [Hotkeys](#hotkeys) |
 | `Shell` | [The notch's state, notices and messages between plugins](#the-notchs-state-notices-and-messages-between-plugins) |
 | `Bus` | [The notch's state, notices and messages between plugins](#the-notchs-state-notices-and-messages-between-plugins) |
 | `Themes` | [Themes: restyling the whole notch](#themes-restyling-the-whole-notch) |
@@ -536,6 +538,16 @@ host.Palette.SetProvider(async (query, token) =>
 ```
 
 `Image` shows a picture in place of the glyph, such as an app's icon. `Invoke` runs on a background thread once the palette has closed, and an exception it throws is logged. Notch removes your entries and provider when the plugin stops; `Remove(id)`, `Clear()` and `SetProvider(null)` do it sooner.
+
+## Hotkeys
+
+`host.Hotkeys` (API 9) gives a plugin keyboard shortcuts that work from any app:
+
+```csharp
+_openChomp = host.Hotkeys.Register("Alt+Shift+C", () => host.Pages.Open("chomp"));
+```
+
+The chord is written as in Notch's settings: `Ctrl`, `Alt`, `Shift` and `Win` and a key, joined by `+`. `Register` throws `ArgumentException` for one Notch cannot read. A chord that Notch itself (its open or palette hotkey), another plugin, Windows or another app already uses is refused with a warning in the plugin log, and the handle you got does nothing. The callback runs on a background thread. Dispose the handle to give the keys back; Notch does it for you when the plugin stops. Settings lists each plugin's hotkeys under it, so the user can see where a shortcut comes from.
 
 ## The notch's state, notices and messages between plugins
 
