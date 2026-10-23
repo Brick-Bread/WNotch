@@ -437,6 +437,7 @@ host.Pages.Open("server");
 | `Stats` | Up to eight `PluginStat`s (`Label`, `Value`, `Detail`, `Progress`, `Color`, like a card). |
 | `Input` | Shows an input line under the console and is called with each line the user submits (Enter or the Send button; Up and Down recall earlier lines). Null makes the console read-only. Runs on a background thread. |
 | `InputHint` | Greyed text in the empty input line. |
+| `Size` | `Large` (the default, 920 by 540, like the terminal) or `Compact`: 640 wide and as tall as what the page shows, up to the large height. A page with a picker and a few buttons looks better compact. API 9. |
 | `Status` | One line of quiet text at the top of the page, beside the back button, such as "10 open, 20 done". |
 
 - `Append(pageId, line)` adds a console line; the newest 500 are kept. The console follows new lines unless the user has scrolled up. `ClearConsole(pageId)` empties it.

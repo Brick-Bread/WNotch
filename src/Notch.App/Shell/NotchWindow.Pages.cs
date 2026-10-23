@@ -28,6 +28,48 @@ public partial class NotchWindow
     /// <summary>A text box in a page the plugin draws itself has the keyboard.</summary>
     private bool _pageViewKeyboard;
 
+    private const double LargePageWidth = 920;
+    private const double LargePageHeight = 540;
+    private const double CompactPageWidth = 640;
+    private const double SmallestCompactPage = 180;
+
+    /// <summary>How tall a compact page's content made the notch, measured after each update.</summary>
+    private double _compactPageHeight = LargePageHeight;
+
+    private bool CompactPage => CurrentPage?.Page.Size == PluginPageSize.Compact;
+
+    private Shape PageShape() => CompactPage
+        ? new Shape(CompactPageWidth, _compactPageHeight, 32)
+        : new Shape(LargePageWidth, LargePageHeight, 32);
+
+    /// <summary>A compact page is as tall as what it shows: measured once the new content is laid out.</summary>
+    private void FitCompactPage()
+    {
+        if (!CompactPage || _tab != NotchTab.Page)
+        {
+            return;
+        }
+
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (!CompactPage || _tab != NotchTab.Page || !PagePanel.IsVisible)
+            {
+                return;
+            }
+
+            // The content's width is fixed by the shape; its height is whatever it asks for there.
+            double width = CompactPageWidth - 36;
+            PagePanel.Measure(new Size(width, double.PositiveInfinity));
+            double top = PagePanel.TranslatePoint(new Point(0, 0), ExpandedLayer).Y - PagePanel.Margin.Top;
+            double height = Math.Clamp(Math.Ceiling(top + PagePanel.DesiredSize.Height + 32), SmallestCompactPage, LargePageHeight);
+            if (Math.Abs(height - _compactPageHeight) >= 1)
+            {
+                _compactPageHeight = height;
+                Refresh();
+            }
+        }, System.Windows.Threading.DispatcherPriority.Loaded);
+    }
+
     /// <summary>The page the tab is showing, or null when another tab is.</summary>
     private PluginPageEntry? CurrentPage => _pageKey is { } key
         ? _pluginPages.Snapshot().FirstOrDefault(e => e.PluginId == key.PluginId && e.Page.Id == key.PageId)
@@ -235,6 +277,7 @@ public partial class NotchWindow
     /// <summary>What every page has around its body: the back button, the status line, the buttons and the input line.</summary>
     private void ShowPageChrome(PluginPage page)
     {
+        FitCompactPage();
         PageBack.Visibility = page.Back is null ? Visibility.Collapsed : Visibility.Visible;
         PageBack.Content = "‹  " + (page.BackLabel ?? "Back");
         PageStatus.Text = page.Status ?? "";

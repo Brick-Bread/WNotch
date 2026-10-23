@@ -200,7 +200,7 @@ public partial class NotchWindow : Window
         NotchMode.Expanded when _tab == NotchTab.Plugins => new Shape(640, PluginsTabHeight, 32),
         NotchMode.Expanded when _tab == NotchTab.Clipboard => new Shape(640, ClipboardTabHeight, 32),
         NotchMode.Expanded when _tab == NotchTab.Palette => new Shape(640, PaletteTabHeight, 32),
-        NotchMode.Expanded when _tab == NotchTab.Page => new Shape(920, 540, 32),
+        NotchMode.Expanded when _tab == NotchTab.Page => PageShape(),
 
         // Home is as tall as the widgets on it.
         NotchMode.Expanded => new Shape(640, HomeHeight(), 32),

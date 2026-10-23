@@ -92,6 +92,19 @@ public sealed record PluginPage
     /// A click in one of its text boxes gives the notch the keyboard. API version 9.
     /// </summary>
     public Func<object>? View { get; init; }
+
+    /// <summary>How big the notch opens for this page. A page with few controls looks better <see cref="PluginPageSize.Compact"/>. API version 9.</summary>
+    public PluginPageSize Size { get; init; } = PluginPageSize.Large;
+}
+
+/// <summary>How big the notch opens for a page. API version 9.</summary>
+public enum PluginPageSize
+{
+    /// <summary>The terminal's size, 920 by 540.</summary>
+    Large,
+
+    /// <summary>640 wide, like Stats or the palette, and as tall as what the page shows, up to the large height.</summary>
+    Compact,
 }
 
 /// <summary>A button on a page.</summary>
