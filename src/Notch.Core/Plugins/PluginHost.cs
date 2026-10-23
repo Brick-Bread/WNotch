@@ -798,6 +798,14 @@ internal sealed class PluginHost : IPluginHost
                 }
             }
 
+            // Notch's own topics carry what Notch says, so no plugin can speak for it.
+            ArgumentException.ThrowIfNullOrWhiteSpace(topic);
+            if (topic.StartsWith(NotchEvents.Prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                log.Warn($"Not sent: topics starting with \"{NotchEvents.Prefix}\" are Notch's own ({topic}).");
+                return;
+            }
+
             bus.Publish(pluginId, topic, payload, (owner, e) => log.Error($"A subscriber of '{topic}' failed.", e));
         }
 

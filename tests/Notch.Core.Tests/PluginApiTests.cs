@@ -233,6 +233,30 @@ public sealed class PluginApiTests : IDisposable
     }
 
     [Fact]
+    public async Task Notch_speaks_on_its_own_topics_and_plugins_cannot()
+    {
+        using PluginManager manager = Manager();
+        manager.Discover();
+        manager.SetEnabled(["a", "b"]);
+        var heard = new System.Collections.Concurrent.ConcurrentQueue<PluginMessage>();
+        var first = new TaskCompletionSource();
+        _probes["b"].Host!.Bus.Subscribe(NotchEvents.Timer, m =>
+        {
+            heard.Enqueue(m);
+            first.TrySetResult();
+        });
+
+        _probes["a"].Host!.Bus.Publish(NotchEvents.Timer, """{"event":"finished"}""");
+        manager.PublishFromNotch(NotchEvents.Timer, NotchEvents.TimerPayload("finished", NotchEvents.TimerKind(Notch.Core.Widgets.PomodoroPhase.Focus), TimeSpan.FromMinutes(25), "Focus"));
+        await first.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await Task.Delay(100);
+
+        PluginMessage message = Assert.Single(heard);
+        Assert.Equal("notch", message.Sender);
+        Assert.Equal("""{"event":"finished","kind":"pomodoro-focus","seconds":1500,"name":"Focus"}""", message.Payload);
+    }
+
+    [Fact]
     public void A_page_keeps_the_view_its_plugin_draws_itself()
     {
         using PluginManager manager = Manager();

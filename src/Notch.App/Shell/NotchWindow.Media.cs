@@ -29,9 +29,18 @@ public partial class NotchWindow
     private void OnMediaChanged(object? sender, EventArgs e) =>
         Dispatcher.BeginInvoke(UpdateMediaCard);
 
+    /// <summary>What plugins were last told was playing (notch.media).</summary>
+    private (string Title, string Artist, string App, bool Playing)? _reportedMedia;
+
     private void UpdateMediaCard()
     {
         MediaSnapshot? media = _media.Current;
+        (string, string, string, bool)? playing = media is null ? null : (media.Title, media.Artist, media.SourceAppId, media.IsPlaying);
+        if (playing != _reportedMedia)
+        {
+            _reportedMedia = playing;
+            PublishToPlugins?.Invoke(Notch.Core.Plugins.NotchEvents.Media, Notch.Core.Plugins.NotchEvents.MediaPayload(media));
+        }
         if (_mediaShown != media is not null)
         {
             // The media widget may be hidden while nothing plays, and Home is taller with it.

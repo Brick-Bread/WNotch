@@ -568,6 +568,25 @@ The chord is written as in Notch's settings: `Ctrl`, `Alt`, `Shift` and `Win` an
 
 `host.Bus` (API 5) lets plugins talk to each other. `Publish(topic, payload)` delivers a message to every plugin subscribed to the topic; `Subscribe(topic, handler)` returns something to dispose when you want to stop (Notch stops it when your plugin stops). Topics are plain strings; prefix yours with your plugin's id. Handlers run on a background thread, and one that throws does not affect the others. Payloads are strings, usually JSON.
 
+Notch itself talks on the bus too (API 9), from the sender `notch`, on topics that start with `notch.`; plugins can subscribe to those but not publish on them.
+
+| Topic | When, and the payload |
+|---|---|
+| `notch.timer` | The built-in timer started, was paused, resumed or cancelled, or finished: `{"event":"finished","kind":"pomodoro-focus","seconds":1500,"name":"Focus 2 of 4"}`. `event` is `started`, `paused`, `resumed`, `cancelled` or `finished`; `kind` is `timer`, `pomodoro-focus`, `pomodoro-short-break` or `pomodoro-long-break`; `seconds` is the length it was started with. Each Pomodoro phase finishes and the next starts. |
+| `notch.media` | Another track, or play and pause: `{"event":"changed","playing":true,"title":"…","artist":"…","album":"…","app":"Spotify.exe"}`, or `{"event":"stopped"}` when nothing plays. |
+
+```csharp
+host.Bus.Subscribe("notch.timer", message =>
+{
+    using var json = JsonDocument.Parse(message.Payload!);
+    if (json.RootElement.GetProperty("event").GetString() == "finished"
+        && json.RootElement.GetProperty("kind").GetString() == "pomodoro-focus")
+    {
+        LogFocusBlock(TimeSpan.FromSeconds(json.RootElement.GetProperty("seconds").GetInt32()));
+    }
+});
+```
+
 ## Themes: restyling the whole notch
 
 `host.Themes` (API 6) lets a plugin offer a look for the whole notch. The user picks it under **Plugin theme** in Settings, and it replaces the Dark / Light / Follow Windows choice for as long as it is picked. A plugin can offer several themes, and a plugin that does nothing else is a fine plugin: [`samples/NeonTheme`](../samples/NeonTheme) is one.

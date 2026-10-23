@@ -279,6 +279,10 @@ public sealed class PluginManager : IDisposable
         }
     }
 
+    /// <summary>Tells plugins something from Notch itself over their bus; see <see cref="NotchEvents"/>.</summary>
+    public void PublishFromNotch(string topic, string? payload) =>
+        Bus.Publish(NotchEvents.Sender, topic, payload, (owner, e) => _log.Write(owner, "error", $"A subscriber of '{topic}' failed.", e));
+
     /// <summary>
     /// Tries again to start a plugin that is switched on but failed or was held back, e.g. right after the user
     /// approved its changed files. Does nothing for one that is running or switched off.

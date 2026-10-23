@@ -401,6 +401,8 @@ public partial class App : Application
         window.PaletteExtras = () => PluginPaletteEntries(settings, settingsStore);
         window.PluginPalette = _plugins!.Palette;
         window.PluginHotkeys = _plugins.Hotkeys;
+        PluginManager pluginsForEvents = _plugins;
+        window.PublishToPlugins = (topic, payload) => pluginsForEvents.PublishFromNotch(topic, payload);
         _commandPipe = new CommandPipe(_commands.HandleArgumentsAsync);
 
         _webhook = new WebhookService(settings, settingsStore, _activities!, _commands);

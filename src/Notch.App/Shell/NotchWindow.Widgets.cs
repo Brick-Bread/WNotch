@@ -37,6 +37,15 @@ public partial class NotchWindow
     /// <summary>Set while the timer runs a Pomodoro cycle rather than a single countdown.</summary>
     private PomodoroCycle? _pomodoro;
 
+    /// <summary>Counts the timer's starts, so plugins hear of a new one even when it replaced a running one.</summary>
+    private int _timerRun;
+
+    /// <summary>The run plugins last heard about: its state, and what it was (kind, length, name).</summary>
+    private (CountdownState State, int Run, string Kind, TimeSpan Duration, string Name) _reportedTimer;
+
+    /// <summary>Hands Notch's own events to plugins over their bus (topic, payload); set by the app.</summary>
+    internal Action<string, string>? PublishToPlugins { get; set; }
+
     /// <summary>Name of the preset that is running, when it has one; shown in place of "Timer".</summary>
     private string? _timerName;
 
@@ -262,6 +271,7 @@ public partial class NotchWindow
 
     private void StartCountdown(TimeSpan duration)
     {
+        _timerRun++;
         _countdown.Start(duration);
         _timerAnnounced = false;
         _countdownTick.Start();
@@ -286,9 +296,57 @@ public partial class NotchWindow
         StartCountdown(pomodoro.CurrentDuration);
     }
 
+    /// <summary>Tells plugins what the timer just did (notch.timer), by comparing with what they were last told.</summary>
+    private void ReportTimer(CountdownState state)
+    {
+        var was = _reportedTimer;
+        if (was.State == state && was.Run == _timerRun)
+        {
+            return;
+        }
+
+        bool newRun = was.Run != _timerRun;
+        _reportedTimer = newRun
+            ? (state, _timerRun, Notch.Core.Plugins.NotchEvents.TimerKind(_pomodoro?.Phase), _countdown.Duration, TimerTitle)
+            : was with { State = state };
+
+        void Tell(string what, (CountdownState, int, string Kind, TimeSpan Duration, string Name) run) =>
+            PublishToPlugins?.Invoke(Notch.Core.Plugins.NotchEvents.Timer, Notch.Core.Plugins.NotchEvents.TimerPayload(what, run.Kind, run.Duration, run.Name));
+
+        if (newRun)
+        {
+            // A timer started over one still running: that one was cancelled.
+            if (was.State is CountdownState.Running or CountdownState.Paused && was.Run != 0)
+            {
+                Tell("cancelled", was);
+            }
+
+            if (state == CountdownState.Running)
+            {
+                Tell("started", _reportedTimer);
+            }
+
+            return;
+        }
+
+        string? what = (was.State, state) switch
+        {
+            (CountdownState.Running, CountdownState.Paused) => "paused",
+            (CountdownState.Paused, CountdownState.Running) => "resumed",
+            (CountdownState.Running or CountdownState.Paused, CountdownState.Idle) => "cancelled",
+            (CountdownState.Running, CountdownState.Finished) => "finished",
+            _ => null,
+        };
+        if (what is not null)
+        {
+            Tell(what, _reportedTimer);
+        }
+    }
+
     private void UpdateTimer()
     {
         CountdownState state = _countdown.State;
+        ReportTimer(state);
         if (state == CountdownState.Finished && _pomodoro is { } pomodoro)
         {
             AdvancePomodoro(pomodoro);
