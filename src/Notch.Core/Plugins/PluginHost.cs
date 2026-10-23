@@ -599,6 +599,7 @@ internal sealed class PluginHost : IPluginHost
                         page with
                         {
                             Input = Guard(page),
+                            Accept = page.Accept is { } accept ? text => Check(page.Id, accept, text) : null,
                             Back = page.Back is { } back ? () => Run(page.Id, back) : null,
                             Choices = [.. page.Choices.Select(c => c with { Clicked = c.Clicked is { } clicked ? () => Run(page.Id, clicked) : null })],
                             Actions = GuardActions(page.Id, page.Actions),
@@ -669,6 +670,20 @@ internal sealed class PluginHost : IPluginHost
                 log.Error($"A click handler of page '{pageId}' failed.", e);
             }
         });
+
+        /// <summary>The shell runs this off the UI thread and waits for the answer; an exception counts as a refusal.</summary>
+        private string? Check(string pageId, Func<string, string?> accept, string text)
+        {
+            try
+            {
+                return accept(text);
+            }
+            catch (Exception e)
+            {
+                log.Error($"The input check of page '{pageId}' failed.", e);
+                return "That could not be handled. See plugins.log.";
+            }
+        }
 
         /// <summary>The shell calls this on the UI thread; plugin code runs elsewhere and cannot throw into it.</summary>
         private Action<string>? Guard(PluginPage page)

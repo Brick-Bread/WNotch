@@ -257,6 +257,26 @@ public sealed class PluginApiTests : IDisposable
     }
 
     [Fact]
+    public void A_page_can_refuse_a_line_and_one_that_throws_counts_as_refusing()
+    {
+        using PluginManager manager = Manager();
+        manager.Discover();
+        manager.SetEnabled(["a"]);
+        _probes["a"].Host!.Pages.Set(new PluginPage
+        {
+            Id = "log",
+            Title = "Log",
+            Accept = line => line.Contains(':') ? null : line == "boom" ? throw new InvalidOperationException("boom") : "Say how long, like 3:30.",
+        });
+
+        Func<string, string?> accept = Assert.Single(manager.Pages.Snapshot()).Page.Accept!;
+
+        Assert.Null(accept("3:30 fixed the bananas"));
+        Assert.Equal("Say how long, like 3:30.", accept("fixed the bananas"));
+        Assert.Contains("could not be handled", accept("boom"));
+    }
+
+    [Fact]
     public void A_page_keeps_the_view_its_plugin_draws_itself()
     {
         using PluginManager manager = Manager();

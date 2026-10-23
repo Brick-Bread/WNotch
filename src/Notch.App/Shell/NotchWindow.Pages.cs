@@ -77,7 +77,7 @@ public partial class NotchWindow
 
     /// <summary>The page is showing and has an input line, so keystrokes must reach the window.</summary>
     private bool PageTakesInput => _tab == NotchTab.Page && CurrentPage?.Page is { } p
-        && (p.Input is not null || (p.View is null ? p.Choices.Count == 0 && p.Blocks.Any(b => b is PluginTextField) : _pageViewKeyboard));
+        && (p.Input is not null || p.Accept is not null || (p.View is null ? p.Choices.Count == 0 && p.Blocks.Any(b => b is PluginTextField) : _pageViewKeyboard));
 
     private void InitializePages()
     {
@@ -86,7 +86,10 @@ public partial class NotchWindow
         PageInput.KeyDown += OnPageInputKeyDown;
         _armTimer.Tick += (_, _) => DisarmAction();
         PageInput.TextChanged += (_, _) =>
+        {
             PageInputHint.Visibility = PageInput.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+            PageInputError.Visibility = Visibility.Collapsed;
+        };
         PageSend.Click += (_, _) => SubmitPageInput();
         PageBack.Click += (_, _) => CurrentPage?.Page.Back?.Invoke();
 
@@ -283,7 +286,7 @@ public partial class NotchWindow
         PageStatus.Text = page.Status ?? "";
         PageStatus.ToolTip = page.Status;
         PageStatus.Visibility = string.IsNullOrWhiteSpace(page.Status) ? Visibility.Collapsed : Visibility.Visible;
-        PageInputRow.Visibility = page.Input is null ? Visibility.Collapsed : Visibility.Visible;
+        PageInputRow.Visibility = page.Input is null && page.Accept is null ? Visibility.Collapsed : Visibility.Visible;
         PageInputHint.Text = page.InputHint ?? "";
         ShowActions(page.Actions);
         UpdateKeyboardInteraction();
@@ -406,14 +409,43 @@ public partial class NotchWindow
         PageInput.CaretIndex = text.Length;
     }
 
-    private void SubmitPageInput()
+    private async void SubmitPageInput()
     {
         string text = PageInput.Text.Trim();
-        if (text.Length == 0 || CurrentPage?.Page.Input is not { } input)
+        if (text.Length == 0 || CurrentPage?.Page is not { } page || (page.Input is null && page.Accept is null))
         {
             return;
         }
 
+        RememberInput(text);
+        if (page.Accept is { } accept)
+        {
+            // The plugin decides whether the line goes; until then it stays where the user can fix it.
+            string typed = PageInput.Text;
+            string? problem = await Task.Run(() => accept(text));
+            if (problem is null)
+            {
+                if (PageInput.Text == typed)
+                {
+                    PageInput.Clear();
+                }
+            }
+            else if (PageInput.Text == typed)
+            {
+                PageInputError.Text = problem;
+                PageInputError.Foreground = ThemeManager.Brush(Notch.Core.Activities.GlowColor.Red);
+                PageInputError.Visibility = Visibility.Visible;
+            }
+
+            return;
+        }
+
+        PageInput.Clear();
+        page.Input?.Invoke(text);
+    }
+
+    private void RememberInput(string text)
+    {
         if (_inputHistory.Count == 0 || _inputHistory[^1] != text)
         {
             _inputHistory.Add(text);
@@ -424,8 +456,6 @@ public partial class NotchWindow
         }
 
         _historyIndex = _inputHistory.Count;
-        PageInput.Clear();
-        input(text);
     }
 
     private void FocusPageInput()

@@ -808,6 +808,8 @@
                     </Border>
 
                     <DockPanel x:Name="PageInputRow" Grid.Row="3" Margin="0,8,0,0">
+                        <TextBlock x:Name="PageInputError" DockPanel.Dock="Bottom" FontSize="11" Margin="12,4,0,0"
+                                   TextTrimming="CharacterEllipsis" Visibility="Collapsed" />
                         <Button x:Name="PageSend" DockPanel.Dock="Right" Style="{DynamicResource PillButton}"
                                 Content="Send" Background="{DynamicResource AccentHoverBrush}" />
                         <Grid>

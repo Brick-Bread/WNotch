@@ -52,6 +52,14 @@ public sealed record PluginPage
     /// </summary>
     public Action<string>? Input { get; init; }
 
+    /// <summary>
+    /// Instead of <see cref="Input"/>, for lines that may be wrong: called with each line the user submits, and
+    /// returns null to take it (the line empties) or a short message to refuse it, which keeps the text in the
+    /// line and shows the message under it. Called on a background thread; an exception counts as a refusal.
+    /// API version 9.
+    /// </summary>
+    public Func<string, string?>? Accept { get; init; }
+
     /// <summary>Greyed text in the empty input line, e.g. "Send a command".</summary>
     public string? InputHint { get; init; }
 
