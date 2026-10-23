@@ -186,7 +186,7 @@ public partial class NotchWindow : Window
     private Shape BaseShapeFor(NotchMode mode) => mode switch
     {
         NotchMode.Compact => new Shape(PillWidth(_pillActivity), CompactHeight, CompactHeight / 2),
-        NotchMode.Peek => new Shape(380, 38, 19),
+        NotchMode.Peek => new Shape(380, PeekHeight, PeekHeight / 2),
         NotchMode.Expanded when _tab == NotchTab.Terminal => new Shape(920, 540, 32),
         NotchMode.Expanded when _tab == NotchTab.Stats => new Shape(640, 290, 32),
         NotchMode.Expanded when _tab == NotchTab.Shelf => new Shape(640, ShelfTabHeight, 32),
@@ -206,6 +206,10 @@ public partial class NotchWindow : Window
     private double IdleHeight => _placement.AtBottom ? IslandPlacement.PillHeight : 10;
 
     private double CompactHeight => _placement.AtBottom ? IslandPlacement.PillHeight : 26;
+
+    // A HUD (volume, Caps Lock, a toast) is a little taller than a live activity at the top; in the taskbar it
+    // must not jump out of the height the taskbar is laid out for either.
+    private double PeekHeight => _placement.AtBottom ? IslandPlacement.PillHeight : 38;
 
     protected override void OnSourceInitialized(EventArgs e)
     {
