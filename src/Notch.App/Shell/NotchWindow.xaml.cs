@@ -192,7 +192,7 @@ public partial class NotchWindow : Window
 
     private Shape BaseShapeFor(NotchMode mode) => mode switch
     {
-        NotchMode.Compact => new Shape(PillWidth(_pillActivity), CompactHeight, CompactHeight / 2),
+        NotchMode.Compact => new Shape(_pillActivity?.Tier == ActivityTier.Glance ? _glanceWidth : PillWidth(_pillActivity), CompactHeight, CompactHeight / 2),
         NotchMode.Peek => new Shape(380, PeekHeight, PeekHeight / 2),
         NotchMode.Expanded when _tab == NotchTab.Terminal => new Shape(920, 540, 32),
         NotchMode.Expanded when _tab == NotchTab.Stats => new Shape(640, 290, 32),
@@ -619,6 +619,12 @@ public partial class NotchWindow : Window
 
         // A plugin's activity may say which of its pages a click on the pill opens.
         Activity? clicked = !_expanded ? _pillActivity : DateTime.UtcNow - _expandedAt < PillClickGrace ? _pillAtExpand : null;
+        if (clicked?.Tier == ActivityTier.Glance)
+        {
+            // Each glance item is its own plugin's: the one clicked decides.
+            clicked = GlanceItemAt(e);
+        }
+
         if (clicked?.OpensPage is { } page && OpenPluginPage(page))
         {
             _pillAtExpand = null;
@@ -756,13 +762,15 @@ public partial class NotchWindow : Window
         }
 
         _pillActivity = activities.Count > 0 ? activities[0] : null;
-        Shape shape = ShapeFor(mode);
-        _animator.AnimateTo(shape.Width, shape.Height, shape.Radius);
 
+        // Before the shape: a row of glance items is as wide as what it holds.
         if (activities.Count > 0)
         {
-            FillPill(activities[0]);
+            FillPill(activities[0], activities);
         }
+
+        Shape shape = ShapeFor(mode);
+        _animator.AnimateTo(shape.Width, shape.Height, shape.Radius);
 
         // The content keeps a fixed size per tab; the island grows or shrinks around it.
         Shape expanded = ShapeFor(NotchMode.Expanded);
@@ -773,7 +781,7 @@ public partial class NotchWindow : Window
         // No glow while expanded: the halo around the large panel would swallow clicks meant
         // for the windows next to it, including the click that closes the notch.
         bool glowing = mode is NotchMode.Compact or NotchMode.Peek && _settings.GlowEffects;
-        Activity? lit = glowing ? activities[0] : null;
+        Activity? lit = glowing && activities[0].Tier != ActivityTier.Glance ? activities[0] : null;
 
         // A plugin may also light the plain pill, which no activity does.
         _pluginGlowAllowed = mode is not NotchMode.Expanded && _settings.GlowEffects;
@@ -781,7 +789,8 @@ public partial class NotchWindow : Window
         _glow.Show(lit?.Glow, lit?.Id == MediaActivityPublisher.ActivityId && lit.Image is not null ? _artAccent : null);
 
         bool pill = mode is NotchMode.Compact or NotchMode.Peek;
-        string pillKey = pill ? activities[0].Id : "";
+        // The glance row changes as its items do, but it is one thing in the pill: it does not fade out and in for each.
+        string pillKey = !pill ? "" : activities[0].Tier == ActivityTier.Glance ? "glance" : activities[0].Id;
         Fade(CompactLayer, CompactScale, pill, pillKey != _pillKey, FadeInDelay);
         Fade(ExpandedLayer, ExpandedScale, mode is NotchMode.Expanded, false, ExpandFadeInDelay);
         _pillKey = pillKey;

@@ -1,4 +1,6 @@
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
@@ -30,6 +32,117 @@ public partial class NotchWindow
         { AgentState: not null } => 292,
         _ => 360,
     };
+
+    private const int MaxGlanceItems = 6;
+    private const double MaxGlanceWidth = 520;
+
+    /// <summary>The pill's width while it shows the glance row, measured when the row is filled.</summary>
+    private double _glanceWidth = 180;
+
+    /// <summary>The glance items' texts that are clocks (<see cref="Activity.CountingFrom"/>), moved on every second.</summary>
+    private readonly List<(TextBlock Text, DateTimeOffset From)> _glanceClocks = [];
+
+    private void FillPill(Activity top, IReadOnlyList<Activity> activities)
+    {
+        bool glance = top.Tier == ActivityTier.Glance;
+        GlanceRow.Visibility = glance ? Visibility.Visible : Visibility.Collapsed;
+        CompactIcon.Visibility = CompactText.Visibility = CompactRight.Visibility = glance ? Visibility.Collapsed : Visibility.Visible;
+        if (glance)
+        {
+            FillGlance(activities);
+            StopPillAnimations();
+            return;
+        }
+
+        FillPill(top);
+    }
+
+    /// <summary>Every glance activity side by side: its glyph or picture, then its title or clock.</summary>
+    private void FillGlance(IReadOnlyList<Activity> activities)
+    {
+        GlanceRow.Children.Clear();
+        _glanceClocks.Clear();
+        foreach (Activity item in activities
+            .Where(a => a.Tier == ActivityTier.Glance)
+            .OrderBy(a => a.Order)
+            .ThenBy(a => a.Id, StringComparer.Ordinal)
+            .Take(MaxGlanceItems))
+        {
+            var row = new StackPanel { Orientation = Orientation.Horizontal, Tag = item, Background = Brushes.Transparent };
+            if (GlanceRow.Children.Count > 0)
+            {
+                row.Margin = new Thickness(14, 0, 0, 0);
+            }
+
+            if (ImageLoader.Decode(item.Image, 32) is { } picture)
+            {
+                row.Children.Add(new Image { Source = picture, Width = 16, Height = 16, Stretch = Stretch.Uniform, VerticalAlignment = VerticalAlignment.Center });
+            }
+            else if (!string.IsNullOrEmpty(item.Glyph))
+            {
+                var glyph = new TextBlock { Text = item.Glyph, FontSize = 13, VerticalAlignment = VerticalAlignment.Center };
+                glyph.SetResourceReference(TextBlock.FontFamilyProperty, "IconFont");
+                if (item.Glow is { } glow)
+                {
+                    glyph.Foreground = ThemeManager.Brush(glow.Color);
+                }
+
+                row.Children.Add(glyph);
+            }
+
+            var text = new TextBlock
+            {
+                Text = item.CountingFrom is { } from ? ElapsedClock.Since(from) : item.Title,
+                FontSize = 11.5,
+                FontWeight = FontWeights.SemiBold,
+                MaxWidth = 150,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(row.Children.Count > 0 ? 6 : 0, 0, 0, 0),
+                ToolTip = item.CountingFrom is null ? null : item.Title,
+            };
+            System.Windows.Documents.Typography.SetNumeralAlignment(text, FontNumeralAlignment.Tabular);
+            row.Children.Add(text);
+            if (item.CountingFrom is { } clock)
+            {
+                _glanceClocks.Add((text, clock));
+            }
+
+            GlanceRow.Children.Add(row);
+        }
+
+        // The pill's sides (CompactLayer's margin) plus the row, within reason.
+        GlanceRow.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        _glanceWidth = Math.Clamp(Math.Ceiling(GlanceRow.DesiredSize.Width + 40), 120, MaxGlanceWidth);
+    }
+
+    /// <summary>The glance item under the pointer, or the nearest one; null when the row is empty.</summary>
+    private Activity? GlanceItemAt(MouseEventArgs e)
+    {
+        FrameworkElement? nearest = null;
+        double best = double.MaxValue;
+        foreach (FrameworkElement item in GlanceRow.Children.OfType<FrameworkElement>())
+        {
+            double x = e.GetPosition(item).X;
+            double distance = x < 0 ? -x : x > item.ActualWidth ? x - item.ActualWidth : 0;
+            if (distance < best)
+            {
+                best = distance;
+                nearest = item;
+            }
+        }
+
+        return nearest?.Tag as Activity;
+    }
+
+    /// <summary>Moves on the glance items' clocks.</summary>
+    private void TickGlanceClocks()
+    {
+        foreach ((TextBlock text, DateTimeOffset from) in _glanceClocks)
+        {
+            text.Text = ElapsedClock.Since(from);
+        }
+    }
 
     private void FillPill(Activity top)
     {

@@ -198,8 +198,11 @@ public static partial class WebhookRequest
             case "attention":
                 tier = ActivityTier.Attention;
                 break;
+            case "glance":
+                tier = ActivityTier.Glance;
+                break;
             default:
-                return new WebhookRefusal(400, "The tier is ongoing, attention or transient.");
+                return new WebhookRefusal(400, "The tier is ongoing, attention, glance or transient.");
         }
 
         double? progress = null;

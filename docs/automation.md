@@ -64,7 +64,7 @@ curl -H "Authorization: Bearer TOKEN" ^
 | `id` | Letters, digits, `.`, `-`, `_`, at most 64. Shown in Notch as `webhook.<id>`. |
 | `title` | 1 to 120 characters. |
 | `detail`, `glyph` | Optional. The glyph is one symbol or a Segoe Fluent Icons character. |
-| `tier` | `transient` (default: goes away by itself), `ongoing` (stays until removed) or `attention` (stays, wants the user). |
+| `tier` | `transient` (default: goes away by itself), `ongoing` (stays until removed), `attention` (stays, wants the user) or `glance` (stays, shown side by side with other glance items while nothing else has the pill). |
 | `progress` | 0 to 1. Draws a bar. |
 | `glow` | A colour (`"green"`, `"#ff8800"`) or `{ "color", "pattern", "strength" }`. Patterns: `steady`, `breathe`, `pulse`, `flash`, `audio`. |
 | `lifetimeMs` | For transient ones, up to 5 minutes. |

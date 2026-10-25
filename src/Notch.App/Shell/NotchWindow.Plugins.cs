@@ -74,6 +74,11 @@ public partial class NotchWindow
             CompactDetail.Visibility = Visibility.Visible;
         }
 
+        if (!_expanded && _pillActivity?.Tier == Notch.Core.Activities.ActivityTier.Glance)
+        {
+            TickGlanceClocks();
+        }
+
         if (!_expanded)
         {
             return;

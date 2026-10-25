@@ -51,7 +51,7 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <Grid Width="18" Height="18" VerticalAlignment="Center">
+                <Grid x:Name="CompactIcon" Width="18" Height="18" VerticalAlignment="Center">
                     <TextBlock x:Name="CompactGlyph" FontFamily="{DynamicResource IconFont}" FontSize="14"
                                HorizontalAlignment="Center" VerticalAlignment="Center" />
                     <Path x:Name="CompactLogo" Width="14" Height="14" Stretch="Uniform" Fill="{DynamicResource TextBrush}"
@@ -59,14 +59,14 @@
                     <Border x:Name="CompactArt" CornerRadius="{DynamicResource SmallRadius}" Visibility="Collapsed" />
                 </Grid>
 
-                <shell:Marquee Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
+                <shell:Marquee x:Name="CompactText" Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
                     <TextBlock FontSize="11.5" FontWeight="SemiBold">
                         <Run x:Name="CompactTitle" /><Run x:Name="CompactSubtitle" FontWeight="Medium"
                              Foreground="{DynamicResource SecondaryTextBrush}" />
                     </TextBlock>
                 </shell:Marquee>
 
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                <StackPanel x:Name="CompactRight" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                     <!-- An agent at work: three dots that blink in turn. -->
                     <StackPanel x:Name="CompactDots" Orientation="Horizontal" Visibility="Collapsed">
                         <Ellipse Width="5" Height="5" Margin="0,0,4,0" Fill="{DynamicResource WorkingBrush}" />
@@ -89,6 +89,10 @@
                     <TextBlock x:Name="CompactLevel" Width="22" Margin="8,0,0,0" TextAlignment="Right" VerticalAlignment="Center"
                                FontSize="11.5" FontWeight="SemiBold" Typography.NumeralAlignment="Tabular" />
                 </StackPanel>
+
+                <!-- Glance activities, from any plugin, side by side; filled in code. -->
+                <StackPanel x:Name="GlanceRow" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Center"
+                            VerticalAlignment="Center" Visibility="Collapsed" />
             </Grid>
 
             <!-- Fixed size per tab, so the content is revealed by the growing island instead of reflowing. -->

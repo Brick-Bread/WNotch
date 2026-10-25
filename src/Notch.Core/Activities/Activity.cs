@@ -3,6 +3,13 @@ namespace Notch.Core.Activities;
 /// <summary>Higher tiers win the pill. Ties go to the most recently published activity.</summary>
 public enum ActivityTier
 {
+    /// <summary>
+    /// A figure to glance at, such as a stopwatch or a player count. While nothing of a higher tier is showing, every
+    /// glance activity is drawn side by side in the pill, from any source: its glyph or image and its title (or its
+    /// clock, see <see cref="Activity.CountingFrom"/>), in <see cref="Activity.Order"/>. Stays until removed. API version 10.
+    /// </summary>
+    Glance = -1,
+
     /// <summary>Long-running background state: media playing, timer running, agent working.</summary>
     Ongoing = 0,
 
@@ -60,4 +67,10 @@ public sealed record Activity
     /// detail and no clock. API version 9.
     /// </summary>
     public DateTimeOffset? CountingFrom { get; init; }
+
+    /// <summary>
+    /// For a <see cref="ActivityTier.Glance"/> activity: its place in the row, lower first. Activities with the same
+    /// order stand in the order of their ids. API version 10.
+    /// </summary>
+    public int Order { get; init; }
 }

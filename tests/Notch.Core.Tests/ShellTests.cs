@@ -17,6 +17,7 @@ public class ShellTests
     [InlineData(ActivityTier.Ongoing, NotchMode.Compact)]
     [InlineData(ActivityTier.Attention, NotchMode.Compact)]
     [InlineData(ActivityTier.Transient, NotchMode.Peek)]
+    [InlineData(ActivityTier.Glance, NotchMode.Compact)]
     public void Top_activity_picks_the_mode(ActivityTier tier, NotchMode expected) =>
         Assert.Equal(expected, NotchModeResolver.Resolve(expanded: false, [Make(tier)]));
 

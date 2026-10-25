@@ -22,6 +22,21 @@ public class ActivityManagerTests
     }
 
     [Fact]
+    public void Glance_activities_come_after_every_other_tier()
+    {
+        using var manager = new ActivityManager(new FakeTimeProvider());
+
+        manager.Publish(Make("media", ActivityTier.Ongoing));
+        manager.Publish(Make("players", ActivityTier.Glance));
+        manager.Publish(Make("stopwatch", ActivityTier.Glance));
+
+        Assert.Equal(["media", "stopwatch", "players"], manager.Snapshot().Select(a => a.Id));
+
+        manager.Remove("media");
+        Assert.Equal(ActivityTier.Glance, manager.Snapshot()[0].Tier);
+    }
+
+    [Fact]
     public void Republishing_replaces_and_keeps_position()
     {
         using var manager = new ActivityManager(new FakeTimeProvider());

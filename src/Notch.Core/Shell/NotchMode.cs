@@ -7,7 +7,7 @@ public enum NotchMode
     /// <summary>Plain pill, nothing to show.</summary>
     Idle,
 
-    /// <summary>Wider pill showing the top ongoing or attention activity.</summary>
+    /// <summary>Wider pill showing the top ongoing or attention activity, or the row of glance activities.</summary>
     Compact,
 
     /// <summary>Briefly enlarged pill for a transient HUD.</summary>

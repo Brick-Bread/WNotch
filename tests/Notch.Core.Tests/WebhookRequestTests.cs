@@ -81,6 +81,14 @@ public class WebhookRequestTests
     }
 
     [Fact]
+    public void An_activity_can_join_the_glance_row()
+    {
+        var publish = Assert.IsType<PublishActivityAction>(Route("POST", "/v1/activity", """{ "id": "ci", "title": "3 failing", "tier": "glance" }"""));
+        Assert.Equal(ActivityTier.Glance, publish.Activity.Tier);
+        Assert.Null(publish.Activity.Lifetime);
+    }
+
+    [Fact]
     public void A_plain_activity_is_transient_with_a_capped_lifetime()
     {
         var publish = Assert.IsType<PublishActivityAction>(Route("POST", "/v1/activity", """{ "id": "a", "title": "T", "lifetimeMs": 99999999, "glow": "green" }"""));

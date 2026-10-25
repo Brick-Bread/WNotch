@@ -181,7 +181,7 @@ Notch reads the manifest to list a plugin in Settings before running any of its 
 | `id` | yes | Unique, permanent identifier. Lowercase letters and digits in groups separated by `.` or `-`, at most 64 characters, e.g. `yourname.build-status`. Prefix it with your name to avoid clashes. It names the plugin's data folder, so changing it loses the plugin's settings. |
 | `name` | yes | Shown in Settings. |
 | `assembly` | yes | File name of the plugin's `.dll`, in the same folder. No paths. |
-| `apiVersion` | yes | The plugin API version the plugin was written for. Currently `9`. See [Compatibility](#compatibility). |
+| `apiVersion` | yes | The plugin API version the plugin was written for. Currently `10`. See [Compatibility](#compatibility). |
 | `version` | no | The plugin's own version, shown in Settings. |
 | `author` | no | Shown in the plugin's tooltip in Settings. |
 | `description` | no | Shown in the plugin's tooltip in Settings. |
@@ -269,6 +269,7 @@ host.Activities.Remove("build");
 | `Glow` | The light around the pill while this activity is the one showing. Null for none. |
 | `Lifetime` | `Transient` only: how long it shows. Default 2 seconds. |
 | `CountingFrom` | A moment, such as when a stopwatch started. Notch shows the time since then, such as "1:23:45", and keeps it ticking in place of `Detail`, so a running clock needs no update each second. To pause it, publish again with the stopped time as `Detail` and no clock. Also on `PluginCard` and `PluginStat`, in place of `Value`. API 9. |
+| `Order` | `Glance` only: its place in the glance row, lower first; equal orders stand in the order of their ids. API 10. |
 | `OpensPage` | The `Id` of one of your pages. Clicking the pill while this activity shows opens that page instead of Home (also when the pointer has just opened the notch on its way to the click). API 9. |
 
 **Tiers** decide which activity the pill shows. A higher tier always wins; within a tier, the most recently published wins. Updating an activity does not count as publishing it again, so a ticking progress value will not push your activity in front of others.
@@ -278,6 +279,21 @@ host.Activities.Remove("build");
 | `Ongoing` | Background state: something is running. | When you remove it. |
 | `Attention` | Something needs the user: finished, failed, waiting for input. | When you remove it. |
 | `Transient` | A brief notice. The pill enlarges for it. | By itself, after `Lifetime`. |
+| `Glance` | A figure to keep in view all day: a stopwatch, a player count, a build status. API 10. | When you remove it. |
+
+**The glance row.** `Glance` ranks below every other tier, and it is the one tier that shares: while nothing else has the pill, every glance activity, from every plugin and the webhook, is drawn side by side in it, as its glyph (or `Image`) and its `Title`, or its clock when it has `CountingFrom`. They stand in `Order`, up to six, and the pill grows to fit them. Music, a timer, an agent or a pop-up takes the pill as usual, and the row comes back when they are gone. `Detail`, `Progress` and `Glow` are not drawn in the row; with `CountingFrom`, the `Title` becomes the item's tooltip. Clicking an item opens that item's `OpensPage`, so two plugins in the row each lead to their own page. Keep the title short (a few words; longer ones are cut off), and use one activity per figure rather than putting several in one title.
+
+```csharp
+host.Activities.Publish(new Activity
+{
+    Id = "players",
+    Tier = ActivityTier.Glance,
+    Title = $"{count} playing",
+    Glyph = "\uE9D9",
+    Order = 20,
+    OpensPage = "island",
+});
+```
 
 Use `Attention` sparingly and always give the user a way to clear it (a card click, or remove it once the condition has passed), otherwise it hides everything in the lower tier indefinitely.
 
@@ -925,6 +941,7 @@ The plugin API is `Notch.Core.Plugins` plus the types in `Notch.Core.Activities`
 | 7 | `IPluginHost.Glow` (draw the light around the pill, in segments if you like) and `IPluginHost.Audio` (loudness of the PC's sound by pitch). The `audio` permission. |
 | 8 | `IPluginHost.Widgets`: widgets for the Home tab, drawn with blocks or with WPF. |
 | 9 | `IPluginHost.Palette` (commands and live results in the command palette) and `IPluginHost.Hotkeys`. Pages: `View` (a page drawn with WPF), `Size`, `Accept`. Blocks: `PluginChoices`; `PluginTextField.Changed`, `ClearOnSubmit` and `Lines`. `Activity.OpensPage`, and `CountingFrom` on activities, cards and figures. `IPluginShell.IsCardVisible`. Notch's own `notch.timer` and `notch.media` messages on the bus. |
+| 10 | `ActivityTier.Glance` and `Activity.Order`: figures from any number of plugins side by side in the pill. |
 
 ## Troubleshooting
 
