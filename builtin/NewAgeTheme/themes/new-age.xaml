@@ -1,0 +1,230 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+    <!-- New Age: a deep navy-black notch lit by one cyan, indigo and violet glow, with round capsules and
+         Bricolage Grotesque. Only the keys that differ from Notch's dark theme are listed; the rest come from it. -->
+
+    <!-- The palette. Void is the island, Panel the cards, Ink the text and Mist the text that comes second. -->
+    <Color x:Key="NewAgeVoid">#03040A</Color>
+    <Color x:Key="NewAgePanel">#0A0D18</Color>
+    <Color x:Key="NewAgeInk">#ECEFF7</Color>
+    <Color x:Key="NewAgeMist">#8C94A8</Color>
+    <Color x:Key="NewAgeCyan">#19B8FF</Color>
+    <Color x:Key="NewAgeIndigo">#2D5BFF</Color>
+    <Color x:Key="NewAgeViolet">#7B4BFF</Color>
+
+    <!-- The island: void, with the faintest navy towards the bottom. -->
+    <LinearGradientBrush x:Key="IslandBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#03040A" Offset="0" />
+        <GradientStop Color="#060814" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="TextBrush" Color="{StaticResource NewAgeInk}" />
+    <SolidColorBrush x:Key="SecondaryTextBrush" Color="{StaticResource NewAgeMist}" />
+
+    <!-- The glow: cyan into indigo into violet, left to right. Defining AccentBrush makes the theme own the accent. -->
+    <LinearGradientBrush x:Key="AccentBrush" StartPoint="0,0.5" EndPoint="1,0.5">
+        <GradientStop Color="{StaticResource NewAgeCyan}" Offset="0" />
+        <GradientStop Color="{StaticResource NewAgeIndigo}" Offset="0.55" />
+        <GradientStop Color="{StaticResource NewAgeViolet}" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="AccentHoverBrush" StartPoint="0,0.5" EndPoint="1,0.5">
+        <GradientStop Color="#5919B8FF" Offset="0" />
+        <GradientStop Color="#592D5BFF" Offset="0.55" />
+        <GradientStop Color="#597B4BFF" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="AccentPressedBrush" StartPoint="0,0.5" EndPoint="1,0.5">
+        <GradientStop Color="#8019B8FF" Offset="0" />
+        <GradientStop Color="#802D5BFF" Offset="0.55" />
+        <GradientStop Color="#807B4BFF" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="OnAccentBrush" Color="#FFFFFF" />
+
+    <!-- Panels are a touch lighter than the void and edged with a hairline of ink. -->
+    <LinearGradientBrush x:Key="CardBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#0D1120" Offset="0" />
+        <GradientStop Color="{StaticResource NewAgePanel}" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="CardBorderBrush" Color="#1AECEFF7" />
+    <SolidColorBrush x:Key="ControlBrush" Color="#14ECEFF7" />
+    <SolidColorBrush x:Key="HoverBrush" Color="#21ECEFF7" />
+    <SolidColorBrush x:Key="PressedBrush" Color="#33ECEFF7" />
+    <SolidColorBrush x:Key="SelectedBrush" Color="{StaticResource NewAgeInk}" />
+    <SolidColorBrush x:Key="TrackBrush" Color="#1FECEFF7" />
+
+    <SolidColorBrush x:Key="WorkingBrush" Color="{StaticResource NewAgeCyan}" />
+    <SolidColorBrush x:Key="AttentionBrush" Color="#FFB547" />
+    <SolidColorBrush x:Key="DoneBrush" Color="#3DDC97" />
+    <SolidColorBrush x:Key="DangerBrush" Color="#FF5470" />
+
+    <!-- Settings and Notch's other windows. -->
+    <SolidColorBrush x:Key="WindowBrush" Color="#05060C" />
+    <SolidColorBrush x:Key="SidebarBrush" Color="{StaticResource NewAgeVoid}" />
+    <LinearGradientBrush x:Key="SwitchOnBrush" StartPoint="0,0.5" EndPoint="1,0.5">
+        <GradientStop Color="{StaticResource NewAgeCyan}" Offset="0" />
+        <GradientStop Color="{StaticResource NewAgeIndigo}" Offset="0.55" />
+        <GradientStop Color="{StaticResource NewAgeViolet}" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- Bricolage Grotesque, next to this file: the text cut for the notch's text, the display cut for its big figures. -->
+    <FontFamily x:Key="UiFontFamily">fonts/#Bricolage Grotesque Text, Segoe UI Variable Text, Segoe UI</FontFamily>
+    <FontFamily x:Key="DisplayFontFamily">fonts/#Bricolage Grotesque Display, Segoe UI Variable Display, Segoe UI</FontFamily>
+
+    <!-- Everything you press is a full capsule; panels and thumbnails are soft squircles. -->
+    <CornerRadius x:Key="CardRadius">18</CornerRadius>
+    <CornerRadius x:Key="ControlRadius">12</CornerRadius>
+    <CornerRadius x:Key="SmallRadius">10</CornerRadius>
+    <CornerRadius x:Key="IconButtonRadius">20</CornerRadius>
+    <CornerRadius x:Key="RowRadius">14</CornerRadius>
+    <sys:Double x:Key="IslandRadiusScale">1.1</sys:Double>
+
+    <!-- A capsule with a hairline of the glow round it, which lights up under the pointer. -->
+    <Style x:Key="PillButton" TargetType="Button">
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+        <Setter Property="Background" Value="{DynamicResource CardBrush}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Padding" Value="13,5" />
+        <Setter Property="Margin" Value="6,0,0,0" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid x:Name="Surface" RenderTransformOrigin="0.5,0.5">
+                        <Border x:Name="Halo" CornerRadius="{DynamicResource ControlRadius}" Background="{DynamicResource WindowBrush}"
+                                Opacity="0">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#2D5BFF" BlurRadius="14" ShadowDepth="0" Opacity="0.7" />
+                            </Border.Effect>
+                        </Border>
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{DynamicResource AccentBrush}"
+                                BorderThickness="1" CornerRadius="{DynamicResource ControlRadius}" />
+                        <Border x:Name="Wash" Background="{DynamicResource TextBrush}" Opacity="0"
+                                CornerRadius="{DynamicResource ControlRadius}" />
+                        <ContentPresenter Margin="{TemplateBinding Padding}" VerticalAlignment="Center"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Halo" Property="Opacity" Value="1" />
+                            <Setter TargetName="Wash" Property="Opacity" Value="0.06" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Wash" Property="Opacity" Value="0.14" />
+                            <Setter TargetName="Surface" Property="RenderTransform">
+                                <Setter.Value>
+                                    <ScaleTransform ScaleX="0.96" ScaleY="0.96" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- A capsule with a hairline edge that turns into the glow while you type in it. -->
+    <Style x:Key="PillTextBox" TargetType="TextBox">
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource TextBrush}" />
+        <Setter Property="SelectionBrush" Value="#2D5BFF" />
+        <Setter Property="Background" Value="{DynamicResource ControlBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Padding" Value="11,3" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{DynamicResource ControlRadius}">
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"
+                                      VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Tabs are chips: an edged capsule at rest, and solid ink with void text when chosen. -->
+    <Style x:Key="TabButton" TargetType="RadioButton">
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Height" Value="24" />
+        <Setter Property="MinWidth" Value="24" />
+        <Setter Property="Margin" Value="0,0,4,0" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="Segment" Background="Transparent" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1"
+                            CornerRadius="{DynamicResource ControlRadius}" Padding="{TemplateBinding Padding}">
+                        <Grid VerticalAlignment="Center">
+                            <TextBlock FontWeight="SemiBold" Visibility="Hidden"
+                                       Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}" />
+                            <TextBlock x:Name="Label" Foreground="{DynamicResource SecondaryTextBrush}" FontWeight="Medium"
+                                       HorizontalAlignment="Center"
+                                       Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource TextBrush}" />
+                            <Setter TargetName="Segment" Property="BorderBrush" Value="#40ECEFF7" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Segment" Property="Background" Value="{DynamicResource SelectedBrush}" />
+                            <Setter TargetName="Segment" Property="BorderBrush" Value="{DynamicResource SelectedBrush}" />
+                            <Setter TargetName="Label" Property="Foreground" Value="#05060C" />
+                            <Setter TargetName="Label" Property="FontWeight" Value="SemiBold" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="CardLabel" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
+    </Style>
+    <!-- The big figures in the heavy display cut, as on a poster. -->
+    <Style x:Key="CardValue" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource DisplayFontFamily}" />
+        <Setter Property="FontSize" Value="23" />
+        <Setter Property="FontWeight" Value="ExtraBold" />
+        <Setter Property="Typography.NumeralAlignment" Value="Tabular" />
+        <Setter Property="Margin" Value="0,1,0,0" />
+    </Style>
+
+    <!-- The terminal, in the same void and glow. -->
+    <SolidColorBrush x:Key="TerminalBackgroundBrush" Color="{StaticResource NewAgeVoid}" />
+    <SolidColorBrush x:Key="TerminalForegroundBrush" Color="{StaticResource NewAgeInk}" />
+    <SolidColorBrush x:Key="TerminalCursorBrush" Color="{StaticResource NewAgeCyan}" />
+    <SolidColorBrush x:Key="TerminalSelectionBrush" Color="#1C2A5C" />
+    <SolidColorBrush x:Key="TerminalAnsi0Brush" Color="#0A0D18" />
+    <SolidColorBrush x:Key="TerminalAnsi1Brush" Color="#FF5470" />
+    <SolidColorBrush x:Key="TerminalAnsi2Brush" Color="#3DDC97" />
+    <SolidColorBrush x:Key="TerminalAnsi3Brush" Color="#FFB547" />
+    <SolidColorBrush x:Key="TerminalAnsi4Brush" Color="#2D5BFF" />
+    <SolidColorBrush x:Key="TerminalAnsi5Brush" Color="#7B4BFF" />
+    <SolidColorBrush x:Key="TerminalAnsi6Brush" Color="#19B8FF" />
+    <SolidColorBrush x:Key="TerminalAnsi7Brush" Color="#C4CAD9" />
+    <SolidColorBrush x:Key="TerminalAnsi8Brush" Color="#3A4156" />
+    <SolidColorBrush x:Key="TerminalAnsi9Brush" Color="#FF7A90" />
+    <SolidColorBrush x:Key="TerminalAnsi10Brush" Color="#6BEAB2" />
+    <SolidColorBrush x:Key="TerminalAnsi11Brush" Color="#FFCB7A" />
+    <SolidColorBrush x:Key="TerminalAnsi12Brush" Color="#5C82FF" />
+    <SolidColorBrush x:Key="TerminalAnsi13Brush" Color="#9D7BFF" />
+    <SolidColorBrush x:Key="TerminalAnsi14Brush" Color="#5CCFFF" />
+    <SolidColorBrush x:Key="TerminalAnsi15Brush" Color="{StaticResource NewAgeInk}" />
+</ResourceDictionary>

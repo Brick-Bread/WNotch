@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/builtin/">
+    <Project Path="builtin/NewAgeTheme/NewAgeTheme.csproj" />
+  </Folder>
   <Folder Name="/samples/">
     <Project Path="samples/BreakReminder/BreakReminder.csproj" />
     <Project Path="samples/NeonTheme/NeonTheme.csproj" />

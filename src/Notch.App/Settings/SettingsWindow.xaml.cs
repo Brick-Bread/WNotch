@@ -691,9 +691,9 @@ public partial class SettingsWindow : Window
             }
             else if (plugin.AlwaysEnabled)
             {
-                // Loaded with --plugin= for this run only; the saved choice (the tag) is left as it was.
+                // Built into Notch, or loaded with --plugin= for this run only; the saved choice (the tag) is left as it was.
                 bool saved = ticked.Contains(plugin.Id);
-                PluginList.Children.Add(new TextBlock { Text = title + " (development)", ToolTip = about, Margin = new Thickness(0, 4, 0, 4) });
+                PluginList.Children.Add(new TextBlock { Text = title + (plugin.BuiltIn ? " (comes with Notch)" : " (development)"), ToolTip = about, Margin = new Thickness(0, 4, 0, 4) });
                 PluginList.Children.Add(new CheckBox { Tag = plugin.Id, IsChecked = saved, Visibility = Visibility.Collapsed });
             }
             else

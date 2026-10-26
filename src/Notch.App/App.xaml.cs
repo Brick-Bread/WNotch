@@ -154,7 +154,11 @@ public partial class App : Application
             _activities,
             pluginCards,
             new PluginLog(Path.Combine(localData, "plugins.log")),
-            checks: checks);
+            checks: checks)
+        {
+            // The plugins that ship with Notch (the New Age theme), copied there by Notch.App.csproj.
+            BuiltInDirectory = Path.Combine(AppContext.BaseDirectory, "plugins"),
+        };
         _plugins.Audio.Starter = publish => new SpectrumAnalyzer(publish);
         _pluginStartMarker = Path.Combine(appData, "plugins-starting");
 

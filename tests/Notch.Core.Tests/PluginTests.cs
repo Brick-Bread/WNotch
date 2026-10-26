@@ -234,6 +234,24 @@ public sealed class PluginManagerTests : IDisposable
     }
 
     [Fact]
+    public void Built_in_plugins_run_without_being_enabled_and_keep_their_id()
+    {
+        string builtIn = Path.Combine(_root, "app", "plugins");
+        Install("theme", parent: builtIn);
+        Install("theme", folder: "impostor");
+        using PluginManager manager = CreateManager(builtInDirectory: builtIn);
+
+        manager.Discover();
+        manager.SetEnabled([]);
+
+        PluginInfo info = Assert.Single(manager.Plugins, p => p.BuiltIn);
+        Assert.True(info.AlwaysEnabled);
+        Assert.Equal(PluginStatus.Running, info.Status);
+        Assert.Equal(Path.Combine(builtIn, "theme"), Assert.Single(_loadedFrom));
+        Assert.Equal(PluginStatus.Invalid, Assert.Single(manager.Plugins, p => !p.BuiltIn).Status);
+    }
+
+    [Fact]
     public void Settings_survive_a_restart_and_tolerate_wrong_types()
     {
         Install("a");
@@ -353,7 +371,7 @@ public sealed class PluginManagerTests : IDisposable
         Assert.Contains("failed to start", File.ReadAllText(Path.Combine(_root, "plugins.log")));
     }
 
-    private PluginManager CreateManager(string? failing = null) => new(
+    private PluginManager CreateManager(string? failing = null, string? builtInDirectory = null) => new(
         PluginsDirectory,
         Path.Combine(_root, "data"),
         _activities,
@@ -367,6 +385,7 @@ public sealed class PluginManagerTests : IDisposable
     {
         BuildCopiesDirectory = Path.Combine(_root, "copies", Environment.ProcessId.ToString()),
         ReloadBuilds = false,
+        BuiltInDirectory = builtInDirectory,
     };
 
     /// <summary>Writes a plugin folder holding only a manifest and returns its path.</summary>

@@ -22,7 +22,8 @@ public enum PluginStatus
 /// <summary>A plugin as listed in settings.</summary>
 /// <param name="Id">Null when the manifest could not be read.</param>
 /// <param name="Name">The manifest's name, or the folder name when there is no usable manifest.</param>
-/// <param name="AlwaysEnabled">Loaded with <c>--plugin=</c>, so it runs regardless of the user's settings.</param>
+/// <param name="AlwaysEnabled">Loaded with <c>--plugin=</c> or built into Notch, so it runs regardless of the user's settings.</param>
+/// <param name="BuiltIn">Shipped in Notch's own folder (<see cref="PluginManager.BuiltInDirectory"/>) rather than installed by the user.</param>
 public sealed record PluginInfo(
     string? Id,
     string Name,
@@ -36,7 +37,8 @@ public sealed record PluginInfo(
     string? Repository = null,
     string? InstalledTag = null,
     IReadOnlyList<PluginSettingField>? Settings = null,
-    IReadOnlyList<string>? Permissions = null);
+    IReadOnlyList<string>? Permissions = null,
+    bool BuiltIn = false);
 
 /// <summary>
 /// Finds plugins on disk and starts and stops them. A plugin is a folder holding a
@@ -102,6 +104,12 @@ public sealed class PluginManager : IDisposable
     public event EventHandler? Changed;
 
     public string PluginsDirectory { get; }
+
+    /// <summary>
+    /// Plugins that ship with Notch, such as the New Age theme: each subfolder with a <c>plugin.json</c>. They run
+    /// without being enabled or approved, since they come with Notch itself. Null for none.
+    /// </summary>
+    public string? BuiltInDirectory { get; init; }
 
     /// <summary>The pages plugins show as tabs, and their consoles.</summary>
     public PluginPageBoard Pages { get; } = new();
@@ -194,6 +202,12 @@ public sealed class PluginManager : IDisposable
                 WatchBuild(directory);
             }
 
+            // Before the installed ones, so an installed plugin cannot take a built-in one's id.
+            foreach (string directory in BuiltInDirectory is null ? [] : Subdirectories(BuiltInDirectory))
+            {
+                Add(directory, pinned: false, builtIn: true);
+            }
+
             foreach (string directory in Subdirectories(PluginsDirectory))
             {
                 Add(directory, pinned: false);
@@ -221,7 +235,7 @@ public sealed class PluginManager : IDisposable
                     continue;
                 }
 
-                bool wanted = slot.Pinned || enabled.Contains(slot.Manifest.Id);
+                bool wanted = slot.Pinned || slot.BuiltIn || enabled.Contains(slot.Manifest.Id);
                 if (SafeMode && wanted && slot.Status == PluginStatus.Disabled)
                 {
                     slot.Error = "Safe mode: plugins are switched off until Notch is started normally.";
@@ -586,20 +600,20 @@ public sealed class PluginManager : IDisposable
         }
     }
 
-    private void Add(string directory, bool pinned)
+    private void Add(string directory, bool pinned, bool builtIn = false)
     {
         if (_slots.Any(s => string.Equals(s.Directory, directory, StringComparison.OrdinalIgnoreCase)))
         {
             return;
         }
 
-        var slot = new Slot(directory, pinned);
+        var slot = new Slot(directory, pinned, builtIn);
         try
         {
             string manifestPath = Path.Combine(directory, PluginManifest.FileName);
             if (!File.Exists(manifestPath))
             {
-                // Any other folder in the plugins directory is simply not a plugin.
+                // Any other folder in a plugins directory is simply not a plugin.
                 if (!pinned)
                 {
                     return;
@@ -695,8 +709,9 @@ public sealed class PluginManager : IDisposable
             return scan.BlockReason;
         }
 
-        // A plugin run with --plugin= is the developer's own build, which changes all the time.
-        if (!slot.Pinned && _checks.Trust is { } trust && !trust.IsApproved(manifest.Id, hash))
+        // A plugin run with --plugin= is the developer's own build, which changes all the time; a built-in one came
+        // with Notch, which the user already chose to run.
+        if (!slot.Pinned && !slot.BuiltIn && _checks.Trust is { } trust && !trust.IsApproved(manifest.Id, hash))
         {
             _checks.Audit.Record(manifest.Id, PluginAuditKinds.Quarantined, trust.HasRecord(manifest.Id) ? "files changed" : "not approved");
             return trust.HasRecord(manifest.Id)
@@ -865,11 +880,13 @@ public sealed class PluginManager : IDisposable
         slot.Status = PluginStatus.Disabled;
     }
 
-    private sealed class Slot(string directory, bool pinned)
+    private sealed class Slot(string directory, bool pinned, bool builtIn)
     {
         public string Directory { get; } = directory;
 
         public bool Pinned { get; } = pinned;
+
+        public bool BuiltIn { get; } = builtIn;
 
         public PluginManifest? Manifest { get; set; }
 
@@ -896,10 +913,11 @@ public sealed class PluginManager : IDisposable
             Directory,
             Status,
             Error,
-            Pinned,
-            PluginOrigin.SourceOf(Directory, Manifest)?.ToString(),
-            PluginOrigin.Read(Directory)?.Tag,
+            Pinned || BuiltIn,
+            BuiltIn ? null : PluginOrigin.SourceOf(Directory, Manifest)?.ToString(),
+            BuiltIn ? null : PluginOrigin.Read(Directory)?.Tag,
             Manifest?.Settings,
-            Manifest?.Permissions);
+            Manifest?.Permissions,
+            BuiltIn);
     }
 }

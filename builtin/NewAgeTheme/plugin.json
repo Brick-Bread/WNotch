@@ -1,0 +1,9 @@
+{
+  "id": "notch.new-age",
+  "name": "New Age theme",
+  "version": "1.0.0",
+  "author": "Notch contributors",
+  "description": "Comes with Notch: a deep navy-black notch with a cyan, indigo and violet glow, round capsules and Bricolage Grotesque.",
+  "assembly": "NewAgeTheme.dll",
+  "apiVersion": 6
+}

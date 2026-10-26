@@ -607,7 +607,7 @@ host.Bus.Subscribe("notch.timer", message =>
 
 ## Themes: restyling the whole notch
 
-`host.Themes` (API 6) lets a plugin offer a look for the whole notch. The user picks it under **Plugin theme** in Settings, and it replaces the Dark / Light / Follow Windows choice for as long as it is picked. A plugin can offer several themes, and a plugin that does nothing else is a fine plugin: [`samples/NeonTheme`](../samples/NeonTheme) is one.
+`host.Themes` (API 6) lets a plugin offer a look for the whole notch. The user picks it under **Plugin theme** in Settings, and it replaces the Dark / Light / Follow Windows choice for as long as it is picked. A plugin can offer several themes, and a plugin that does nothing else is a fine plugin: [`samples/NeonTheme`](../samples/NeonTheme) is one, and so is [`builtin/NewAgeTheme`](../builtin/NewAgeTheme), the New Age theme that ships with Notch, which also shows a theme bringing its own fonts.
 
 ```csharp
 public void Start(IPluginHost host) =>

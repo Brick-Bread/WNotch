@@ -18,7 +18,22 @@
     <!-- Not used as a library: referenced so Notch.Hook.exe is built and copied next to Notch.exe. -->
     <ProjectReference Include="..\Notch.Hook\Notch.Hook.csproj" />
     <ProjectReference Include="..\Notch.Cli\Notch.Cli.csproj" />
+    <!-- Not used as a library either: built so ShipBuiltInPlugins can copy it into the plugins folder. -->
+    <ProjectReference Include="..\..\builtin\NewAgeTheme\NewAgeTheme.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
+
+  <!-- The plugins that ship with Notch go in plugins\<name> next to Notch.exe, in the build and in what is
+       published, where PluginManager.BuiltInDirectory finds them. They are built by the references above. -->
+  <PropertyGroup>
+    <NewAgeThemeOutput>..\..\builtin\NewAgeTheme\bin\$(Configuration)\net10.0\</NewAgeThemeOutput>
+  </PropertyGroup>
+  <Target Name="ShipBuiltInPlugins" BeforeTargets="AssignTargetPaths" DependsOnTargets="ResolveProjectReferences">
+    <ItemGroup>
+      <_NewAgeThemeFile Include="$(NewAgeThemeOutput)**\*" Exclude="$(NewAgeThemeOutput)**\*.pdb;$(NewAgeThemeOutput)**\*.deps.json" />
+      <Content Include="@(_NewAgeThemeFile)" Link="plugins\new-age\%(_NewAgeThemeFile.RecursiveDir)%(_NewAgeThemeFile.Filename)%(_NewAgeThemeFile.Extension)"
+               CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <PackageReference Include="H.NotifyIcon.Wpf" Version="2.4.1" />
