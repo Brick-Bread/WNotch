@@ -482,6 +482,13 @@ public partial class NotchWindow
         }
     }
 
+    /// <summary>The line under a CPU or GPU figure: its temperature, in the region's units, or nothing when it is not reported.</summary>
+    private static void ShowTemperature(TextBlock line, double? celsius)
+    {
+        line.Visibility = celsius is null ? Visibility.Collapsed : Visibility.Visible;
+        line.Text = celsius is { } c ? StatsFormat.Temperature(c, System.Globalization.RegionInfo.CurrentRegion.IsMetric) : "";
+    }
+
     private async void SampleStats()
     {
         if (_statsSampling)
@@ -502,6 +509,8 @@ public partial class NotchWindow
             StatsMemoryChart.Push(stats.MemoryUsage);
             StatsGpu.Text = stats.GpuUsage is { } gpu ? StatsFormat.Percent(gpu) : "n/a";
             StatsGpuChart.Push(stats.GpuUsage ?? 0);
+            ShowTemperature(StatsCpuTemperature, stats.CpuTemperature);
+            ShowTemperature(StatsGpuTemperature, stats.GpuTemperature);
             StatsDownload.Text = StatsFormat.Rate(stats.DownloadBytesPerSecond);
             StatsUpload.Text = StatsFormat.Rate(stats.UploadBytesPerSecond);
             StatsBattery.Text = stats.BatteryPercent is { } battery ? $"{battery}%" : "None";

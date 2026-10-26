@@ -15,6 +15,9 @@ public sealed partial class SystemStatsSampler
 {
     private const string GpuCategory = "GPU Engine";
     private const string GpuCounter = "Utilization Percentage";
+    private const string ThermalCategory = "Thermal Zone Information";
+    private const string ThermalCounter = "Temperature";
+    private const int KmtQueryAdapterPerfData = 62;
 
     private readonly Stopwatch _clock = Stopwatch.StartNew();
     private ulong _lastIdle;
@@ -25,6 +28,8 @@ public sealed partial class SystemStatsSampler
     private bool _hasNetworkBaseline;
     private Dictionary<string, CounterSample>? _lastGpuSamples;
     private bool _gpuUnavailable;
+    private bool _cpuTemperatureUnavailable;
+    private bool _gpuTemperatureUnavailable;
 
     public SystemStats Sample()
     {
@@ -38,8 +43,104 @@ public sealed partial class SystemStatsSampler
             ReadGpu(),
             down,
             up,
-            PowerManager.BatteryStatus == BatteryStatus.NotPresent ? null : PowerManager.RemainingChargePercent);
+            PowerManager.BatteryStatus == BatteryStatus.NotPresent ? null : PowerManager.RemainingChargePercent,
+            ReadCpuTemperature(),
+            ReadGpuTemperature());
     }
+
+    /// <summary>
+    /// The hottest ACPI thermal zone, which on most PCs is the processor's. Windows publishes it as a performance
+    /// counter in kelvin, which needs no administrator rights (unlike the WMI class with the same numbers).
+    /// </summary>
+    private double? ReadCpuTemperature()
+    {
+        if (_cpuTemperatureUnavailable)
+        {
+            return null;
+        }
+
+        try
+        {
+            InstanceDataCollection? zones = new PerformanceCounterCategory(ThermalCategory).ReadCategory()[ThermalCounter];
+            double? hottest = zones?.Values.Cast<InstanceData>()
+                .Select(zone => zone.RawValue - 273.15)
+                .Where(Plausible)
+                .Select(celsius => (double?)celsius)
+                .Max();
+            _cpuTemperatureUnavailable = zones is null || zones.Count == 0;
+            return hottest;
+        }
+        catch (Exception e) when (e is InvalidOperationException or System.ComponentModel.Win32Exception or UnauthorizedAccessException)
+        {
+            // No thermal zones on this machine, as on many desktops and virtual machines.
+            _cpuTemperatureUnavailable = true;
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// The hottest GPU, from the performance data the driver gives the graphics kernel: what Task Manager shows.
+    /// Drivers older than WDDM 2.9, and most integrated GPUs, report no temperature.
+    /// </summary>
+    private unsafe double? ReadGpuTemperature()
+    {
+        if (_gpuTemperatureUnavailable)
+        {
+            return null;
+        }
+
+        try
+        {
+            var enumerate = new D3DKMT_ENUMADAPTERS2();
+            if (D3DKMTEnumAdapters2(ref enumerate) != 0 || enumerate.NumAdapters == 0)
+            {
+                _gpuTemperatureUnavailable = true;
+                return null;
+            }
+
+            var adapters = new D3DKMT_ADAPTERINFO[enumerate.NumAdapters];
+            double? hottest = null;
+            fixed (D3DKMT_ADAPTERINFO* first = adapters)
+            {
+                enumerate.Adapters = first;
+                if (D3DKMTEnumAdapters2(ref enumerate) != 0)
+                {
+                    return null;
+                }
+
+                for (int i = 0; i < enumerate.NumAdapters; i++)
+                {
+                    var data = new D3DKMT_ADAPTER_PERFDATA();
+                    var query = new D3DKMT_QUERYADAPTERINFO
+                    {
+                        Adapter = adapters[i].Adapter,
+                        Type = KmtQueryAdapterPerfData,
+                        PrivateDriverData = &data,
+                        PrivateDriverDataSize = (uint)sizeof(D3DKMT_ADAPTER_PERFDATA),
+                    };
+
+                    // Tenths of a degree; 0 from a driver that does not measure it.
+                    if (D3DKMTQueryAdapterInfo(ref query) == 0 && data.Temperature > 0 && Plausible(data.Temperature / 10.0))
+                    {
+                        hottest = Math.Max(hottest ?? 0, data.Temperature / 10.0);
+                    }
+
+                    var close = new D3DKMT_CLOSEADAPTER { Adapter = adapters[i].Adapter };
+                    D3DKMTCloseAdapter(ref close);
+                }
+            }
+
+            return hottest;
+        }
+        catch (Exception e) when (e is EntryPointNotFoundException or DllNotFoundException)
+        {
+            // Windows before version 2004.
+            _gpuTemperatureUnavailable = true;
+            return null;
+        }
+    }
+
+    private static bool Plausible(double celsius) => celsius is > 0 and < 125;
 
     private double ReadCpu()
     {
@@ -168,6 +269,62 @@ public sealed partial class SystemStatsSampler
         public ulong AvailableVirtual;
         public ulong AvailableExtendedVirtual;
     }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private unsafe struct D3DKMT_ENUMADAPTERS2
+    {
+        public uint NumAdapters;
+        public D3DKMT_ADAPTERINFO* Adapters;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct D3DKMT_ADAPTERINFO
+    {
+        public uint Adapter;
+        public uint LuidLow;
+        public int LuidHigh;
+        public uint NumOfSources;
+        public int PrecisePresentRegionsPreferred;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private unsafe struct D3DKMT_QUERYADAPTERINFO
+    {
+        public uint Adapter;
+        public int Type;
+        public void* PrivateDriverData;
+        public uint PrivateDriverDataSize;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct D3DKMT_ADAPTER_PERFDATA
+    {
+        public uint PhysicalAdapterIndex;
+        public ulong MemoryFrequency;
+        public ulong MaxMemoryFrequency;
+        public ulong MaxMemoryFrequencyOC;
+        public ulong MemoryBandwidth;
+        public ulong PCIEBandwidth;
+        public uint FanRPM;
+        public uint Power;
+        public uint Temperature;
+        public byte PowerStateOverride;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct D3DKMT_CLOSEADAPTER
+    {
+        public uint Adapter;
+    }
+
+    [LibraryImport("gdi32.dll")]
+    private static partial int D3DKMTEnumAdapters2(ref D3DKMT_ENUMADAPTERS2 enumerate);
+
+    [LibraryImport("gdi32.dll")]
+    private static partial int D3DKMTQueryAdapterInfo(ref D3DKMT_QUERYADAPTERINFO query);
+
+    [LibraryImport("gdi32.dll")]
+    private static partial int D3DKMTCloseAdapter(ref D3DKMT_CLOSEADAPTER close);
 
     [LibraryImport("kernel32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]

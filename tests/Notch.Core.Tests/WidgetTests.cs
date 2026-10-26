@@ -148,6 +148,12 @@ public class WidgetTests
     public void Byte_sizes_are_compact(double bytes, string expected) =>
         Assert.Equal(expected, StatsFormat.Bytes(bytes));
 
+    [Theory]
+    [InlineData(58.85, true, "59 °C")]
+    [InlineData(58.85, false, "138 °F")]
+    public void Temperatures_follow_the_region(double celsius, bool metric, string expected) =>
+        Assert.Equal(expected, StatsFormat.Temperature(celsius, metric));
+
     [Fact]
     public void Webcal_links_become_https() =>
         Assert.Equal("https://example.com/cal.ics", CalendarService.NormalizeUrl(" webcal://example.com/cal.ics "));

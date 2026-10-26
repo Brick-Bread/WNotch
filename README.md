@@ -139,6 +139,8 @@ Pushing a tag such as `v0.2.0` runs `.github/workflows/release.yml`, which tests
 | `src/Notch.Hook` | Small helper the Claude and Codex CLIs run to report agent status to the app |
 | `samples/BreakReminder` | Example plugin |
 | `samples/NeonTheme` | Example plugin that offers a theme |
+| `builtin/NewAgeTheme` | The New Age theme, a plugin that ships inside Notch (copied to `plugins
+ew-age` next to Notch.exe) |
 | `tests/Notch.Core.Tests` | xUnit tests for `Notch.Core` |
 | `docs/plugins.md` | Guide to writing plugins |
 

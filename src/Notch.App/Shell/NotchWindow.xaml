@@ -492,6 +492,8 @@
                         <DockPanel>
                             <TextBlock DockPanel.Dock="Top" Text="CPU" Style="{DynamicResource CardLabel}" />
                             <TextBlock x:Name="StatsCpu" DockPanel.Dock="Top" Text="&#x2013;" Style="{DynamicResource CardValue}" />
+                            <!-- Collapsed on machines that do not report a temperature. -->
+                            <TextBlock x:Name="StatsCpuTemperature" DockPanel.Dock="Top" FontSize="11" Opacity="0.55" Visibility="Collapsed" />
                             <shell:Sparkline x:Name="StatsCpuChart" Margin="0,6,0,0" />
                         </DockPanel>
                     </Border>
@@ -507,6 +509,7 @@
                         <DockPanel>
                             <TextBlock DockPanel.Dock="Top" Text="GPU" Style="{DynamicResource CardLabel}" />
                             <TextBlock x:Name="StatsGpu" DockPanel.Dock="Top" Text="&#x2013;" Style="{DynamicResource CardValue}" />
+                            <TextBlock x:Name="StatsGpuTemperature" DockPanel.Dock="Top" FontSize="11" Opacity="0.55" Visibility="Collapsed" />
                             <shell:Sparkline x:Name="StatsGpuChart" Margin="0,6,0,0" />
                         </DockPanel>
                     </Border>
