@@ -10,10 +10,14 @@ pub mod audio;
 #[cfg(windows)]
 pub mod clipboard;
 #[cfg(windows)]
+pub mod command_pipe;
+#[cfg(windows)]
 pub mod conpty;
 pub mod display;
 #[cfg(windows)]
 pub mod fullscreen;
+#[cfg(windows)]
+pub mod hook_server;
 #[cfg(windows)]
 pub mod hud;
 #[cfg(windows)]
