@@ -30,6 +30,8 @@ pub mod process;
 pub mod registry;
 pub mod spectrum;
 #[cfg(windows)]
+pub mod stats;
+#[cfg(windows)]
 pub mod thumbnails;
 #[cfg(windows)]
 pub mod window;
