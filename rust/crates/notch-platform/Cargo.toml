@@ -10,11 +10,15 @@ repository.workspace = true
 publish.workspace = true
 
 [dependencies]
+chrono.workspace = true
 notch-core.workspace = true
 
 [target.'cfg(windows)'.dependencies]
 tokio = { workspace = true, features = ["io-util", "net", "rt", "time"] }
 windows = { workspace = true, features = [
+    "Foundation",
+    "Media_Control",
+    "Storage_Streams",
     "Wdk_System_Threading",
     "Win32_Devices_FunctionDiscovery",
     "Win32_Foundation",
