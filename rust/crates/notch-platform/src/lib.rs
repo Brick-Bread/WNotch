@@ -13,6 +13,8 @@ pub mod clipboard;
 pub mod conpty;
 pub mod display;
 #[cfg(windows)]
+pub mod hud;
+#[cfg(windows)]
 pub mod media;
 #[cfg(windows)]
 pub mod pipes;
