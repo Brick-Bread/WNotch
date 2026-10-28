@@ -329,7 +329,7 @@ fn parse_query(query: &str) -> Values {
 }
 
 /// `Uri.UnescapeDataString`: `%xx` sequences decoded; text whose escapes do not make UTF-8 is left as it was.
-fn unescape(text: &str) -> String {
+pub(crate) fn unescape(text: &str) -> String {
     let bytes = text.as_bytes();
     let mut out = Vec::with_capacity(bytes.len());
     let mut i = 0;
