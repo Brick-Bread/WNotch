@@ -27,6 +27,8 @@ pub mod pipes;
 #[cfg(windows)]
 pub mod process;
 #[cfg(windows)]
+pub mod process_scan;
+#[cfg(windows)]
 pub mod registry;
 pub mod spectrum;
 #[cfg(windows)]
