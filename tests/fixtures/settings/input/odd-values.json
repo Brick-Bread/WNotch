@@ -1,0 +1,9 @@
+{
+  "Style": "island",
+  "Position": 1,
+  "GlowIntensity": 9000,
+  "PomodoroFocusMinutes": -5,
+  "WebhookPort": 80,
+  "TimerPresets": [{ "Name": "Way too long a name", "Seconds": 0 }],
+  "HomeWidgets": [{ "Kind": "teleporter" }, { "Kind": "media", "Options": { "x": "y" } }]
+}

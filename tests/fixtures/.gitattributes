@@ -1,0 +1,2 @@
+# The C# and Rust tests compare these byte for byte (after line endings), so keep them LF everywhere.
+* text eol=lf

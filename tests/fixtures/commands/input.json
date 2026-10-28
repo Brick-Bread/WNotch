@@ -1,0 +1,313 @@
+[
+  {
+    "url": "notch://install?id=acme.build-status"
+  },
+  {
+    "url": "notch://timer?d=5m"
+  },
+  {
+    "url": "notch://timer?action=pause"
+  },
+  {
+    "url": "notch://timer?d=90"
+  },
+  {
+    "url": "notch://timer?d=1.5"
+  },
+  {
+    "url": "notch://timer?d=1:30"
+  },
+  {
+    "url": "notch://timer?d=1:02:03"
+  },
+  {
+    "url": "notch://timer?d=2%20hours%2010%20min"
+  },
+  {
+    "url": "notch://timer?d=24h"
+  },
+  {
+    "url": "notch://timer?duration=10s"
+  },
+  {
+    "url": "notch://timer?d=cancel"
+  },
+  {
+    "url": "notch://timer?d=RESET"
+  },
+  {
+    "url": "notch://toast?title=Hi&color=%23ff0000&lifetime=1h"
+  },
+  {
+    "url": "notch://toast?text=Deploy+done&detail=prod&glyph=%EE%9C%BE&color=Cyan"
+  },
+  {
+    "url": "notch://toast?title=Plain"
+  },
+  {
+    "url": "notch://open?tab=Stats"
+  },
+  {
+    "url": "notch://open?tab=home"
+  },
+  {
+    "url": "notch://open?page=chomp.desk/chomp"
+  },
+  {
+    "url": "notch://open?page=chomp.desk%2FTime%20Sheet"
+  },
+  {
+    "url": "notch://open?tab=page&page=acme/x"
+  },
+  {
+    "url": "notch://open?tab=acme/x"
+  },
+  {
+    "url": "notch://plugin?id=acme.x&enable=true"
+  },
+  {
+    "url": "notch://plugin?id=acme.x&enable=no"
+  },
+  {
+    "url": "notch://plugin?id=acme.x&enable"
+  },
+  {
+    "url": "NOTCH://PALETTE"
+  },
+  {
+    "url": "notch:palette"
+  },
+  {
+    "url": "notch:///settings"
+  },
+  {
+    "url": "notch://settings/"
+  },
+  {
+    "url": "notch://open?tab=home&tab=stats"
+  },
+  {
+    "url": "notch://open?TAB=shelf"
+  },
+  {
+    "url": "notch://install"
+  },
+  {
+    "url": "notch://install?id="
+  },
+  {
+    "url": "notch://install?id=Bad%20Id"
+  },
+  {
+    "url": "notch://install?id=UPPER"
+  },
+  {
+    "url": "notch://install?id=../x"
+  },
+  {
+    "url": "notch://teleport?id=a"
+  },
+  {
+    "url": "http://install?id=a"
+  },
+  {
+    "url": "notch://timer?d=0"
+  },
+  {
+    "url": "notch://timer?d=48h"
+  },
+  {
+    "url": "notch://timer?d=soon"
+  },
+  {
+    "url": "notch://open?tab=secrets"
+  },
+  {
+    "url": "notch://open?page=chomp"
+  },
+  {
+    "url": "notch://open?page=Bad%20Id/main"
+  },
+  {
+    "url": "notch://open?page=acme/%0Amain"
+  },
+  {
+    "url": "notch://plugin?id=a"
+  },
+  {
+    "url": "notch://plugin?id=a&enable=maybe"
+  },
+  {
+    "url": ""
+  },
+  {
+    "url": "notch://toast?title=Hi&color=chartreuse-ish"
+  },
+  {
+    "url": "notch://toast?title=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  {
+    "url": "notch://toast"
+  },
+  {
+    "url": "notch://toast?title=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  {
+    "url": "notch://toast?title=Hi&detail=ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+  },
+  {
+    "url": "notch://toast?title=Hi&glyph=123456789"
+  },
+  {
+    "url": "notch://toast?title=Hi&lifetime=never"
+  },
+  {
+    "args": [
+      "timer",
+      "90s"
+    ]
+  },
+  {
+    "args": [
+      "timer",
+      "--d",
+      "1h20m"
+    ]
+  },
+  {
+    "args": [
+      "timer",
+      "stop"
+    ]
+  },
+  {
+    "args": [
+      "timer",
+      "resume"
+    ]
+  },
+  {
+    "args": [
+      "timer",
+      "pause"
+    ]
+  },
+  {
+    "args": [
+      "toast",
+      "Build done",
+      "--detail",
+      "all green",
+      "--color",
+      "green",
+      "--lifetime",
+      "5s"
+    ]
+  },
+  {
+    "args": [
+      "toast",
+      "--title=Hello",
+      "--glyph",
+      "X"
+    ]
+  },
+  {
+    "args": [
+      "open",
+      "clipboard"
+    ]
+  },
+  {
+    "args": [
+      "open",
+      "page",
+      "chomp.desk/chomp"
+    ]
+  },
+  {
+    "args": [
+      "open",
+      "chomp.desk/chomp"
+    ]
+  },
+  {
+    "args": [
+      "open",
+      "--page",
+      "chomp.desk/chomp"
+    ]
+  },
+  {
+    "args": [
+      "open"
+    ]
+  },
+  {
+    "args": [
+      "plugin",
+      "acme.x",
+      "--enable",
+      "off"
+    ]
+  },
+  {
+    "args": [
+      "plugin",
+      "acme.x"
+    ]
+  },
+  {
+    "args": [
+      "install",
+      "acme.x"
+    ]
+  },
+  {
+    "args": [
+      "SETTINGS"
+    ]
+  },
+  {
+    "args": [
+      "palette"
+    ]
+  },
+  {
+    "args": [
+      "Timer",
+      "--action",
+      "Pause"
+    ]
+  },
+  {
+    "args": [
+      "toast",
+      "--detail"
+    ]
+  },
+  {
+    "args": [
+      "open",
+      "--tab"
+    ]
+  },
+  {
+    "args": []
+  },
+  {
+    "args": [
+      "fly"
+    ]
+  },
+  {
+    "args": [
+      "timer"
+    ]
+  },
+  {
+    "args": [
+      "install"
+    ]
+  }
+]

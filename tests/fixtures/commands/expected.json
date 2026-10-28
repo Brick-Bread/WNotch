@@ -1,0 +1,781 @@
+[
+  {
+    "input": {
+      "url": "notch://install?id=acme.build-status"
+    },
+    "ok": true,
+    "command": {
+      "kind": "install",
+      "pluginId": "acme.build-status"
+    }
+  },
+  {
+    "input": {
+      "url": "notch://timer?d=5m"
+    },
+    "ok": true,
+    "command": {
+      "kind": "startTimer",
+      "seconds": 300
+    }
+  },
+  {
+    "input": {
+      "url": "notch://timer?action=pause"
+    },
+    "ok": true,
+    "command": {
+      "kind": "timerAction",
+      "action": "pause"
+    }
+  },
+  {
+    "input": {
+      "url": "notch://timer?d=90"
+    },
+    "ok": true,
+    "command": {
+      "kind": "startTimer",
+      "seconds": 5400
+    }
+  },
+  {
+    "input": {
+      "url": "notch://timer?d=1.5"
+    },
+    "ok": true,
+    "command": {
+      "kind": "startTimer",
+      "seconds": 90
+    }
+  },
+  {
+    "input": {
+      "url": "notch://timer?d=1:30"
+    },
+    "ok": true,
+    "command": {
+      "kind": "startTimer",
+      "seconds": 90
+    }
+  },
+  {
+    "input": {
+      "url": "notch://timer?d=1:02:03"
+    },
+    "ok": true,
+    "command": {
+      "kind": "startTimer",
+      "seconds": 3723
+    }
+  },
+  {
+    "input": {
+      "url": "notch://timer?d=2%20hours%2010%20min"
+    },
+    "ok": true,
+    "command": {
+      "kind": "startTimer",
+      "seconds": 7800
+    }
+  },
+  {
+    "input": {
+      "url": "notch://timer?d=24h"
+    },
+    "ok": true,
+    "command": {
+      "kind": "startTimer",
+      "seconds": 86400
+    }
+  },
+  {
+    "input": {
+      "url": "notch://timer?duration=10s"
+    },
+    "ok": true,
+    "command": {
+      "kind": "startTimer",
+      "seconds": 10
+    }
+  },
+  {
+    "input": {
+      "url": "notch://timer?d=cancel"
+    },
+    "ok": true,
+    "command": {
+      "kind": "timerAction",
+      "action": "stop"
+    }
+  },
+  {
+    "input": {
+      "url": "notch://timer?d=RESET"
+    },
+    "ok": true,
+    "command": {
+      "kind": "timerAction",
+      "action": "stop"
+    }
+  },
+  {
+    "input": {
+      "url": "notch://toast?title=Hi&color=%23ff0000&lifetime=1h"
+    },
+    "ok": true,
+    "command": {
+      "kind": "toast",
+      "title": "Hi",
+      "detail": null,
+      "glyph": null,
+      "color": "#ff0000",
+      "lifetimeSeconds": 30
+    }
+  },
+  {
+    "input": {
+      "url": "notch://toast?text=Deploy+done&detail=prod&glyph=%EE%9C%BE&color=Cyan"
+    },
+    "ok": true,
+    "command": {
+      "kind": "toast",
+      "title": "Deploy done",
+      "detail": "prod",
+      "glyph": "\uE73E",
+      "color": "#2ec4ff",
+      "lifetimeSeconds": null
+    }
+  },
+  {
+    "input": {
+      "url": "notch://toast?title=Plain"
+    },
+    "ok": true,
+    "command": {
+      "kind": "toast",
+      "title": "Plain",
+      "detail": null,
+      "glyph": null,
+      "color": null,
+      "lifetimeSeconds": null
+    }
+  },
+  {
+    "input": {
+      "url": "notch://open?tab=Stats"
+    },
+    "ok": true,
+    "command": {
+      "kind": "openTab",
+      "tab": "stats"
+    }
+  },
+  {
+    "input": {
+      "url": "notch://open?tab=home"
+    },
+    "ok": true,
+    "command": {
+      "kind": "openTab",
+      "tab": "home"
+    }
+  },
+  {
+    "input": {
+      "url": "notch://open?page=chomp.desk/chomp"
+    },
+    "ok": true,
+    "command": {
+      "kind": "openPage",
+      "page": "chomp.desk/chomp"
+    }
+  },
+  {
+    "input": {
+      "url": "notch://open?page=chomp.desk%2FTime%20Sheet"
+    },
+    "ok": true,
+    "command": {
+      "kind": "openPage",
+      "page": "chomp.desk/Time Sheet"
+    }
+  },
+  {
+    "input": {
+      "url": "notch://open?tab=page&page=acme/x"
+    },
+    "ok": true,
+    "command": {
+      "kind": "openPage",
+      "page": "acme/x"
+    }
+  },
+  {
+    "input": {
+      "url": "notch://open?tab=acme/x"
+    },
+    "ok": true,
+    "command": {
+      "kind": "openPage",
+      "page": "acme/x"
+    }
+  },
+  {
+    "input": {
+      "url": "notch://plugin?id=acme.x&enable=true"
+    },
+    "ok": true,
+    "command": {
+      "kind": "setPluginEnabled",
+      "pluginId": "acme.x",
+      "enabled": true
+    }
+  },
+  {
+    "input": {
+      "url": "notch://plugin?id=acme.x&enable=no"
+    },
+    "ok": true,
+    "command": {
+      "kind": "setPluginEnabled",
+      "pluginId": "acme.x",
+      "enabled": false
+    }
+  },
+  {
+    "input": {
+      "url": "notch://plugin?id=acme.x&enable"
+    },
+    "ok": true,
+    "command": {
+      "kind": "setPluginEnabled",
+      "pluginId": "acme.x",
+      "enabled": true
+    }
+  },
+  {
+    "input": {
+      "url": "NOTCH://PALETTE"
+    },
+    "ok": true,
+    "command": {
+      "kind": "openPalette"
+    }
+  },
+  {
+    "input": {
+      "url": "notch:palette"
+    },
+    "ok": true,
+    "command": {
+      "kind": "openPalette"
+    }
+  },
+  {
+    "input": {
+      "url": "notch:///settings"
+    },
+    "ok": true,
+    "command": {
+      "kind": "openSettings"
+    }
+  },
+  {
+    "input": {
+      "url": "notch://settings/"
+    },
+    "ok": true,
+    "command": {
+      "kind": "openSettings"
+    }
+  },
+  {
+    "input": {
+      "url": "notch://open?tab=home&tab=stats"
+    },
+    "ok": true,
+    "command": {
+      "kind": "openTab",
+      "tab": "home"
+    }
+  },
+  {
+    "input": {
+      "url": "notch://open?TAB=shelf"
+    },
+    "ok": true,
+    "command": {
+      "kind": "openTab",
+      "tab": "shelf"
+    }
+  },
+  {
+    "input": {
+      "url": "notch://install"
+    },
+    "ok": false,
+    "error": "install needs a plugin id."
+  },
+  {
+    "input": {
+      "url": "notch://install?id="
+    },
+    "ok": false,
+    "error": "install needs a plugin id."
+  },
+  {
+    "input": {
+      "url": "notch://install?id=Bad%20Id"
+    },
+    "ok": false,
+    "error": "install needs a plugin id."
+  },
+  {
+    "input": {
+      "url": "notch://install?id=UPPER"
+    },
+    "ok": false,
+    "error": "install needs a plugin id."
+  },
+  {
+    "input": {
+      "url": "notch://install?id=../x"
+    },
+    "ok": false,
+    "error": "install needs a plugin id."
+  },
+  {
+    "input": {
+      "url": "notch://teleport?id=a"
+    },
+    "ok": false,
+    "error": "Unknown command."
+  },
+  {
+    "input": {
+      "url": "http://install?id=a"
+    },
+    "ok": false,
+    "error": "That is not a notch:// link."
+  },
+  {
+    "input": {
+      "url": "notch://timer?d=0"
+    },
+    "ok": false,
+    "error": "timer needs a duration like 5m, 90s or 1h20m, or stop, pause or resume."
+  },
+  {
+    "input": {
+      "url": "notch://timer?d=48h"
+    },
+    "ok": false,
+    "error": "timer needs a duration like 5m, 90s or 1h20m, or stop, pause or resume."
+  },
+  {
+    "input": {
+      "url": "notch://timer?d=soon"
+    },
+    "ok": false,
+    "error": "timer needs a duration like 5m, 90s or 1h20m, or stop, pause or resume."
+  },
+  {
+    "input": {
+      "url": "notch://open?tab=secrets"
+    },
+    "ok": false,
+    "error": "open needs a tab: home, terminal, stats, shelf, plugins, clipboard, or page plugin-id/page-id."
+  },
+  {
+    "input": {
+      "url": "notch://open?page=chomp"
+    },
+    "ok": false,
+    "error": "open page needs a plugin's page as plugin-id/page-id, e.g. acme.tool/main."
+  },
+  {
+    "input": {
+      "url": "notch://open?page=Bad%20Id/main"
+    },
+    "ok": false,
+    "error": "open page needs a plugin's page as plugin-id/page-id, e.g. acme.tool/main."
+  },
+  {
+    "input": {
+      "url": "notch://open?page=acme/%0Amain"
+    },
+    "ok": false,
+    "error": "open page needs a plugin's page as plugin-id/page-id, e.g. acme.tool/main."
+  },
+  {
+    "input": {
+      "url": "notch://plugin?id=a"
+    },
+    "ok": false,
+    "error": "plugin needs enable=true or enable=false."
+  },
+  {
+    "input": {
+      "url": "notch://plugin?id=a&enable=maybe"
+    },
+    "ok": false,
+    "error": "plugin needs enable=true or enable=false."
+  },
+  {
+    "input": {
+      "url": ""
+    },
+    "ok": false,
+    "error": "That link is empty or too long."
+  },
+  {
+    "input": {
+      "url": "notch://toast?title=Hi&color=chartreuse-ish"
+    },
+    "ok": false,
+    "error": "The colour is a name like Green, or #rrggbb."
+  },
+  {
+    "input": {
+      "url": "notch://toast?title=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    "ok": false,
+    "error": "toast needs a title of 1 to 120 characters."
+  },
+  {
+    "input": {
+      "url": "notch://toast"
+    },
+    "ok": false,
+    "error": "toast needs a title of 1 to 120 characters."
+  },
+  {
+    "input": {
+      "url": "notch://toast?title=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    "ok": false,
+    "error": "That link is empty or too long."
+  },
+  {
+    "input": {
+      "url": "notch://toast?title=Hi&detail=ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    },
+    "ok": false,
+    "error": "The detail can be at most 300 characters."
+  },
+  {
+    "input": {
+      "url": "notch://toast?title=Hi&glyph=123456789"
+    },
+    "ok": false,
+    "error": "The glyph is one symbol."
+  },
+  {
+    "input": {
+      "url": "notch://toast?title=Hi&lifetime=never"
+    },
+    "ok": false,
+    "error": "The lifetime is a duration like 5s."
+  },
+  {
+    "input": {
+      "args": [
+        "timer",
+        "90s"
+      ]
+    },
+    "ok": true,
+    "command": {
+      "kind": "startTimer",
+      "seconds": 90
+    }
+  },
+  {
+    "input": {
+      "args": [
+        "timer",
+        "--d",
+        "1h20m"
+      ]
+    },
+    "ok": true,
+    "command": {
+      "kind": "startTimer",
+      "seconds": 4800
+    }
+  },
+  {
+    "input": {
+      "args": [
+        "timer",
+        "stop"
+      ]
+    },
+    "ok": true,
+    "command": {
+      "kind": "timerAction",
+      "action": "stop"
+    }
+  },
+  {
+    "input": {
+      "args": [
+        "timer",
+        "resume"
+      ]
+    },
+    "ok": true,
+    "command": {
+      "kind": "timerAction",
+      "action": "resume"
+    }
+  },
+  {
+    "input": {
+      "args": [
+        "timer",
+        "pause"
+      ]
+    },
+    "ok": true,
+    "command": {
+      "kind": "timerAction",
+      "action": "pause"
+    }
+  },
+  {
+    "input": {
+      "args": [
+        "toast",
+        "Build done",
+        "--detail",
+        "all green",
+        "--color",
+        "green",
+        "--lifetime",
+        "5s"
+      ]
+    },
+    "ok": true,
+    "command": {
+      "kind": "toast",
+      "title": "Build done",
+      "detail": "all green",
+      "glyph": null,
+      "color": "#3fd86b",
+      "lifetimeSeconds": 5
+    }
+  },
+  {
+    "input": {
+      "args": [
+        "toast",
+        "--title=Hello",
+        "--glyph",
+        "X"
+      ]
+    },
+    "ok": true,
+    "command": {
+      "kind": "toast",
+      "title": "Hello",
+      "detail": null,
+      "glyph": "X",
+      "color": null,
+      "lifetimeSeconds": null
+    }
+  },
+  {
+    "input": {
+      "args": [
+        "open",
+        "clipboard"
+      ]
+    },
+    "ok": true,
+    "command": {
+      "kind": "openTab",
+      "tab": "clipboard"
+    }
+  },
+  {
+    "input": {
+      "args": [
+        "open",
+        "page",
+        "chomp.desk/chomp"
+      ]
+    },
+    "ok": true,
+    "command": {
+      "kind": "openPage",
+      "page": "chomp.desk/chomp"
+    }
+  },
+  {
+    "input": {
+      "args": [
+        "open",
+        "chomp.desk/chomp"
+      ]
+    },
+    "ok": true,
+    "command": {
+      "kind": "openPage",
+      "page": "chomp.desk/chomp"
+    }
+  },
+  {
+    "input": {
+      "args": [
+        "open",
+        "--page",
+        "chomp.desk/chomp"
+      ]
+    },
+    "ok": true,
+    "command": {
+      "kind": "openPage",
+      "page": "chomp.desk/chomp"
+    }
+  },
+  {
+    "input": {
+      "args": [
+        "open"
+      ]
+    },
+    "ok": false,
+    "error": "open needs a tab: home, terminal, stats, shelf, plugins, clipboard, or page plugin-id/page-id."
+  },
+  {
+    "input": {
+      "args": [
+        "plugin",
+        "acme.x",
+        "--enable",
+        "off"
+      ]
+    },
+    "ok": true,
+    "command": {
+      "kind": "setPluginEnabled",
+      "pluginId": "acme.x",
+      "enabled": false
+    }
+  },
+  {
+    "input": {
+      "args": [
+        "plugin",
+        "acme.x"
+      ]
+    },
+    "ok": false,
+    "error": "plugin needs enable=true or enable=false."
+  },
+  {
+    "input": {
+      "args": [
+        "install",
+        "acme.x"
+      ]
+    },
+    "ok": true,
+    "command": {
+      "kind": "install",
+      "pluginId": "acme.x"
+    }
+  },
+  {
+    "input": {
+      "args": [
+        "SETTINGS"
+      ]
+    },
+    "ok": true,
+    "command": {
+      "kind": "openSettings"
+    }
+  },
+  {
+    "input": {
+      "args": [
+        "palette"
+      ]
+    },
+    "ok": true,
+    "command": {
+      "kind": "openPalette"
+    }
+  },
+  {
+    "input": {
+      "args": [
+        "Timer",
+        "--action",
+        "Pause"
+      ]
+    },
+    "ok": true,
+    "command": {
+      "kind": "timerAction",
+      "action": "pause"
+    }
+  },
+  {
+    "input": {
+      "args": [
+        "toast",
+        "--detail"
+      ]
+    },
+    "ok": false,
+    "error": "toast needs a title of 1 to 120 characters."
+  },
+  {
+    "input": {
+      "args": [
+        "open",
+        "--tab"
+      ]
+    },
+    "ok": false,
+    "error": "open needs a tab: home, terminal, stats, shelf, plugins, clipboard, or page plugin-id/page-id."
+  },
+  {
+    "input": {
+      "args": []
+    },
+    "ok": false,
+    "error": "Say what to do, e.g. timer 5m."
+  },
+  {
+    "input": {
+      "args": [
+        "fly"
+      ]
+    },
+    "ok": false,
+    "error": "Unknown command."
+  },
+  {
+    "input": {
+      "args": [
+        "timer"
+      ]
+    },
+    "ok": false,
+    "error": "timer needs a duration like 5m, 90s or 1h20m, or stop, pause or resume."
+  },
+  {
+    "input": {
+      "args": [
+        "install"
+      ]
+    },
+    "ok": false,
+    "error": "install needs a plugin id."
+  }
+]

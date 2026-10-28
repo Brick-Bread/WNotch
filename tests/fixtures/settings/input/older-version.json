@@ -1,0 +1,10 @@
+{
+  "Style": "Notch",
+  "ExpandOnHover": true,
+  "Theme": "Light",
+  "AccentColor": "Green",
+  "ShowMedia": true,
+  "EnabledPlugins": ["notch.break-reminder"],
+  "SomeSettingFromTheFuture": { "nested": [1, 2, 3] },
+  "RetiredFlag": true
+}

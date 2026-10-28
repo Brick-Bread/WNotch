@@ -1,0 +1,71 @@
+{
+  "DisplayIndex": null,
+  "Style": "Island",
+  "Position": "TaskbarLeft",
+  "ExpandOnHover": true,
+  "ShelfOpensOnDrag": true,
+  "OpenHotkey": "Alt+Shift+N",
+  "HideInFullscreen": true,
+  "Theme": "Dark",
+  "PluginTheme": null,
+  "AccentColor": "Blue",
+  "GlowEffects": true,
+  "GlowIntensity": 9000,
+  "NotifyOfUpdates": true,
+  "LastNotifiedUpdateTag": null,
+  "ShowMedia": true,
+  "ShowVolume": true,
+  "ShowBrightness": true,
+  "ShowPower": true,
+  "ShowBluetooth": true,
+  "ShowCapsLock": true,
+  "PomodoroFocusMinutes": -5,
+  "PomodoroShortBreakMinutes": 5,
+  "PomodoroLongBreakMinutes": 15,
+  "TimerPresets": [
+    {
+      "Name": "Way too long a name",
+      "Seconds": 0
+    }
+  ],
+  "HomeWidgets": [
+    {
+      "Id": "*generated*",
+      "Kind": "teleporter",
+      "Width": "Full",
+      "HideWhenEmpty": true,
+      "Options": {},
+      "Source": null
+    },
+    {
+      "Id": "*generated*",
+      "Kind": "media",
+      "Width": "Full",
+      "HideWhenEmpty": true,
+      "Options": {
+        "x": "y"
+      },
+      "Source": null
+    }
+  ],
+  "CalendarFeeds": [],
+  "EnabledPlugins": [],
+  "TerminalPresets": [
+    "Claude = claude",
+    "Codex = codex",
+    "opencode = opencode",
+    "Shell = powershell"
+  ],
+  "RecentFolders": [],
+  "WebhookEnabled": false,
+  "WebhookPort": 80,
+  "WebhookToken": null,
+  "PaletteHotkey": "Alt+Shift+P",
+  "DetectAgents": true,
+  "HiddenAgents": [],
+  "WatchAppSessions": true,
+  "GlobalAgentHooks": false,
+  "ClipboardHistory": false,
+  "MirrorNotifications": false,
+  "MirroredApps": []
+}
