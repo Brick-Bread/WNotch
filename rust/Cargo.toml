@@ -27,6 +27,7 @@ tempfile = "3.27.0"
 thiserror = "2.0.21"
 tokio = "1.54.1"
 windows = "0.62.2"
+windows-core = "0.62.2"
 
 [workspace.lints.rust]
 unsafe_op_in_unsafe_fn = "deny"

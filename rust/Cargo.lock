@@ -1812,6 +1812,7 @@ dependencies = [
  "notch-core",
  "tokio",
  "windows",
+ "windows-core",
 ]
 
 [[package]]

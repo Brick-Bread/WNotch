@@ -6,6 +6,8 @@
 //! their tests also run on other systems.
 
 #[cfg(windows)]
+pub mod audio;
+#[cfg(windows)]
 pub mod clipboard;
 #[cfg(windows)]
 pub mod conpty;
