@@ -248,4 +248,111 @@ mod tests {
         // Transparent pixels do not count.
         assert_eq!(accent_color(&[0, 0, 255, 0]), None);
     }
+
+    fn close(a: f64, b: f64) -> bool {
+        (a - b).abs() < 1e-6
+    }
+
+    #[test]
+    fn flash_starts_bright_and_settles_low() {
+        let glow = Glow::new(GlowColor::WHITE, GlowPattern::Flash);
+
+        assert!(close(glow.intensity_at(0.0, 0.0), 1.0));
+        assert!(close(glow.intensity_at(5.0, 0.0), 0.35));
+        assert!(glow.intensity_at(0.3, 0.0) > glow.intensity_at(0.9, 0.0));
+    }
+
+    #[test]
+    fn waves_repeat_and_stay_in_range() {
+        for (pattern, period) in [(GlowPattern::Breathe, 3.2), (GlowPattern::Pulse, 1.1)] {
+            let glow = Glow::new(GlowColor::CYAN, pattern);
+
+            let mut t = 0.0;
+            while t < period * 3.0 {
+                assert!((0.0..=1.0).contains(&glow.intensity_at(t, 0.0)));
+                t += 0.05;
+            }
+
+            assert!(close(glow.intensity_at(0.4, 0.0), glow.intensity_at(0.4 + period, 0.0)));
+            assert!(glow.intensity_at(period / 2.0, 0.0) > glow.intensity_at(0.0, 0.0));
+        }
+    }
+
+    #[test]
+    fn audio_glow_follows_the_level() {
+        let glow = Glow::new(GlowColor::VIOLET, GlowPattern::Audio);
+
+        assert!(glow.intensity_at(1.0, 0.9) > glow.intensity_at(1.0, 0.1));
+        assert!(close(glow.intensity_at(1.0, 5.0), 1.0));
+    }
+
+    #[test]
+    fn strength_scales_brightness() {
+        assert!(close(Glow::with_strength(GlowColor::WHITE, GlowPattern::Steady, 0.5).intensity_at(0.0, 0.0), 0.4));
+    }
+
+    #[test]
+    fn output_lifts_dim_glows_but_keeps_their_order() {
+        assert!(close(output::level(0.0, 1.0), 0.0));
+        assert!(close(output::level(1.0, 1.0), 1.0));
+        assert!(output::level(0.25, 1.0) > 0.4);
+        assert!(output::level(0.25, 1.0) < output::level(0.5, 1.0));
+    }
+
+    #[test]
+    fn output_scales_with_the_brightness_setting() {
+        assert!(close(2.0 * output::level(0.5, 1.0), output::level(0.5, output::gain(200))));
+        assert_eq!(output::gain(output::DEFAULT_PERCENT), 1.0);
+        assert_eq!(output::gain(-5), 0.25);
+        assert_eq!(output::gain(1000), 2.0);
+    }
+
+    #[test]
+    fn colours_blend() {
+        assert_eq!(GlowColor::new(0, 0, 0).lerp(GlowColor::new(200, 128, 0), 0.5), GlowColor::new(100, 64, 0));
+    }
+
+    #[test]
+    fn accent_picks_the_vivid_colour_over_grey() {
+        // Mostly grey pixels with a few strong blue ones.
+        let mut pixels = Vec::new();
+        for _ in 0..90 {
+            pixels.extend_from_slice(&[128, 128, 128, 255]);
+        }
+        for _ in 0..10 {
+            pixels.extend_from_slice(&[220, 60, 20, 255]);
+        }
+
+        let accent = accent_color(&pixels).unwrap();
+
+        assert_eq!(accent.b, 255);
+        assert!(accent.r < 60 && accent.g < 100);
+    }
+
+    #[test]
+    fn greyscale_images_have_no_accent() {
+        assert_eq!(accent_color(&[50, 50, 50, 255, 200, 200, 200, 255]), None);
+    }
+
+    #[test]
+    fn presets_are_found_by_name() {
+        // C#'s null name is the empty string here.
+        for (name, found) in [("Blue", true), ("violet", true), ("None", false), ("", false)] {
+            assert_eq!(GlowColor::from_name(name).is_some(), found, "{name}");
+        }
+    }
+
+    #[test]
+    fn every_named_preset_resolves_to_itself() {
+        for (name, color) in GlowColor::NAMED {
+            assert_eq!(GlowColor::from_name(name), Some(color));
+        }
+    }
+
+    #[test]
+    fn on_light_deepens_every_channel() {
+        let deep = GlowColor::YELLOW.on_light();
+
+        assert!(deep.r < GlowColor::YELLOW.r && deep.g < GlowColor::YELLOW.g && deep.b < GlowColor::YELLOW.b);
+    }
 }
