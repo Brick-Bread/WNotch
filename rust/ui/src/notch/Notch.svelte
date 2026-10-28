@@ -20,6 +20,6 @@
 
   .island {
     margin: 0 auto;
-    background: #000;
+    background: var(--island);
   }
 </style>

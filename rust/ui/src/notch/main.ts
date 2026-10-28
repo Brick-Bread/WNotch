@@ -1,3 +1,4 @@
+import "../theme";
 import { mount } from "svelte";
 import Notch from "./Notch.svelte";
 
