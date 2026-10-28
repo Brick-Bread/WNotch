@@ -164,31 +164,31 @@ Contents:
 - [ ] notchctl checks the arguments locally first; a parse error goes to stderr with exit 1 — `src/Notch.Cli/Program.cs:39`
 - [ ] notchctl timeouts: 3 s to connect, 10 min to answer — `src/Notch.Cli/Program.cs:46`
 - [ ] notchctl exit codes: 0 ok (message to stdout), 1 refused (message to stderr), 2 not running ("Notch is not running. Start it, or use --start."), 3 connected but no answer in time — `src/Notch.Cli/Program.cs:57`
-- [ ] Webhook listener on `http://127.0.0.1:<port>/` only; the port must be 1024..65535, otherwise an error string — `src/Notch.Platform/Automation/WebhookServer.cs:32`
-- [ ] Rate limit: 30 requests per fixed 1 s window, then 429 "Too many requests." (checked before auth) — `src/Notch.Platform/Automation/WebhookServer.cs:166`
+- [x] Webhook listener on `http://127.0.0.1:<port>/` only; the port must be 1024..65535, otherwise an error string — `src/Notch.Platform/Automation/WebhookServer.cs:32`
+- [x] Rate limit: 30 requests per fixed 1 s window, then 429 "Too many requests." (checked before auth) — `src/Notch.Platform/Automation/WebhookServer.cs:166`
 - [x] Auth order: any `Origin` header gives 403. `Host` must be exactly `127.0.0.1:<port>`, `localhost:<port>` or `[::1]:<port>`, otherwise 403. No token configured gives 503. `Authorization: Bearer <token>` (prefix ignores case, value trimmed, compared in constant time) or 401 — `src/Notch.Core/Automation/WebhookRequest.cs:38`
 - [x] Token: 32 random bytes, base64url without padding — `src/Notch.Core/Automation/WebhookRequest.cs:286`
-- [ ] Body limit 64 KiB: Content-Length over the limit gives 413, a stream that grows past it while being read gives 413, and a missing or too-large body on POST gives 413 — `src/Notch.Platform/Automation/WebhookServer.cs:122`
+- [x] Body limit 64 KiB: Content-Length over the limit gives 413, a stream that grows past it while being read gives 413, and a missing or too-large body on POST gives 413 — `src/Notch.Platform/Automation/WebhookServer.cs:122`
 - [x] Routing: the query is stripped and trailing `/` trimmed. `/v1/activity/<id>` needs DELETE (otherwise 405 "Use DELETE…") and an invalid id gives 400. `/v1/activity`, `/v1/notify` and `/v1/command` need POST (otherwise 405 "Use POST."). Anything else gives 404 — `src/Notch.Core/Automation/WebhookRequest.cs:66`
 - [x] The body must be valid JSON (otherwise 400 "not valid JSON") and a JSON object (otherwise 400) — `src/Notch.Core/Automation/WebhookRequest.cs:103`
 - [x] **[changed: a glow pattern that is not one of the five names, or a lone surrogate in a string, is refused with 400; C# accepts the undefined pattern, and answers 500 for the surrogate]** `POST /v1/activity` fields: `id` (`^[A-Za-z0-9._-]+$`, at most 64, published as `webhook.<id>`), `title` (1..120, trimmed), `detail` (≤300), `glyph` (≤8), `tier` (`transient` default, `ongoing`, `attention`, `glance`), `progress` (number clamped 0..1, NaN becomes 0), `glow` (colour string, giving Steady, or `{color, pattern: Steady|Breathe|Pulse|Flash|Audio, strength 0..1 default 1}`), `lifetimeMs` (>0, capped at 5 min, Transient only) — `src/Notch.Core/Automation/WebhookRequest.cs:162`
 - [x] `POST /v1/notify` takes the same fields as the toast command — `src/Notch.Core/Automation/WebhookRequest.cs:122`
 - [x] `POST /v1/command`: the verb comes from `command` or `verb`, and the other string, number and bool fields become values. install and plugin are refused with 403; parse errors give 400 — `src/Notch.Core/Automation/WebhookRequest.cs:127`
 - [x] `DELETE /v1/activity/<id>` removes `webhook.<id>` — `src/Notch.Core/Automation/WebhookRequest.cs:71`
-- [ ] Reply JSON is `{"ok":bool,"message":string}` with `application/json; charset=utf-8` and no CORS headers. A handler result gives 200, or 422 when ok is false. An unexpected exception gives 500 "Something went wrong." — `src/Notch.Platform/Automation/WebhookServer.cs:199`
+- [x] Reply JSON is `{"ok":bool,"message":string}` with `application/json; charset=utf-8` and no CORS headers. A handler result gives 200, or 422 when ok is false. An unexpected exception gives 500 "Something went wrong." — `src/Notch.Platform/Automation/WebhookServer.cs:199`
 - [ ] At most 20 non-transient webhook activities live at once; over the limit the request is refused (422) with the message "Too many activities are showing…". Publishing an id as transient removes it from the live set — `src/Notch.App/Automation/WebhookService.cs:16`
 - [ ] `Apply()` on startup and on each settings save: stop when the webhook is off, otherwise generate the token if needed and start. A start problem is logged to errors.log at startup and shown in a MessageBox after save — `src/Notch.App/Automation/WebhookService.cs:38`
 
 ### IPC and wire formats
 - [ ] Single-instance mutex `Local\Notch.SingleInstance` (DEBUG: `Local\Notch.SingleInstance.Debug`). A `--screenshots=` run skips the check — `src/Notch.App/App.xaml.cs:84`
 - [ ] A second instance forwards its arguments (minus `--wait-for=`) through the command pipe with a 3 s timeout, then quits — `src/Notch.App/App.xaml.cs:94`
-- [ ] Command pipe name `notch-command` (DEBUG `notch-command-debug`), InOut, byte mode, max instances, `CurrentUserOnly` — `src/Notch.Core/Automation/CommandPipe.cs:24`
+- [x] Command pipe name `notch-command` (DEBUG `notch-command-debug`), InOut, byte mode, max instances, `CurrentUserOnly` — `src/Notch.Core/Automation/CommandPipe.cs:24`
 - [x] **[changed: a `null` among the arguments gets "That request could not be read."; C# passes it on to its handler]** Command pipe request: one UTF-8 line holding a JSON array of strings plus `\n`, at most 8 KiB, read within 5 s. An unreadable request gets `{ok:false,message:"That request could not be read."}` — `src/Notch.Core/Automation/CommandPipe.cs:29`
 - [x] Command pipe answer: one line of `CommandResult` JSON with web (camelCase) naming, `{"ok":bool,"message":string|null}`. When the client gets EOF without a line it treats that as ok — `src/Notch.Core/Automation/CommandPipe.cs:81`
-- [ ] Client `ExchangeAsync` takes separate connect and answer timeouts and reports Connected versus not — `src/Notch.Core/Automation/CommandPipe.cs:62`
-- [ ] Per-process agent pipe `notch-agent-<pid>`, passed to terminal sessions in `NOTCH_PIPE` — `src/Notch.Platform/Agents/AgentHookServer.cs:19`
+- [x] Client `ExchangeAsync` takes separate connect and answer timeouts and reports Connected versus not — `src/Notch.Core/Automation/CommandPipe.cs:62`
+- [x] Per-process agent pipe `notch-agent-<pid>`, passed to terminal sessions in `NOTCH_PIPE` — `src/Notch.Platform/Agents/AgentHookServer.cs:19`
 - [x] Shared agent pipe `notch-agent-shared` (DEBUG `notch-agent-shared-debug`) — `src/Notch.Core/Agents/AgentHooks.cs:56`
-- [ ] The agent server listens on both pipes: InOut (needed by opencode), max instances, CurrentUserOnly. It reads one line within 5 s and ignores lines over 256 KiB; nothing is written back — `src/Notch.Platform/Agents/AgentHookServer.cs:48`
+- [x] The agent server listens on both pipes: InOut (needed by opencode), max instances, CurrentUserOnly. It reads one line within 5 s and ignores lines over 256 KiB; nothing is written back — `src/Notch.Platform/Agents/AgentHookServer.cs:48`
 - [x] Hook line format: `{"session":string,"payload":string(JSON text),"pid":int}` plus `\n` — `src/Notch.Core/Agents/AgentHooks.cs:63`
 - [x] Hook parsing: the event is `payload.hook_event_name`, falling back to `payload.type`. Folder comes from `payload.cwd`, agent from `payload.agent`. An empty session means the agent was started outside Notch — `src/Notch.Core/Agents/AgentHooks.cs:74`
 - [ ] Env vars set for terminal sessions: `NOTCH_PIPE=<per-process pipe>` and `NOTCH_SESSION=<session id>`, plus the preset's own variables, merged over the parent environment ignoring case — `src/Notch.App/Terminal/TerminalController.cs:182`
@@ -243,7 +243,7 @@ Contents:
 - [ ] Settings "start with Windows" reads and writes the Run value — `src/Notch.App/Settings/SettingsWindow.xaml.cs:516`
 - [ ] `HKCU\Software\Classes\notch`: default `URL:Notch`, `URL Protocol` = `""`, `DefaultIcon` = `"<exe>",0`, `shell\open\command` = `"<exe>" "%1"` — `src/Notch.Setup/Machine.cs:91`
 - [ ] `HKCU\Environment` `Path`: the install dir is added or removed only. Comparison expands variables, strips quotes and trailing `\` and ignores case. The REG_EXPAND_SZ type is kept, or used when the value contains `%`. `WM_SETTINGCHANGE "Environment"` is broadcast with SMTO_ABORTIFHUNG and a 500 ms timeout (3 s cap) — `src/Notch.Setup/Machine.cs:123`
-- [ ] `HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize` `AppsUseLightTheme` (DWORD ≠ 0 means light; unreadable means dark) — `src/Notch.Platform/Display/SystemTheme.cs:7`
+- [x] `HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize` `AppsUseLightTheme` (DWORD ≠ 0 means light; unreadable means dark) — `src/Notch.Platform/Display/SystemTheme.cs:7`
 - [ ] Uninstall deletes the `Classes\notch` and Uninstall keys, the `Software\Notch` key, the Run value and the PATH entry — `src/Notch.Setup/Machine.cs:176`
 - [ ] Default install dir `%LocalAppData%\Programs\Notch`; app exe `Notch.exe`; companions `Notch.Hook.exe`, `notchctl.exe`, `Uninstall.exe`, `Assets\terminal\**`, `Assets\opencode\notch.js`, `plugins\new-age\` — `src/Notch.Setup/Machine.cs:23`
 - [ ] Shipped assets and built-in plugins are copied by the project file — `src/Notch.App/Notch.App.csproj:33`
@@ -1031,7 +1031,7 @@ Contents:
 - [ ] Closing the notch resets: hotkey hold, page-view keyboard, timer entry, Home edit mode and Home keyboard — `src/Notch.App/Shell/NotchWindow.xaml.cs:719`
 - [ ] On open: refreshes the calendar display and prunes missing shelf files — `src/Notch.App/Shell/NotchWindow.xaml.cs:710`
 - [ ] Fullscreen hide (setting): the window is hidden entirely while a fullscreen app covers this display. A fullscreen app counts when it is the foreground window, or when it is the uppermost app window with only topmost windows above it — `src/Notch.Platform/Display/FullscreenDetector.cs:19`
-- [ ] Fullscreen detection ignores hidden, minimised, cloaked, tool, no-activate and transparent windows, windows with a caption (maximised), and the shell's own windows (Progman/WorkerW/Shell_TrayWnd/XamlExplorerHostIslandWindow) — `src/Notch.Platform/Display/FullscreenDetector.cs:55`
+- [x] Fullscreen detection ignores hidden, minimised, cloaked, tool, no-activate and transparent windows, windows with a caption (maximised), and the shell's own windows (Progman/WorkerW/Shell_TrayWnd/XamlExplorerHostIslandWindow) — `src/Notch.Platform/Display/FullscreenDetector.cs:55`
 - [ ] Fullscreen is checked on every foreground change and again 400 ms later, plus every second. It is not checked while typing into the notch or dragging out of it — `src/Notch.App/Shell/NotchWindow.xaml.cs:240`
 - [ ] When hiding for fullscreen it collapses first. Coming back it reappears without taking focus. The hotkey and palette do nothing while it is hidden — `src/Notch.App/Shell/NotchWindow.xaml.cs:494`
 - [ ] The theme refresh recolours: terminal theme, widget colours, plugin cards, Home views, page figures — `src/Notch.App/Shell/NotchWindow.xaml.cs:329`
@@ -1068,16 +1068,16 @@ Contents:
 - [ ] Agent logos (claude, codex, …) are geometry resources — `src/Notch.App/Themes/AgentLogos.xaml:1`
 
 ### Pill: HUDs & notices
-- [ ] Volume HUD: "Volume" or "Muted", progress, glyph by level (mute/low/mid/high), white flash scaled by level. Comes from the default render device's volume notifications — `src/Notch.Core/Hud/HudActivities.cs:17`
-- [ ] Audio output HUD: the new default device's name with "Output" when the default output changes (3.5 s) — `src/Notch.Platform/Hud/VolumeWatcher.cs:38`
-- [ ] Brightness HUD: "Brightness" + progress, yellow flash scaled by level. Built-in panel only (WMI WmiMonitorBrightnessEvent) — `src/Notch.Platform/Hud/BrightnessWatcher.cs:44`
+- [x] Volume HUD: "Volume" or "Muted", progress, glyph by level (mute/low/mid/high), white flash scaled by level. Comes from the default render device's volume notifications — `src/Notch.Core/Hud/HudActivities.cs:17`
+- [x] Audio output HUD: the new default device's name with "Output" when the default output changes (3.5 s) — `src/Notch.Platform/Hud/VolumeWatcher.cs:38`
+- [x] Brightness HUD: "Brightness" + progress, yellow flash scaled by level. Built-in panel only (WMI WmiMonitorBrightnessEvent) — `src/Notch.Platform/Hud/BrightnessWatcher.cs:44`
 - [x] Power HUD: "Charging" (green flash) or "On battery" (white 0.6) with "%", 3.5 s, shown on plug/unplug. The first reading only sets a baseline — `src/Notch.Core/Hud/PowerHudTracker.cs:33`
 - [x] Low battery HUD: "Low battery" with "%", red pulse, 6 s, when crossing 20/10/5 % while unplugged — `src/Notch.Core/Hud/PowerHudTracker.cs:38`
-- [ ] Bluetooth HUD: device name, "Connected"/"Disconnected", blue flash, 3.5 s. Covers paired Classic and LE devices; the starting state is only a baseline — `src/Notch.Platform/Hud/BluetoothWatcher.cs:66`
+- [x] Bluetooth HUD: device name, "Connected"/"Disconnected", blue flash, 3.5 s. Covers paired Classic and LE devices; the starting state is only a baseline — `src/Notch.Platform/Hud/BluetoothWatcher.cs:66`
 - [ ] Caps Lock HUD: "Caps Lock" On/Off, 2 s. Caps Lock is polled every 150 ms (no keyboard hook) — `src/Notch.App/Shell/NotchWindow.Keyboard.cs:47`
-- [ ] Missing hardware (no battery, no dimmable panel, no BT radio) is skipped quietly — `src/Notch.Platform/Hud/SystemHudSources.cs:44`
+- [x] Missing hardware (no battery, no dimmable panel, no BT radio) is skipped quietly — `src/Notch.Platform/Hud/SystemHudSources.cs:44`
 - [x] Notification mirror: Windows toast → transient "sender/subject" + app name, blue flash 0.8, 5 s. The body is never shown. Title max 80, app max 40, one line — `src/Notch.Core/Shell/NotificationMirror.cs:31`
-- [ ] Notifications are polled every 2 s. The first poll only primes (no replay of the action centre). Dismissed ids are forgotten — `src/Notch.Platform/Notifications/NotificationWatcher.cs:62`
+- [x] Notifications are polled every 2 s. The first poll only primes (no replay of the action centre). Dismissed ids are forgotten — `src/Notch.Platform/Notifications/NotificationWatcher.cs:62`
 - [ ] App filter: show all when the list is empty, otherwise apps whose name contains a listed word (case-insensitive) — `src/Notch.Core/Shell/NotificationMirror.cs:23`
 - [ ] Windows notification access is requested when the feature is switched on. If refused, a message box explains it (only when the user just saved) — `src/Notch.Platform/Notifications/NotificationWatcher.cs:29`
 - [ ] Timer in pill: Ongoing "<title>" + remaining time with a breathing glow in the timer colour (focus 0.55, others 0.5); "<title> paused" without glow; on finish Attention "Done" with a pulse glow and a chime — `src/Notch.App/Shell/NotchWindow.Widgets.cs:388`
@@ -1128,7 +1128,7 @@ Contents:
 - [ ] Timeline: elapsed, progress bar, "-remaining" (h:mm:ss over an hour), ticking every 500 ms only while expanded and playing; hidden without a timeline — `src/Notch.App/Shell/NotchWindow.Media.cs:77`
 - [ ] Click-to-seek on a 14 px hit area when the source can seek (hand cursor) — `src/Notch.App/Shell/NotchWindow.Media.cs:105`
 - [ ] Previous / Play-Pause (glyph shows state) / Next, each enabled per the session's capabilities — `src/Notch.App/Shell/NotchWindow.Media.cs:23`
-- [ ] Follows the system's current media session (GSMTC, the same one the Windows flyout shows); thumbnail max 8 MB — `src/Notch.Platform/Media/GsmtcMediaService.cs:9`
+- [x] Follows the system's current media session (GSMTC, the same one the Windows flyout shows); thumbnail max 8 MB — `src/Notch.Platform/Media/GsmtcMediaService.cs:9`
 - [ ] Publishes `notch.media` to plugins on track or play-state change, and "stopped" when nothing plays — `src/Notch.App/Shell/NotchWindow.Media.cs:39`
 
 ### Home widget: Agents
@@ -1300,7 +1300,7 @@ Contents:
 - [ ] Per-agent hide toggles (HiddenAgents) and a master on/off — `src/Notch.App/Agents/AgentTracker.cs:118`
 - [ ] Global hook messages (shared pipe; session empty; the hook's pid is mapped to an agent through its ancestors) update a detected agent's state and folder. If the agent is unknown, a rescan runs — `src/Notch.App/Agents/AgentTracker.cs:231`
 - [ ] opencode plugin events are routed by folder: to Notch terminal sessions first, then to detected opencode windows in that folder (or the only one) — `src/Notch.App/Agents/AgentTracker.cs:267`
-- [ ] Focus window: raises the first window among host/ancestor/conhost candidates, restoring it if minimised and attaching input to beat the foreground lock — `src/Notch.Platform/Agents/WindowFocus.cs:19`
+- [x] Focus window: raises the first window among host/ancestor/conhost candidates, restoring it if minimised and attaching input to beat the foreground lock — `src/Notch.Platform/Agents/WindowFocus.cs:19`
 - [ ] Done is cleared when the agent's window is in front or after jumping to it — `src/Notch.App/Agents/AgentTracker.cs:157`
 - [ ] App sessions: reads the Claude desktop app's Code-tab session files and transcripts, and ChatGPT/Codex thread transcripts. States Working/NeedsInput/Done/Idle with a 10-minute staleness limit. Claude sessions are listed from the last 6 h, ChatGPT from the last 1 h (max 5). Tail-reads 256 KB; unchanged files are skipped — `src/Notch.App/Agents/AppSessionReader.cs:24`
 - [ ] App sessions are marked seen when that app's window is in front (Claude: the shown session; ChatGPT: all of its sessions) — `src/Notch.App/Agents/AgentTracker.cs:183`
