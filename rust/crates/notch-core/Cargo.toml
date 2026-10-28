@@ -12,9 +12,11 @@ publish.workspace = true
 [dependencies]
 base64.workspace = true
 chrono.workspace = true
+chrono-tz.workspace = true
 getrandom.workspace = true
 indexmap.workspace = true
 p256.workspace = true
+rrule.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
