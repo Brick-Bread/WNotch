@@ -18,6 +18,7 @@ pub mod pipes;
 pub mod process;
 #[cfg(windows)]
 pub mod registry;
+pub mod spectrum;
 #[cfg(windows)]
 pub mod thumbnails;
 #[cfg(windows)]
