@@ -6,9 +6,17 @@
 //! their tests also run on other systems.
 
 #[cfg(windows)]
+pub mod clipboard;
+#[cfg(windows)]
 pub mod conpty;
 pub mod display;
 #[cfg(windows)]
 pub mod pipes;
 #[cfg(windows)]
+pub mod process;
+#[cfg(windows)]
 pub mod registry;
+#[cfg(windows)]
+pub mod thumbnails;
+#[cfg(windows)]
+pub mod window;
