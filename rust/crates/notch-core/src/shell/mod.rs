@@ -2,8 +2,10 @@
 
 pub mod fullscreen;
 pub mod hotkey;
+pub mod island;
 pub mod mode;
 pub mod notification_mirror;
+pub mod opening;
 pub mod palette_search;
 pub mod placement;
 
