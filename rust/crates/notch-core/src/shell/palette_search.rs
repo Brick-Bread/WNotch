@@ -81,10 +81,17 @@ fn score(word: &[u16], text: &[u16]) -> i32 {
     5.max(30 - (span - word.len() as i32))
 }
 
-/// `ToLowerInvariant`, as UTF-16 units. İ is the one character whose full lowercase mapping is
-/// longer than its simple one; the simple one is its first character.
+/// `ToLowerInvariant`, as UTF-16 units. It maps one character to one character, so a character
+/// whose lowercase is longer (only İ) stays as it is.
 fn lower(text: &str) -> Vec<u16> {
-    text.chars().map(|c| c.to_lowercase().next().unwrap_or(c)).collect::<String>().encode_utf16().collect()
+    let simple = |c: char| {
+        let mut lower = c.to_lowercase();
+        match (lower.next(), lower.next()) {
+            (Some(single), None) => single,
+            _ => c,
+        }
+    };
+    text.chars().map(simple).collect::<String>().encode_utf16().collect()
 }
 
 /// `char.IsLetterOrDigit` on one UTF-16 unit; half a surrogate pair is neither. Rust's test also
@@ -169,6 +176,11 @@ mod tests {
     #[test]
     fn the_list_is_cut_to_the_maximum() {
         assert_eq!(rank_items(Some("o"), 3).len(), 3);
+    }
+
+    #[test]
+    fn lowercasing_keeps_dotted_capital_i_as_dotnet_does() {
+        assert_eq!(lower("İK\u{212A}"), "İkk".encode_utf16().collect::<Vec<_>>());
     }
 
     #[test]

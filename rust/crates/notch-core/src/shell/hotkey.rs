@@ -115,8 +115,12 @@ fn key_code(name: &str) -> Option<i32> {
         .map(|number| F1 + number - 1)
 }
 
-/// A character's simple uppercase mapping, as `char.ToUpperInvariant` gives it.
+/// A character's simple uppercase mapping, as `char.ToUpperInvariant` gives it. The invariant
+/// culture leaves the Turkish dotless ı alone.
 fn upper(c: char) -> char {
+    if c == 'ı' {
+        return c;
+    }
     let mut upper = c.to_uppercase();
     match (upper.next(), upper.next()) {
         (Some(single), None) => single,
@@ -186,6 +190,8 @@ mod tests {
         assert_eq!(Hotkey::parse(Some("Alt+F01")).map(|h| h.to_string()).as_deref(), Some("Alt+F1"));
         assert_eq!(Hotkey::parse(Some("Alt+F+1")), None);
         assert_eq!(Hotkey::parse(Some("Alt+F-1")), None);
+        assert_eq!(Hotkey::parse(Some("Alt+ı")), None);
+        assert_eq!(Hotkey::parse(Some("Alt+ſ")).map(|h| h.to_string()).as_deref(), Some("Alt+S"));
         assert_eq!(parse_integer(" +24 "), Some(24));
         assert_eq!(parse_integer("99999999999"), None);
         assert_eq!(parse_integer("٣"), None);

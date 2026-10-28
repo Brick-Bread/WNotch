@@ -79,13 +79,14 @@ fn clip(text: &str, length: usize) -> String {
     clipped
 }
 
-/// `StringComparison.OrdinalIgnoreCase`: each character's simple uppercase mapping.
+/// `StringComparison.OrdinalIgnoreCase`: each character's simple uppercase mapping, except that
+/// no other character becomes an ASCII one (ı stays apart from I, ſ from S).
 fn fold_case(text: &str) -> String {
     text.chars()
         .map(|c| {
             let mut upper = c.to_uppercase();
             match (upper.next(), upper.next()) {
-                (Some(single), None) => single,
+                (Some(single), None) if single.is_ascii() == c.is_ascii() => single,
                 _ => c,
             }
         })
@@ -154,6 +155,13 @@ mod tests {
         assert!(allows("Microsoft Outlook", &allowed));
         assert!(allows("Microsoft Teams (work)", &allowed));
         assert!(!allows("Slack", &allowed));
+    }
+
+    #[test]
+    fn case_is_ignored_as_ordinal_ignore_case_ignores_it() {
+        assert!(allows("ÉCOLE", &["école"]));
+        assert!(!allows("Iİ", &["ı"]));
+        assert!(!allows("Slack", &["ſlack"]));
     }
 
     #[test]
