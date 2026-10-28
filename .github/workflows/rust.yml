@@ -1,0 +1,50 @@
+name: rust
+
+on:
+  push:
+    branches: [rust-port]
+  pull_request:
+    paths:
+      - rust/**
+      - tests/fixtures/**
+      - tests/Notch.Core.Tests/FixtureTests.cs
+      - src/Notch.Core/**
+      - .github/workflows/rust.yml
+
+jobs:
+  rust:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: rust/ui/package-lock.json
+      - name: Check and build the UI
+        working-directory: rust/ui
+        run: |
+          npm ci
+          npm run check
+          npm run build
+      # rust-toolchain.toml picks the toolchain; this installs it before the cache keys on it.
+      - run: rustup show active-toolchain
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      - run: cargo fmt --all --check
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - run: cargo test --workspace --locked
+
+  # The fixtures hold the C# answers the Rust tests are checked against; this fails when C# stops giving them.
+  fixtures:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet test tests/Notch.Core.Tests --filter FullyQualifiedName~FixtureTests
