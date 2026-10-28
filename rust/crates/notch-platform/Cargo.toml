@@ -16,6 +16,7 @@ notch-core.workspace = true
 [target.'cfg(windows)'.dependencies]
 tokio = { workspace = true, features = ["io-util", "net", "rt", "time"] }
 windows = { workspace = true, features = [
+    "ApplicationModel",
     "Devices_Bluetooth",
     "Devices_Enumeration",
     "Foundation",
@@ -23,6 +24,8 @@ windows = { workspace = true, features = [
     "Media_Control",
     "Storage_Streams",
     "System_Power",
+    "UI_Notifications",
+    "UI_Notifications_Management",
     "Wdk_System_Threading",
     "Win32_Devices_FunctionDiscovery",
     "Win32_Foundation",

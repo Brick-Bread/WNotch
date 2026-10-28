@@ -21,6 +21,8 @@ pub mod keyboard;
 #[cfg(windows)]
 pub mod media;
 #[cfg(windows)]
+pub mod notifications;
+#[cfg(windows)]
 pub mod pipes;
 #[cfg(windows)]
 pub mod process;
