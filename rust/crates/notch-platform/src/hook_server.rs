@@ -26,9 +26,12 @@ impl HookServer {
     /// including those from agents Notch did not start.
     pub fn start(received: impl Fn(HookMessage) + Send + Sync + 'static) -> Self {
         // Unique per process so two copies of the app (a dev build, say) never cross wires.
-        let pipe_name = format!("notch-agent-{}", std::process::id());
+        Self::start_on(format!("notch-agent-{}", std::process::id()), SHARED_PIPE_NAME.to_owned(), received)
+    }
+
+    fn start_on(pipe_name: String, shared: String, received: impl Fn(HookMessage) + Send + Sync + 'static) -> Self {
         let received = Arc::new(received);
-        let tasks = [pipe_name.clone(), SHARED_PIPE_NAME.to_owned()]
+        let tasks = [pipe_name.clone(), shared]
             .into_iter()
             .map(|name| {
                 let received = Arc::clone(&received);
@@ -75,11 +78,19 @@ mod tests {
 
     use super::*;
 
+    /// A server on pipes of the test's own, as tests run side by side in one process.
+    fn test_server(received: impl Fn(HookMessage) + Send + Sync + 'static) -> HookServer {
+        static NEXT: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+        let n = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let id = format!("{}-{n}", std::process::id());
+        HookServer::start_on(format!("notch-test-agent-{id}"), format!("notch-test-shared-{id}"), received)
+    }
+
     #[tokio::test]
     async fn the_hook_program_which_only_writes_still_connects() {
         let messages = Arc::new(Mutex::new(Vec::new()));
         let sink = Arc::clone(&messages);
-        let server = HookServer::start(move |message| sink.lock().unwrap().push(message));
+        let server = test_server(move |message| sink.lock().unwrap().push(message));
 
         // Notch.Hook.exe opens its end for writing only.
         let path = pipes::path(server.pipe_name());
@@ -106,7 +117,7 @@ mod tests {
     async fn a_hook_line_on_the_private_pipe_arrives() {
         let messages = Arc::new(Mutex::new(Vec::new()));
         let sink = Arc::clone(&messages);
-        let server = HookServer::start(move |message| sink.lock().unwrap().push(message));
+        let server = test_server(move |message| sink.lock().unwrap().push(message));
 
         let mut client = pipes::connect(server.pipe_name(), Duration::from_secs(5)).await.unwrap();
         let line = format_message("session-1", r#"{"hook_event_name":"Stop","cwd":"C:\\code"}"#, 42);
