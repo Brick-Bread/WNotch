@@ -59,10 +59,11 @@ pub fn temperature(celsius: f64, metric: bool) -> String {
     if metric { format!("{} °C", round(celsius)) } else { format!("{} °F", round(celsius * 9.0 / 5.0 + 32.0)) }
 }
 
-/// A non-negative number with `decimals` places as .NET's "0" and "0.0" formats write it: first
-/// cut to 15 significant digits, then halves rounded away from zero (Rust rounds them to even).
-fn fixed(value: f64, decimals: u32) -> String {
-    let scientific = format!("{:.14e}", value.max(0.0));
+/// A number with `decimals` places as .NET's "0" and "0.0" formats write it: first cut to 15
+/// significant digits, then halves rounded away from zero (Rust rounds them to even).
+pub(crate) fn fixed(value: f64, decimals: u32) -> String {
+    let sign = if value.is_sign_negative() { "-" } else { "" };
+    let scientific = format!("{:.14e}", value.abs());
     let (mantissa, exponent) = scientific.split_once('e').unwrap_or((&scientific, "0"));
     let digits: u64 = mantissa.replace('.', "").parse().unwrap_or(0);
     let shift = exponent.parse::<i32>().unwrap_or(0) - 14 + decimals as i32;
@@ -80,9 +81,9 @@ fn fixed(value: f64, decimals: u32) -> String {
 
     let unit = 10u64.pow(decimals);
     if decimals == 0 {
-        scaled.to_string()
+        format!("{sign}{scaled}")
     } else {
-        format!("{}.{:0width$}", scaled / unit, scaled % unit, width = decimals as usize)
+        format!("{sign}{}.{:0width$}", scaled / unit, scaled % unit, width = decimals as usize)
     }
 }
 

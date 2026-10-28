@@ -17,10 +17,11 @@ notch-ipc = { path = "crates/notch-ipc" }
 notch-platform = { path = "crates/notch-platform" }
 
 chrono = { version = "0.4.45", default-features = false, features = ["std", "clock"] }
+chrono-tz = "0.10.4"
 getrandom = "0.4.3"
 indexmap = "2.14.2"
 serde = { version = "1.0.229", features = ["derive"] }
-serde_json = { version = "1.0.154", features = ["preserve_order"] }
+serde_json = { version = "1.0.154", features = ["preserve_order", "raw_value"] }
 tauri = "2.12.5"
 tauri-build = "2.7.4"
 tempfile = "3.27.0"
