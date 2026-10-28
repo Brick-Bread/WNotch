@@ -76,6 +76,33 @@ mod tests {
     use super::*;
 
     #[tokio::test]
+    async fn the_hook_program_which_only_writes_still_connects() {
+        let messages = Arc::new(Mutex::new(Vec::new()));
+        let sink = Arc::clone(&messages);
+        let server = HookServer::start(move |message| sink.lock().unwrap().push(message));
+
+        // Notch.Hook.exe opens its end for writing only.
+        let path = pipes::path(server.pipe_name());
+        let mut client = loop {
+            match tokio::net::windows::named_pipe::ClientOptions::new().read(false).write(true).open(&path) {
+                Ok(client) => break client,
+                Err(_) => tokio::time::sleep(Duration::from_millis(50)).await,
+            }
+        };
+        let line = format_message("s", r#"{"hook_event_name":"Notification"}"#, 7);
+        client.write_all(format!("{line}\n").as_bytes()).await.unwrap();
+        drop(client);
+
+        for _ in 0..50 {
+            if !messages.lock().unwrap().is_empty() {
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(50)).await;
+        }
+        assert_eq!(messages.lock().unwrap()[0].event_name, "Notification");
+    }
+
+    #[tokio::test]
     async fn a_hook_line_on_the_private_pipe_arrives() {
         let messages = Arc::new(Mutex::new(Vec::new()));
         let sink = Arc::clone(&messages);

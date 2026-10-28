@@ -11,7 +11,12 @@ publish.workspace = true
 
 [dependencies]
 chrono.workspace = true
+http-body-util.workspace = true
+hyper = { workspace = true, features = ["http1", "server"] }
+hyper-util = { workspace = true, features = ["tokio"] }
 notch-core.workspace = true
+serde_json.workspace = true
+tokio = { workspace = true, features = ["net", "rt"] }
 
 [target.'cfg(windows)'.dependencies]
 tokio = { workspace = true, features = ["io-util", "net", "rt", "time"] }
@@ -70,8 +75,8 @@ windows-collections.workspace = true
 # The `implement` macro for COM callbacks names this crate.
 windows-core.workspace = true
 
-[target.'cfg(windows)'.dev-dependencies]
-tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+[dev-dependencies]
+tokio = { workspace = true, features = ["io-util", "macros", "rt-multi-thread"] }
 
 [lints]
 workspace = true

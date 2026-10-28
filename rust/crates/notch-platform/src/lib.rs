@@ -39,5 +39,6 @@ pub mod spectrum;
 pub mod stats;
 #[cfg(windows)]
 pub mod thumbnails;
+pub mod webhook_server;
 #[cfg(windows)]
 pub mod window;

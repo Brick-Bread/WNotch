@@ -20,6 +20,9 @@ base64 = "0.23.1"
 chrono = { version = "0.4.45", default-features = false, features = ["std", "clock"] }
 chrono-tz = "0.10.4"
 getrandom = "0.4.3"
+http-body-util = "0.1.5"
+hyper = "1.12.0"
+hyper-util = "0.1.21"
 indexmap = "2.14.2"
 p256 = { version = "0.14.0", default-features = false, features = ["alloc", "ecdsa", "pkcs8"] }
 rrule = "0.14.0"

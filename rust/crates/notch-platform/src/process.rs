@@ -131,8 +131,30 @@ mod tests {
     }
 
     #[test]
+    fn reads_the_folder_another_program_was_started_in() {
+        let folder = std::env::temp_dir().join(format!("notch-folder-{}", std::process::id()));
+        std::fs::create_dir_all(&folder).unwrap();
+        let mut child = std::process::Command::new("cmd.exe")
+            .args(["/d", "/c", "ping -n 6 127.0.0.1 >nul"])
+            .current_dir(&folder)
+            .spawn()
+            .unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(500));
+
+        let read = working_directory(child.id());
+        let _ = child.kill();
+        let _ = child.wait();
+        // Compare as the file system resolves them: the temp folder may be given in its short 8.3 form.
+        let resolved = read.map(|f| std::fs::canonicalize(f).unwrap());
+        assert_eq!(resolved, Some(std::fs::canonicalize(&folder).unwrap()));
+        let _ = std::fs::remove_dir_all(&folder);
+    }
+
+    #[test]
     fn nothing_for_a_process_that_is_not_there() {
-        assert_eq!(working_directory(0), None);
+        for pid in [0, 4, u32::MAX] {
+            assert_eq!(working_directory(pid), None, "{pid}");
+        }
         assert_eq!(name(0), None);
     }
 }
