@@ -1,0 +1,30 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Notch Setup",
+  "mainBinaryName": "notch-setup",
+  "identifier": "io.github.brick-bread.notch.setup",
+  "build": {
+    "frontendDist": "../../ui/dist",
+    "devUrl": "http://localhost:5173"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "setup",
+        "title": "Notch Setup",
+        "url": "setup.html",
+        "width": 520,
+        "height": 420,
+        "resizable": false,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'"
+    }
+  },
+  "bundle": {
+    "active": false,
+    "icon": ["../notch-app/icons/icon.ico", "../notch-app/icons/icon.png"]
+  }
+}

@@ -1,0 +1,19 @@
+[package]
+name = "notch-setup"
+description = "Installs, updates and uninstalls Notch. The app's zip is appended to this program."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[build-dependencies]
+tauri-build.workspace = true
+
+[dependencies]
+tauri.workspace = true
+
+[lints]
+workspace = true

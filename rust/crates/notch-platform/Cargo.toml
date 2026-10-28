@@ -1,0 +1,19 @@
+[package]
+name = "notch-platform"
+description = "Notch's Windows integrations: windows and displays, media, HUD sources, ConPTY, pipes, stats."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+notch-core.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows = { workspace = true, features = ["Win32_Foundation"] }
+
+[lints]
+workspace = true
