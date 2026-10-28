@@ -38,6 +38,13 @@ jobs:
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - run: cargo test --workspace --locked
+      # A build to try on Windows, until the installer is ported (step 8). Needs WebView2, as Windows 11 has.
+      - run: cargo build --release --locked -p notch-app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Notch-rust-preview
+          path: rust/target/release/Notch.exe
+          if-no-files-found: error
 
   # The fixtures hold the C# answers the Rust tests are checked against; this fails when C# stops giving them.
   fixtures:

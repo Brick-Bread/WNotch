@@ -18,9 +18,12 @@ path = "src/main.rs"
 tauri-build.workspace = true
 
 [dependencies]
+base64.workspace = true
 notch-core.workspace = true
 notch-platform.workspace = true
+serde.workspace = true
 tauri.workspace = true
+tokio = { workspace = true, features = ["time"] }
 
 [lints]
 workspace = true
