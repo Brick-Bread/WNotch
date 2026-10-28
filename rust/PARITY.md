@@ -113,8 +113,8 @@ Contents:
 - [ ] `%LocalAppData%\Notch\plugins.log` has lines `{u time} [level] source: message` (source `notch` for the plugin manager). Above 1 MB it rotates to `plugins.log.old` — `src/Notch.Core/Plugins/PluginLog.cs:6`
 - [ ] `%LocalAppData%\Notch\plugin-audit.log` is NDJSON `{time(ISO "O"), plugin, kind, detail(≤500 chars)}`. Above 1 MB it rotates to `plugin-audit.log.1` — `src/Notch.Core/Plugins/Checks/PluginAudit.cs:26`
 - [ ] `%AppData%\Notch\shelf.json` is an indented JSON array of paths, saved atomically via `.tmp`. Not loaded or saved under `--demo` — `src/Notch.Core/Shelf/ShelfStore.cs:6`
-- [ ] `%AppData%\Notch\clipboard-pins.json` holds only pinned items, as `ClipboardItem{Id,Kind(number: 0 Text,1 Image,2 Files),CopiedAt,Text,Image(base64 PNG),Files,Source,Pinned}`. The file is deleted when nothing is pinned; saved via `.tmp` — `src/Notch.Core/Clipboard/ClipboardHistory.cs:255`
-- [ ] The rest of the clipboard history is in memory only: capacity 50, text at most 100 000 characters, image at most 4 MB, at most 50 files — `src/Notch.Core/Clipboard/ClipboardHistory.cs:58`
+- [x] `%AppData%\Notch\clipboard-pins.json` holds only pinned items, as `ClipboardItem{Id,Kind(number: 0 Text,1 Image,2 Files),CopiedAt,Text,Image(base64 PNG),Files,Source,Pinned}`. The file is deleted when nothing is pinned; saved via `.tmp` — `src/Notch.Core/Clipboard/ClipboardHistory.cs:255`
+- [x] The rest of the clipboard history is in memory only: capacity 50, text at most 100 000 characters, image at most 4 MB, at most 50 files — `src/Notch.Core/Clipboard/ClipboardHistory.cs:58`
 - [ ] Clipboard path from the window — `src/Notch.App/Shell/NotchWindow.Clipboard.cs:22`
 - [x] Notes and to-dos have no separate files; they are stored inside `settings.json` `HomeWidgets[].Options` — `src/Notch.App/Shell/NotchWindow.HomeWidgets.cs:648`
 - [ ] `%LocalAppData%\Notch\errors.log`: unhandled UI exceptions are appended as `{u time} {exception}` plus a blank line — `src/Notch.App/App.xaml.cs:656`
@@ -322,10 +322,10 @@ Contents:
 - [ ] `Clear()` removes everything the plugin published — `src/Notch.Core/Plugins/INotchPlugin.cs:120`
 - [ ] Ids are scoped as `plugin.<pluginId>.<id>` — `src/Notch.Core/Plugins/PluginManager.cs:162`
 - [ ] `OpensPage` is rewritten to `<pluginId>/<pageId>`, and an empty value becomes null — `src/Notch.Core/Plugins/PluginHost.cs:165`
-- [ ] Ordering: higher tier wins, then most recently published; an update keeps its sequence (does not re-rank) — `src/Notch.Core/Activities/ActivityManager.cs:61`
-- [ ] Snapshot order: Tier descending, then Sequence descending — `src/Notch.Core/Activities/ActivityManager.cs:94`
-- [ ] Transient expiry timer, default lifetime 2 s — `src/Notch.Core/Activities/ActivityManager.cs:9`
-- [ ] Ids suppressed by the user are dropped on publish — `src/Notch.Core/Activities/ActivityManager.cs:27`
+- [x] Ordering: higher tier wins, then most recently published; an update keeps its sequence (does not re-rank) — `src/Notch.Core/Activities/ActivityManager.cs:61`
+- [x] Snapshot order: Tier descending, then Sequence descending — `src/Notch.Core/Activities/ActivityManager.cs:94`
+- [x] Transient expiry timer, default lifetime 2 s — `src/Notch.Core/Activities/ActivityManager.cs:9`
+- [x] Ids suppressed by the user are dropped on publish — `src/Notch.Core/Activities/ActivityManager.cs:27`
 - [ ] Glance row: up to six items, in Order then by id; Detail, Progress and Glow are not drawn; with CountingFrom the Title becomes the tooltip; clicking an item opens its OpensPage — `docs/plugins.md:284`
 - [ ] Use Attention sparingly; it hides lower tiers indefinitely — `docs/plugins.md:298`
 
@@ -350,35 +350,35 @@ Contents:
 - [ ] `Activity.OpensPage` (string?) (v9) — `src/Notch.Core/Activities/Activity.cs:62`
 - [ ] `Activity.CountingFrom` (DateTimeOffset?) (v9) — `src/Notch.Core/Activities/Activity.cs:69`
 - [ ] `Activity.Order` (int, Glance only) (v10) — `src/Notch.Core/Activities/Activity.cs:75`
-- [ ] Elapsed-clock format: "m:ss", or "h:mm:ss" from one hour on; negative values clamp to 0 — `src/Notch.Core/Activities/ElapsedClock.cs:6`
+- [x] Elapsed-clock format: "m:ss", or "h:mm:ss" from one hour on; negative values clamp to 0 — `src/Notch.Core/Activities/ElapsedClock.cs:6`
 
 ### Glow / GlowColor / GlowPattern
-- [ ] `GlowColor` readonly record struct (byte R, byte G, byte B) — `src/Notch.Core/Activities/Glow.cs:3`
-- [ ] `GlowColor.White` = F2F2F2 — `src/Notch.Core/Activities/Glow.cs:5`
-- [ ] `GlowColor.Blue` = 3D8BFF — `src/Notch.Core/Activities/Glow.cs:6`
-- [ ] `GlowColor.Cyan` = 2EC4FF — `src/Notch.Core/Activities/Glow.cs:7`
-- [ ] `GlowColor.Green` = 3FD86B — `src/Notch.Core/Activities/Glow.cs:8`
-- [ ] `GlowColor.Amber` = FFB01F — `src/Notch.Core/Activities/Glow.cs:9`
-- [ ] `GlowColor.Orange` = FF7A2E — `src/Notch.Core/Activities/Glow.cs:10`
-- [ ] `GlowColor.Red` = FF3B3B — `src/Notch.Core/Activities/Glow.cs:11`
-- [ ] `GlowColor.Yellow` = FFD84A — `src/Notch.Core/Activities/Glow.cs:12`
-- [ ] `GlowColor.Violet` = A86BFF — `src/Notch.Core/Activities/Glow.cs:13`
-- [ ] `GlowColor.Named` in picker order Blue, Cyan, Green, Yellow, Amber, Orange, Red, Violet (White is not included) — `src/Notch.Core/Activities/Glow.cs:16`
-- [ ] `GlowColor.FromName(string?)` is case-insensitive and returns null for "White" — `src/Notch.Core/Activities/Glow.cs:29`
-- [ ] `GlowColor.OnLight()` = Lerp toward black by 0.3 (used for light themes) — `src/Notch.Core/Activities/Glow.cs:46`
-- [ ] `GlowColor.Lerp(other, amount)` clamps amount to 0..1 and rounds — `src/Notch.Core/Activities/Glow.cs:49`
-- [ ] `GlowPattern` enum — `src/Notch.Core/Activities/Glow.cs:58`
-- [ ] `GlowPattern.Steady` — `src/Notch.Core/Activities/Glow.cs:61`
-- [ ] `GlowPattern.Breathe` — `src/Notch.Core/Activities/Glow.cs:64`
-- [ ] `GlowPattern.Pulse` — `src/Notch.Core/Activities/Glow.cs:67`
-- [ ] `GlowPattern.Flash` — `src/Notch.Core/Activities/Glow.cs:70`
-- [ ] `GlowPattern.Audio` — `src/Notch.Core/Activities/Glow.cs:73`
-- [ ] `Glow` record (Color, Pattern, Strength = 1) — `src/Notch.Core/Activities/Glow.cs:78`
-- [ ] Glow timing constants: Breathe period 3.2 s, Pulse period 1.1 s, Flash decay 1.2 s — `src/Notch.Core/Activities/Glow.cs:80`
-- [ ] `Glow.IntensityAt(seconds, audioLevel)` formulas: Breathe .45+.55w, Pulse .25+.75w, Flash .35+.65·decay, Audio .2+.8·level, Steady .8; result × Strength, clamped — `src/Notch.Core/Activities/Glow.cs:86`
-- [ ] `Glow.IsAnimated` (any pattern except Steady) — `src/Notch.Core/Activities/Glow.cs:102`
-- [ ] Wave function sin²(π·(t mod p)/p) — `src/Notch.Core/Activities/Glow.cs:105`
-- [ ] `GlowOutput` user brightness: 25–200 %, default 100, lift exponent 0.6 — `src/Notch.Core/Activities/Glow.cs:113`
+- [x] `GlowColor` readonly record struct (byte R, byte G, byte B) — `src/Notch.Core/Activities/Glow.cs:3`
+- [x] `GlowColor.White` = F2F2F2 — `src/Notch.Core/Activities/Glow.cs:5`
+- [x] `GlowColor.Blue` = 3D8BFF — `src/Notch.Core/Activities/Glow.cs:6`
+- [x] `GlowColor.Cyan` = 2EC4FF — `src/Notch.Core/Activities/Glow.cs:7`
+- [x] `GlowColor.Green` = 3FD86B — `src/Notch.Core/Activities/Glow.cs:8`
+- [x] `GlowColor.Amber` = FFB01F — `src/Notch.Core/Activities/Glow.cs:9`
+- [x] `GlowColor.Orange` = FF7A2E — `src/Notch.Core/Activities/Glow.cs:10`
+- [x] `GlowColor.Red` = FF3B3B — `src/Notch.Core/Activities/Glow.cs:11`
+- [x] `GlowColor.Yellow` = FFD84A — `src/Notch.Core/Activities/Glow.cs:12`
+- [x] `GlowColor.Violet` = A86BFF — `src/Notch.Core/Activities/Glow.cs:13`
+- [x] `GlowColor.Named` in picker order Blue, Cyan, Green, Yellow, Amber, Orange, Red, Violet (White is not included) — `src/Notch.Core/Activities/Glow.cs:16`
+- [x] `GlowColor.FromName(string?)` is case-insensitive and returns null for "White" — `src/Notch.Core/Activities/Glow.cs:29`
+- [x] `GlowColor.OnLight()` = Lerp toward black by 0.3 (used for light themes) — `src/Notch.Core/Activities/Glow.cs:46`
+- [x] `GlowColor.Lerp(other, amount)` clamps amount to 0..1 and rounds — `src/Notch.Core/Activities/Glow.cs:49`
+- [x] `GlowPattern` enum — `src/Notch.Core/Activities/Glow.cs:58`
+- [x] `GlowPattern.Steady` — `src/Notch.Core/Activities/Glow.cs:61`
+- [x] `GlowPattern.Breathe` — `src/Notch.Core/Activities/Glow.cs:64`
+- [x] `GlowPattern.Pulse` — `src/Notch.Core/Activities/Glow.cs:67`
+- [x] `GlowPattern.Flash` — `src/Notch.Core/Activities/Glow.cs:70`
+- [x] `GlowPattern.Audio` — `src/Notch.Core/Activities/Glow.cs:73`
+- [x] `Glow` record (Color, Pattern, Strength = 1) — `src/Notch.Core/Activities/Glow.cs:78`
+- [x] Glow timing constants: Breathe period 3.2 s, Pulse period 1.1 s, Flash decay 1.2 s — `src/Notch.Core/Activities/Glow.cs:80`
+- [x] `Glow.IntensityAt(seconds, audioLevel)` formulas: Breathe .45+.55w, Pulse .25+.75w, Flash .35+.65·decay, Audio .2+.8·level, Steady .8; result × Strength, clamped — `src/Notch.Core/Activities/Glow.cs:86`
+- [x] `Glow.IsAnimated` (any pattern except Steady) — `src/Notch.Core/Activities/Glow.cs:102`
+- [x] Wave function sin²(π·(t mod p)/p) — `src/Notch.Core/Activities/Glow.cs:105`
+- [x] `GlowOutput` user brightness: 25–200 %, default 100, lift exponent 0.6 — `src/Notch.Core/Activities/Glow.cs:113`
 
 ### Cards (IPluginCards / PluginCard)
 - [ ] `IPluginCards` interface (v1) — `src/Notch.Core/Plugins/INotchPlugin.cs:124`
@@ -1011,7 +1011,7 @@ Contents:
 - [ ] A theme can scale the corner radius (`IslandRadiusScale`, clamped 0–2) — `src/Notch.App/Shell/ThemeManager.cs:222`
 - [ ] Mode resolution: expanded → Expanded; no activities → Idle; top activity transient → Peek; otherwise Compact — `src/Notch.Core/Shell/NotchMode.cs:24`
 - [ ] Spring animation of width/height (stiffness 380, damping 26, visible overshoot) and radius (300/30). Steps per rendered frame with sub-stepping (max 1/240 s) — `src/Notch.App/Shell/NotchAnimator.cs:11`
-- [ ] The spring snaps to target when it is within 0.05 and velocity is below 0.5 — `src/Notch.Core/Animation/Spring.cs:28`
+- [x] The spring snaps to target when it is within 0.05 and velocity is below 0.5 — `src/Notch.Core/Animation/Spring.cs:28`
 - [ ] Height never drops below the resting height while shrinking (no undershoot) — `src/Notch.App/Shell/NotchWindow.xaml.cs:845`
 - [ ] Content fade: fades out within 90 ms. Fades in after the island has mostly resized (130 ms pill, 170 ms expanded, 220 ms cubic-ease fade) and scales up from 0.96 — `src/Notch.App/Shell/NotchWindow.xaml.cs:815`
 - [ ] A new activity taking the pill fades the pill content out and in again. Changes within the glance row do not — `src/Notch.App/Shell/NotchWindow.xaml.cs:793`
@@ -1041,27 +1041,27 @@ Contents:
 ### Glow
 - [ ] Glow layers (halo drop shadow blur 18 + 14×opacity, core blur 9, rim) follow the island outline, spread 2.5×gain past it. At the edge they are only on the sides away from the screen edge — `src/Notch.App/Shell/GlowController.cs:18`
 - [ ] Glow only shows in Compact/Peek and only when glow effects are on. There is no glow while expanded or for the glance row — `src/Notch.App/Shell/NotchWindow.xaml.cs:783`
-- [ ] Patterns: Steady (0.8), Breathe (3.2 s sine²), Pulse (1.1 s), Flash (burst decaying over 1.2 s to 0.35), Audio (follows output loudness). Each is multiplied by strength — `src/Notch.Core/Activities/Glow.cs:86`
+- [x] Patterns: Steady (0.8), Breathe (3.2 s sine²), Pulse (1.1 s), Flash (burst decaying over 1.2 s to 0.35), Audio (follows output loudness). Each is multiplied by strength — `src/Notch.Core/Activities/Glow.cs:86`
 - [ ] Brightness gain is 25–200 % with a 0.6 lift curve. Above full opacity the extra brightness widens the halo (√gain reach) — `src/Notch.Core/Activities/Glow.cs:113`
 - [ ] Intensity eases (×14/s) and colour blends (×6/s) between glows. A new pattern starts from its beginning — `src/Notch.App/Shell/GlowController.cs:208`
 - [ ] Frames are capped at about 24 fps (40 ms). Rendering stops when the glow is dark — `src/Notch.App/Shell/GlowController.cs:30`
 - [ ] Audio pattern: √peak from the output meter, fast attack (0.6) and slow release (0.08^dt) — `src/Notch.App/Shell/GlowController.cs:195`
-- [ ] Media glow colour is taken from the album art (weighted saturated pixels, brightened); null for greyscale art — `src/Notch.Core/Activities/Glow.cs:139`
+- [x] Media glow colour is taken from the album art (weighted saturated pixels, brightened); null for greyscale art — `src/Notch.Core/Activities/Glow.cs:139`
 - [ ] Plugin glow frames replace the activity glow, including on the plain pill. Segmented frames draw a blurred left-to-right gradient (pad 9×√gain, blur 9×1.6×reach) and hide the halo — `src/Notch.App/Shell/GlowController.cs:184`
 - [ ] Accent colour presets: Blue, Cyan, Green, Yellow, Amber, Orange, Red, Violet (plus White for glows). Colours are deepened (30 % toward black) in the light theme — `src/Notch.Core/Activities/Glow.cs:16`
 
 ### Pill: activities, tiers & layout
 - [ ] Activity model: id, tier, title, detail, glyph (Segoe Fluent), agentId, agentState, image, progress, glow, lifetime, opensPage, countingFrom, order — `src/Notch.Core/Activities/Activity.cs:23`
 - [ ] Tiers: Glance (−1, shown side by side), Ongoing (0), Attention (1), Transient (2, expires itself, default 2 s) — `src/Notch.Core/Activities/Activity.cs:4`
-- [ ] Ordering: highest tier first, then the most recently published. Republishing the same id keeps its place in line — `src/Notch.Core/Activities/ActivityManager.cs:60`
-- [ ] Suppressed ids (the user's "show in pill" settings) are dropped when published, and removed if already showing — `src/Notch.Core/Activities/ActivityManager.cs:27`
+- [x] Ordering: highest tier first, then the most recently published. Republishing the same id keeps its place in line — `src/Notch.Core/Activities/ActivityManager.cs:60`
+- [x] Suppressed ids (the user's "show in pill" settings) are dropped when published, and removed if already showing — `src/Notch.Core/Activities/ActivityManager.cs:27`
 - [ ] Layout: left icon (album art, else agent logo, else glyph tinted in the glow colour); middle marquee "Title" + secondary-coloured subtitle; right state area — `src/Notch.App/Shell/NotchWindow.Pill.cs:147`
 - [ ] Marquee: text that does not fit holds 1.4 s, scrolls at 30 DIP/s, holds, scrolls back, forever, with 10 DIP edge fades — `src/Notch.App/Shell/Marquee.cs:15`
 - [ ] Detail on the right (max 130 wide, ellipsis). For a `CountingFrom` activity it shows an elapsed clock ticking every second — `src/Notch.App/Shell/NotchWindow.Plugins.cs:71`
 - [ ] Transient with progress (a level HUD): glyph + 84 px bar + numeric level 0–100; title hidden — `src/Notch.App/Shell/NotchWindow.Pill.cs:185`
 - [ ] Glance row: up to 6 glance activities in order then id. Each shows a picture (16 px) or glyph (glow-tinted) and its title or a ticking clock (max 150 wide, tooltip = title when it is a clock). Width = content + 40, clamped 120–520 — `src/Notch.App/Shell/NotchWindow.Pill.cs:61`
 - [ ] Media in pill: art or music glyph; title + " · artist"; animated 4-bar wave (0.45 s, staggered), bars tinted with the art accent — `src/Notch.App/Shell/NotchWindow.Pill.cs:187`
-- [ ] Media activity is Ongoing while playing, with a violet Audio glow (0.85) that the art accent replaces; it is removed when paused or stopped — `src/Notch.Core/Media/MediaActivityPublisher.cs:27`
+- [x] Media activity is Ongoing while playing, with a violet Audio glow (0.85) that the art accent replaces; it is removed when paused or stopped — `src/Notch.Core/Media/MediaActivityPublisher.cs:27`
 - [ ] Agent in pill: with a logo, the subtitle shows only the folder. Working = three blinking dots (0.6 s, staggered 0.2 s); NeedsInput = "Needs you" in the attention colour; Done = check glyph + "Done" in green. A "+N" suffix counts other sessions — `src/Notch.App/Shell/NotchWindow.Pill.cs:193`
 - [ ] Agent activities: Working = Ongoing, cyan breathe 0.8; NeedsInput = Attention, amber pulse; Done = Attention, green steady 0.8; Idle = none — `src/Notch.Core/Agents/AgentActivities.cs:20`
 - [ ] Every board entry is republished with a count of the other non-idle sessions — `src/Notch.Core/Agents/AgentBoard.cs:149`
@@ -1071,8 +1071,8 @@ Contents:
 - [ ] Volume HUD: "Volume" or "Muted", progress, glyph by level (mute/low/mid/high), white flash scaled by level. Comes from the default render device's volume notifications — `src/Notch.Core/Hud/HudActivities.cs:17`
 - [ ] Audio output HUD: the new default device's name with "Output" when the default output changes (3.5 s) — `src/Notch.Platform/Hud/VolumeWatcher.cs:38`
 - [ ] Brightness HUD: "Brightness" + progress, yellow flash scaled by level. Built-in panel only (WMI WmiMonitorBrightnessEvent) — `src/Notch.Platform/Hud/BrightnessWatcher.cs:44`
-- [ ] Power HUD: "Charging" (green flash) or "On battery" (white 0.6) with "%", 3.5 s, shown on plug/unplug. The first reading only sets a baseline — `src/Notch.Core/Hud/PowerHudTracker.cs:33`
-- [ ] Low battery HUD: "Low battery" with "%", red pulse, 6 s, when crossing 20/10/5 % while unplugged — `src/Notch.Core/Hud/PowerHudTracker.cs:38`
+- [x] Power HUD: "Charging" (green flash) or "On battery" (white 0.6) with "%", 3.5 s, shown on plug/unplug. The first reading only sets a baseline — `src/Notch.Core/Hud/PowerHudTracker.cs:33`
+- [x] Low battery HUD: "Low battery" with "%", red pulse, 6 s, when crossing 20/10/5 % while unplugged — `src/Notch.Core/Hud/PowerHudTracker.cs:38`
 - [ ] Bluetooth HUD: device name, "Connected"/"Disconnected", blue flash, 3.5 s. Covers paired Classic and LE devices; the starting state is only a baseline — `src/Notch.Platform/Hud/BluetoothWatcher.cs:66`
 - [ ] Caps Lock HUD: "Caps Lock" On/Off, 2 s. Caps Lock is polled every 150 ms (no keyboard hook) — `src/Notch.App/Shell/NotchWindow.Keyboard.cs:47`
 - [ ] Missing hardware (no battery, no dimmable panel, no BT radio) is skipped quietly — `src/Notch.Platform/Hud/SystemHudSources.cs:44`
@@ -1082,7 +1082,7 @@ Contents:
 - [ ] Windows notification access is requested when the feature is switched on. If refused, a message box explains it (only when the user just saved) — `src/Notch.Platform/Notifications/NotificationWatcher.cs:29`
 - [ ] Timer in pill: Ongoing "<title>" + remaining time with a breathing glow in the timer colour (focus 0.55, others 0.5); "<title> paused" without glow; on finish Attention "Done" with a pulse glow and a chime — `src/Notch.App/Shell/NotchWindow.Widgets.cs:388`
 - [ ] Pomodoro phase notice: "Back to focus" (red) or "Break time" (green), 4 s, with an Asterisk chime — `src/Notch.App/Shell/NotchWindow.Widgets.cs:282`
-- [ ] Shelf drop notice "On the shelf · N items" when files are dropped while the notch is closed — `src/Notch.Core/Shelf/ShelfActivities.cs:10`
+- [x] Shelf drop notice "On the shelf · N items" when files are dropped while the notch is closed — `src/Notch.Core/Shelf/ShelfActivities.cs:10`
 - [ ] Clipboard "Copied again" notice (1.5 s) — `src/Notch.App/Shell/NotchWindow.Clipboard.cs:245`
 - [ ] "Clipboard history is off · Switch it on in Settings" notice when the Clipboard tab is requested while history is off — `src/Notch.App/Shell/NotchWindow.Terminal.cs:42`
 - [ ] "Could not find that window" notice when jumping to a detected agent fails — `src/Notch.App/Shell/NotchWindow.Agents.cs:77`
@@ -1245,8 +1245,8 @@ Contents:
 ### Clipboard tab
 - [ ] Off by default. Turning it on shows the tab and registers a clipboard listener; turning it off clears everything, pins included, and deletes the pins file — `src/Notch.App/Shell/NotchWindow.Clipboard.cs:48`
 - [ ] Captures text (max 100 k characters), images (stored as PNG, max 4 MB) and file lists (max 50) with the source program. Retries 5× if the clipboard is busy — `src/Notch.App/Shell/NotchWindow.Clipboard.cs:93`
-- [ ] Privacy: skips ExcludeClipboardContentFromMonitorProcessing, CanIncludeInClipboardHistory=0, and copies from known password managers — `src/Notch.Core/Clipboard/ClipboardHistory.cs:239`
-- [ ] Keeps 50 unpinned items. Re-copying the same content moves it up. Pinned items come first, then newest — `src/Notch.Core/Clipboard/ClipboardHistory.cs:159`
+- [x] Privacy: skips ExcludeClipboardContentFromMonitorProcessing, CanIncludeInClipboardHistory=0, and copies from known password managers — `src/Notch.Core/Clipboard/ClipboardHistory.cs:239`
+- [x] Keeps 50 unpinned items. Re-copying the same content moves it up. Pinned items come first, then newest — `src/Notch.Core/Clipboard/ClipboardHistory.cs:159`
 - [ ] Search box ("Search what you copied"): text contents, file paths, "picture/image"; "Nothing matches" — `src/Notch.App/Shell/NotchWindow.Clipboard.cs:163`
 - [ ] Rows: glyph or image thumbnail, preview (first line, 200 characters / file names / "Picture (N KB)"), source · age ("just now", "N min ago", time, date). Clicking copies it again without adding a new history entry — `src/Notch.App/Shell/NotchWindow.Clipboard.cs:220`
 - [ ] Row buttons: "Put these files on the shelf" (file items only), Pin/Unpin (pins survive restarts in `clipboard-pins.json`), "Forget this one" — `src/Notch.App/Shell/NotchWindow.xaml:686`
