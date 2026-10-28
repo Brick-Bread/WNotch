@@ -22,10 +22,12 @@ Without the variable, the C# tests fail when an answer differs from the file. To
 - write the same JSON, except that it keeps keys it does not know (C# drops them; see `older-version.json`), and that line endings may be CRLF on Windows;
 - treat a widget `Id` of `*generated*` in an expected file as "any new 8-character lowercase hex id";
 - take everything as C# does, including the surprising parts:
-  - enum names are read ignoring case, and their numbers are accepted;
+  - enum names are read ignoring case, numbers and numbers in strings are accepted, and a number with no name is kept and written back;
   - out-of-range numbers are kept as they are, because they are clamped where they are used;
-  - **one unknown enum name anywhere, even a widget's width, or a value of the wrong JSON type, makes the whole file fall back to defaults**;
-  - `null` for a list or a string is kept as `null`.
+  - for a repeated key the last one wins;
+  - **one unknown enum name anywhere, even a widget's width, a value of the wrong JSON type, an integer written as `1.0` or past 32 bits, a comment or a trailing comma makes the whole file fall back to defaults**.
+
+One deliberate difference: C# keeps a `null` given for a list or a string that may not be null (see `nulls.json`), and then crashes on it or treats it as empty. The Rust port reads it as empty, so its tests swap those `null`s for `""` or `[]` before comparing.
 
 ### `commands/`
 

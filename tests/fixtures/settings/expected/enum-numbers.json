@@ -1,0 +1,97 @@
+{
+  "DisplayIndex": null,
+  "Style": "Island",
+  "Position": 7,
+  "ExpandOnHover": true,
+  "ShelfOpensOnDrag": true,
+  "OpenHotkey": "Alt+Shift+N",
+  "HideInFullscreen": true,
+  "Theme": "System",
+  "PluginTheme": null,
+  "AccentColor": "Blue",
+  "GlowEffects": true,
+  "GlowIntensity": 100,
+  "NotifyOfUpdates": true,
+  "LastNotifiedUpdateTag": null,
+  "ShowMedia": true,
+  "ShowVolume": true,
+  "ShowBrightness": true,
+  "ShowPower": true,
+  "ShowBluetooth": true,
+  "ShowCapsLock": true,
+  "PomodoroFocusMinutes": 25,
+  "PomodoroShortBreakMinutes": 5,
+  "PomodoroLongBreakMinutes": 15,
+  "TimerPresets": [
+    {
+      "Name": "",
+      "Seconds": 300
+    },
+    {
+      "Name": "",
+      "Seconds": 900
+    },
+    {
+      "Name": "",
+      "Seconds": 1800
+    },
+    {
+      "Name": "",
+      "Seconds": 3600
+    }
+  ],
+  "HomeWidgets": [
+    {
+      "Id": "*generated*",
+      "Kind": "media",
+      "Width": "Full",
+      "HideWhenEmpty": true,
+      "Options": {},
+      "Source": null
+    },
+    {
+      "Id": "*generated*",
+      "Kind": "agents",
+      "Width": "Full",
+      "HideWhenEmpty": true,
+      "Options": {},
+      "Source": null
+    },
+    {
+      "Id": "*generated*",
+      "Kind": "timer",
+      "Width": "Half",
+      "HideWhenEmpty": true,
+      "Options": {},
+      "Source": null
+    },
+    {
+      "Id": "*generated*",
+      "Kind": "calendar",
+      "Width": "Half",
+      "HideWhenEmpty": true,
+      "Options": {},
+      "Source": null
+    }
+  ],
+  "CalendarFeeds": [],
+  "EnabledPlugins": [],
+  "TerminalPresets": [
+    "Claude = claude",
+    "Codex = codex",
+    "opencode = opencode",
+    "Shell = powershell"
+  ],
+  "RecentFolders": [],
+  "WebhookEnabled": false,
+  "WebhookPort": 47890,
+  "WebhookToken": null,
+  "PaletteHotkey": "Alt+Shift+P",
+  "DetectAgents": true,
+  "HiddenAgents": [],
+  "WatchAppSessions": true,
+  "GlobalAgentHooks": false,
+  "ClipboardHistory": false,
+  "MirrorNotifications": false,
+  "MirroredApps": []
+}

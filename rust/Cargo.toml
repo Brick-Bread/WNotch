@@ -16,10 +16,13 @@ notch-core = { path = "crates/notch-core" }
 notch-ipc = { path = "crates/notch-ipc" }
 notch-platform = { path = "crates/notch-platform" }
 
+getrandom = "0.4.3"
+indexmap = "2.14.2"
 serde = { version = "1.0.229", features = ["derive"] }
-serde_json = "1.0.154"
+serde_json = { version = "1.0.154", features = ["preserve_order"] }
 tauri = "2.12.5"
 tauri-build = "2.7.4"
+tempfile = "3.27.0"
 thiserror = "2.0.21"
 windows = "0.62.2"
 

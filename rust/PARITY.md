@@ -17,49 +17,49 @@ Contents:
 ## 1. Data, commands and wire formats
 
 ### Settings keys (`settings.json`)
-- [ ] File format: `System.Text.Json` with `WriteIndented = true`, PascalCase property names (no naming policy), and enums written as strings where the property has `JsonStringEnumConverter`. A missing or corrupt file, or an IO/JSON/access error, gives all defaults — `src/Notch.Core/Settings/AppSettings.cs:225`
-- [ ] Atomic save: write `settings.json.tmp`, then `File.Move(overwrite)`; creates the parent folder; IO and access errors are swallowed — `src/Notch.Core/Settings/AppSettings.cs:245`
-- [ ] `DisplayIndex`: `int?`, default `null` (primary display); an index into the system display list — `src/Notch.Core/Settings/AppSettings.cs:17`
-- [ ] `Style`: `NotchStyle` enum string `"Notch"|"Island"`, default `"Notch"` — `src/Notch.Core/Settings/AppSettings.cs:21`
-- [ ] `NotchStyle` enum values `Notch`, `Island` — `src/Notch.Core/Settings/NotchAppearance.cs:4`
-- [ ] `Position`: `NotchPosition` enum string `"TopCenter"|"TaskbarLeft"`, default `"TopCenter"` — `src/Notch.Core/Settings/AppSettings.cs:25`
-- [ ] `NotchPosition` enum values `TopCenter`, `TaskbarLeft` — `src/Notch.Core/Settings/NotchAppearance.cs:14`
-- [ ] `ExpandOnHover`: `bool`, default `true` — `src/Notch.Core/Settings/AppSettings.cs:28`
-- [ ] `ShelfOpensOnDrag`: `bool`, default `true` — `src/Notch.Core/Settings/AppSettings.cs:31`
+- [x] **[changed: a `null` for a list or a string that C# declares non-null reads as empty; C# keeps the `null` and then crashes or treats it as empty]** File format: `System.Text.Json` with `WriteIndented = true`, PascalCase property names (no naming policy), and enums written as strings where the property has `JsonStringEnumConverter`. A missing or corrupt file, or an IO/JSON/access error, gives all defaults — `src/Notch.Core/Settings/AppSettings.cs:225`
+- [x] Atomic save: write `settings.json.tmp`, then `File.Move(overwrite)`; creates the parent folder; IO and access errors are swallowed — `src/Notch.Core/Settings/AppSettings.cs:245`
+- [x] `DisplayIndex`: `int?`, default `null` (primary display); an index into the system display list — `src/Notch.Core/Settings/AppSettings.cs:17`
+- [x] `Style`: `NotchStyle` enum string `"Notch"|"Island"`, default `"Notch"` — `src/Notch.Core/Settings/AppSettings.cs:21`
+- [x] `NotchStyle` enum values `Notch`, `Island` — `src/Notch.Core/Settings/NotchAppearance.cs:4`
+- [x] `Position`: `NotchPosition` enum string `"TopCenter"|"TaskbarLeft"`, default `"TopCenter"` — `src/Notch.Core/Settings/AppSettings.cs:25`
+- [x] `NotchPosition` enum values `TopCenter`, `TaskbarLeft` — `src/Notch.Core/Settings/NotchAppearance.cs:14`
+- [x] `ExpandOnHover`: `bool`, default `true` — `src/Notch.Core/Settings/AppSettings.cs:28`
+- [x] `ShelfOpensOnDrag`: `bool`, default `true` — `src/Notch.Core/Settings/AppSettings.cs:31`
 - [ ] `OpenHotkey`: `string`, default `"Alt+Shift+N"`; empty or unparseable means no hotkey (read by `Hotkey.TryParse`) — `src/Notch.Core/Settings/AppSettings.cs:38`
-- [ ] `HideInFullscreen`: `bool`, default `true` — `src/Notch.Core/Settings/AppSettings.cs:40`
-- [ ] `Theme`: `NotchTheme` enum string `"Dark"|"Light"|"System"`, default `"Dark"` — `src/Notch.Core/Settings/AppSettings.cs:44`
-- [ ] `NotchTheme` enum values `Dark`, `Light`, `System`; `IsLight(theme, systemIsLight)` rule — `src/Notch.Core/Settings/NotchTheme.cs:3`
+- [x] `HideInFullscreen`: `bool`, default `true` — `src/Notch.Core/Settings/AppSettings.cs:40`
+- [x] `Theme`: `NotchTheme` enum string `"Dark"|"Light"|"System"`, default `"Dark"` — `src/Notch.Core/Settings/AppSettings.cs:44`
+- [x] `NotchTheme` enum values `Dark`, `Light`, `System`; `IsLight(theme, systemIsLight)` rule — `src/Notch.Core/Settings/NotchTheme.cs:3`
 - [ ] `PluginTheme`: `string?` `"plugin-id/theme-id"`, default `null`; kept while the plugin is off. Choosing a theme from the tray sets it to `null` — `src/Notch.Core/Settings/AppSettings.cs:51`
-- [ ] `AccentColor`: `string`, default `"Blue"`; anything that is not a preset name (for example `NoAccent = "None"`) means no tint — `src/Notch.Core/Settings/AppSettings.cs:57`
-- [ ] Accent/glow preset names, in this order: Blue `#3D8BFF`, Cyan `#2EC4FF`, Green `#3FD86B`, Yellow `#FFD84A`, Amber `#FFB01F`, Orange `#FF7A2E`, Red `#FF3B3B`, Violet `#A86BFF`. `White` `#F2F2F2` exists but is not in the named list. Name lookup ignores case — `src/Notch.Core/Activities/Glow.cs:5`
-- [ ] `GlowEffects`: `bool`, default `true` — `src/Notch.Core/Settings/AppSettings.cs:62`
-- [ ] `GlowIntensity`: `int` percent, default `100`, clamped 25..200 (`GlowOutput.MinPercent`/`MaxPercent`/`DefaultPercent`) — `src/Notch.Core/Activities/Glow.cs:115`
+- [x] `AccentColor`: `string`, default `"Blue"`; anything that is not a preset name (for example `NoAccent = "None"`) means no tint — `src/Notch.Core/Settings/AppSettings.cs:57`
+- [x] Accent/glow preset names, in this order: Blue `#3D8BFF`, Cyan `#2EC4FF`, Green `#3FD86B`, Yellow `#FFD84A`, Amber `#FFB01F`, Orange `#FF7A2E`, Red `#FF3B3B`, Violet `#A86BFF`. `White` `#F2F2F2` exists but is not in the named list. Name lookup ignores case — `src/Notch.Core/Activities/Glow.cs:5`
+- [x] `GlowEffects`: `bool`, default `true` — `src/Notch.Core/Settings/AppSettings.cs:62`
+- [x] `GlowIntensity`: `int` percent, default `100`, clamped 25..200 (`GlowOutput.MinPercent`/`MaxPercent`/`DefaultPercent`) — `src/Notch.Core/Activities/Glow.cs:115`
 - [ ] `NotifyOfUpdates`: `bool`, default `true`; also controls the registry refresh and revocation check at startup — `src/Notch.Core/Settings/AppSettings.cs:68`
 - [ ] `LastNotifiedUpdateTag`: `string?`, default `null`; announce each release once — `src/Notch.Core/Settings/AppSettings.cs:71`
-- [ ] `ShowMedia`: `bool`, default `true`; when off, suppresses the media activity id — `src/Notch.Core/Settings/AppSettings.cs:73`
-- [ ] `ShowVolume`: `bool`, default `true`; when off, suppresses `HudActivities.VolumeId` and `AudioOutputId` — `src/Notch.Core/Settings/AppSettings.cs:75`
-- [ ] `ShowBrightness`: `bool`, default `true` — `src/Notch.Core/Settings/AppSettings.cs:77`
-- [ ] `ShowPower`: `bool`, default `true` — `src/Notch.Core/Settings/AppSettings.cs:79`
-- [ ] `ShowBluetooth`: `bool`, default `true` — `src/Notch.Core/Settings/AppSettings.cs:81`
-- [ ] `ShowCapsLock`: `bool`, default `true` — `src/Notch.Core/Settings/AppSettings.cs:83`
-- [ ] `SuppressedActivityIds()`, which maps the Show* flags to activity ids — `src/Notch.Core/Settings/AppSettings.cs:179`
-- [ ] `PomodoroFocusMinutes`: `int`, default `25`; values outside 1..600 fall back to the classic value — `src/Notch.Core/Settings/AppSettings.cs:85`
-- [ ] `PomodoroShortBreakMinutes`: `int`, default `5`; values outside 1..600 fall back to the classic value — `src/Notch.Core/Settings/AppSettings.cs:87`
-- [ ] `PomodoroLongBreakMinutes`: `int`, default `15`; values outside 1..600 fall back to the classic value — `src/Notch.Core/Settings/AppSettings.cs:89`
-- [ ] `TimerPresets`: `List<TimerPreset>`, default `[{Name:"",Seconds:300},{"",900},{"",1800},{"",3600}]` — `src/Notch.Core/Settings/AppSettings.cs:105`
-- [ ] `TimerPreset` JSON shape `{ "Name": string, "Seconds": int }`; `Duration`, `Label` and `IsValid` are `[JsonIgnore]` — `src/Notch.Core/Widgets/TimerPreset.cs:8`
-- [ ] `TimerPreset.MaxNameLength = 10`; `IsValid` means 1 s..24 h (`DurationParser.Shortest`/`Longest`) — `src/Notch.Core/Widgets/TimerPreset.cs:10`
-- [ ] `TimerPreset.TryParse` / `ToLine` text forms: `"15m"`, `"Tea 3m"`, `"Long walk 1h 20m"` — `src/Notch.Core/Widgets/TimerPreset.cs:29`
-- [ ] `Timers()`: keeps only valid presets, takes at most `MaxTimerPresets = 6`, trims names and cuts them to 10 characters — `src/Notch.Core/Settings/AppSettings.cs:114`
-- [ ] `HomeWidgets`: `List<HomeWidget>`, default `HomeLayout.Default()` = media(Full), agents(Full), timer(Half), calendar(Half) — `src/Notch.Core/Widgets/HomeLayout.cs:214`
-- [ ] `HomeWidget.Id`: `string`, default 8 hex characters from a GUID `"N"` — `src/Notch.Core/Widgets/HomeLayout.cs:16`
-- [ ] `HomeWidget.Kind`: `string`, default `""` — `src/Notch.Core/Widgets/HomeLayout.cs:19`
-- [ ] `HomeWidget.Width`: `WidgetWidth` enum string `"Full"|"Half"`, default `"Full"` — `src/Notch.Core/Widgets/HomeLayout.cs:22`
-- [ ] `HomeWidget.HideWhenEmpty`: `bool`, default `true` — `src/Notch.Core/Widgets/HomeLayout.cs:25`
-- [ ] `HomeWidget.Options`: `Dictionary<string,string>`, default `{}`; toggle values are `"true"`/`"false"` — `src/Notch.Core/Widgets/HomeLayout.cs:28`
-- [ ] `HomeWidget.Source`: `string?` `"plugin-id/type-id"`, used by `plugin-widget` — `src/Notch.Core/Widgets/HomeLayout.cs:31`
-- [ ] Widget kinds (stored, never renamed): `media`, `agents`, `timer`, `calendar`, `clock`, `stats`, `shelf`, `clipboard`, `weather`, `note`, `todo`, `launcher`, `command`, `feed`, `plugin`, `plugin-widget` — `src/Notch.Core/Widgets/HomeLayout.cs:53`
+- [x] `ShowMedia`: `bool`, default `true`; when off, suppresses the media activity id — `src/Notch.Core/Settings/AppSettings.cs:73`
+- [x] `ShowVolume`: `bool`, default `true`; when off, suppresses `HudActivities.VolumeId` and `AudioOutputId` — `src/Notch.Core/Settings/AppSettings.cs:75`
+- [x] `ShowBrightness`: `bool`, default `true` — `src/Notch.Core/Settings/AppSettings.cs:77`
+- [x] `ShowPower`: `bool`, default `true` — `src/Notch.Core/Settings/AppSettings.cs:79`
+- [x] `ShowBluetooth`: `bool`, default `true` — `src/Notch.Core/Settings/AppSettings.cs:81`
+- [x] `ShowCapsLock`: `bool`, default `true` — `src/Notch.Core/Settings/AppSettings.cs:83`
+- [x] `SuppressedActivityIds()`, which maps the Show* flags to activity ids — `src/Notch.Core/Settings/AppSettings.cs:179`
+- [x] `PomodoroFocusMinutes`: `int`, default `25`; values outside 1..600 fall back to the classic value — `src/Notch.Core/Settings/AppSettings.cs:85`
+- [x] `PomodoroShortBreakMinutes`: `int`, default `5`; values outside 1..600 fall back to the classic value — `src/Notch.Core/Settings/AppSettings.cs:87`
+- [x] `PomodoroLongBreakMinutes`: `int`, default `15`; values outside 1..600 fall back to the classic value — `src/Notch.Core/Settings/AppSettings.cs:89`
+- [x] `TimerPresets`: `List<TimerPreset>`, default `[{Name:"",Seconds:300},{"",900},{"",1800},{"",3600}]` — `src/Notch.Core/Settings/AppSettings.cs:105`
+- [x] `TimerPreset` JSON shape `{ "Name": string, "Seconds": int }`; `Duration`, `Label` and `IsValid` are `[JsonIgnore]` — `src/Notch.Core/Widgets/TimerPreset.cs:8`
+- [x] `TimerPreset.MaxNameLength = 10`; `IsValid` means 1 s..24 h (`DurationParser.Shortest`/`Longest`) — `src/Notch.Core/Widgets/TimerPreset.cs:10`
+- [x] `TimerPreset.TryParse` / `ToLine` text forms: `"15m"`, `"Tea 3m"`, `"Long walk 1h 20m"` — `src/Notch.Core/Widgets/TimerPreset.cs:29`
+- [x] `Timers()`: keeps only valid presets, takes at most `MaxTimerPresets = 6`, trims names and cuts them to 10 characters — `src/Notch.Core/Settings/AppSettings.cs:114`
+- [x] `HomeWidgets`: `List<HomeWidget>`, default `HomeLayout.Default()` = media(Full), agents(Full), timer(Half), calendar(Half) — `src/Notch.Core/Widgets/HomeLayout.cs:214`
+- [x] `HomeWidget.Id`: `string`, default 8 hex characters from a GUID `"N"` — `src/Notch.Core/Widgets/HomeLayout.cs:16`
+- [x] `HomeWidget.Kind`: `string`, default `""` — `src/Notch.Core/Widgets/HomeLayout.cs:19`
+- [x] `HomeWidget.Width`: `WidgetWidth` enum string `"Full"|"Half"`, default `"Full"` — `src/Notch.Core/Widgets/HomeLayout.cs:22`
+- [x] `HomeWidget.HideWhenEmpty`: `bool`, default `true` — `src/Notch.Core/Widgets/HomeLayout.cs:25`
+- [x] `HomeWidget.Options`: `Dictionary<string,string>`, default `{}`; toggle values are `"true"`/`"false"` — `src/Notch.Core/Widgets/HomeLayout.cs:28`
+- [x] `HomeWidget.Source`: `string?` `"plugin-id/type-id"`, used by `plugin-widget` — `src/Notch.Core/Widgets/HomeLayout.cs:31`
+- [x] Widget kinds (stored, never renamed): `media`, `agents`, `timer`, `calendar`, `clock`, `stats`, `shelf`, `clipboard`, `weather`, `note`, `todo`, `launcher`, `command`, `feed`, `plugin`, `plugin-widget` — `src/Notch.Core/Widgets/HomeLayout.cs:53`
 - [ ] Shared option keys: `title` (`TitleKey`) and note text `text` (`NoteTextKey`) — `src/Notch.Core/Widgets/HomeLayout.cs:122`
 - [ ] Single-instance widgets: media, agents, timer, calendar, shelf, clipboard — `src/Notch.Core/Widgets/HomeLayout.cs:130`
 - [ ] Clock options: `title`, `zone`, `hours24`=false, `seconds`=false (Half) — `src/Notch.Core/Widgets/HomeLayout.cs:136`
@@ -73,29 +73,29 @@ Contents:
 - [ ] Plugin card options: `card` (choice filled in by the app) — `src/Notch.Core/Widgets/HomeLayout.cs:184`
 - [ ] `HomeLayout.MaxWidgets = 24`; `Normalize` drops unknown kinds, `plugin-widget` without a `Source`, and duplicate single widgets; it fixes ids, empty options and invalid widths — `src/Notch.Core/Widgets/HomeLayout.cs:266`
 - [ ] Row layout: a Full widget sits alone, consecutive Half widgets pair up, and an unpaired Half sits alone on the left — `src/Notch.Core/Widgets/HomeLayout.cs:227`
-- [ ] `CalendarFeeds`: `List<string>` of .ics URLs, default `[]` — `src/Notch.Core/Settings/AppSettings.cs:127`
-- [ ] `EnabledPlugins`: `List<string>` of plugin ids, default `[]` — `src/Notch.Core/Settings/AppSettings.cs:130`
-- [ ] `TerminalPresets`: `List<string>`, default `["Claude = claude","Codex = codex","opencode = opencode","Shell = powershell"]` — `src/Notch.Core/Terminal/TerminalProfile.cs:39`
+- [x] `CalendarFeeds`: `List<string>` of .ics URLs, default `[]` — `src/Notch.Core/Settings/AppSettings.cs:127`
+- [x] `EnabledPlugins`: `List<string>` of plugin ids, default `[]` — `src/Notch.Core/Settings/AppSettings.cs:130`
+- [x] `TerminalPresets`: `List<string>`, default `["Claude = claude","Codex = codex","opencode = opencode","Shell = powershell"]` — `src/Notch.Core/Terminal/TerminalProfile.cs:39`
 - [ ] Terminal preset line grammar: `Name = [VAR=value ...] command [args]`; double quotes group words, and an unbalanced quote rejects the line. A variable name is letters, digits and `_` and does not start with a digit. At most `MaxPresets = 6`; when no line is usable, the defaults are used. The id is a slug of the name, with `-2`, `-3`… on collision and `terminal` when empty. The agent is detected from the command name ("claude" substring, or `AgentCatalog.ForCommand`) — `src/Notch.Core/Terminal/TerminalPresets.cs:14`
-- [ ] `RecentFolders`: `List<string>`, default `[]`; most recent first, deduplicated ignoring case, at most 8 — `src/Notch.Core/Settings/AppSettings.cs:139`
-- [ ] `WebhookEnabled`: `bool`, default `false` — `src/Notch.Core/Settings/AppSettings.cs:142`
-- [ ] `WebhookPort`: `int`, default `47890` — `src/Notch.Core/Automation/WebhookRequest.cs:27`
+- [x] `RecentFolders`: `List<string>`, default `[]`; most recent first, deduplicated ignoring case, at most 8 — `src/Notch.Core/Settings/AppSettings.cs:139`
+- [x] `WebhookEnabled`: `bool`, default `false` — `src/Notch.Core/Settings/AppSettings.cs:142`
+- [x] `WebhookPort`: `int`, default `47890` — `src/Notch.Core/Automation/WebhookRequest.cs:27`
 - [ ] `WebhookToken`: `string?`, default `null`; generated and saved the first time the webhook is applied while enabled — `src/Notch.App/Automation/WebhookService.cs:47`
-- [ ] `PaletteHotkey`: `string`, default `"Alt+Shift+P"` — `src/Notch.Core/Settings/AppSettings.cs:151`
-- [ ] `DetectAgents`: `bool`, default `true` — `src/Notch.Core/Settings/AppSettings.cs:154`
-- [ ] `HiddenAgents`: `List<string>` of AgentCatalog ids, default `[]` — `src/Notch.Core/Settings/AppSettings.cs:157`
+- [x] `PaletteHotkey`: `string`, default `"Alt+Shift+P"` — `src/Notch.Core/Settings/AppSettings.cs:151`
+- [x] `DetectAgents`: `bool`, default `true` — `src/Notch.Core/Settings/AppSettings.cs:154`
+- [x] `HiddenAgents`: `List<string>` of AgentCatalog ids, default `[]` — `src/Notch.Core/Settings/AppSettings.cs:157`
 - [ ] AgentCatalog ids: `claude`, `codex`, `gemini`, `aider`, `opencode` — `src/Notch.Core/Agents/AgentCatalog.cs:46`
-- [ ] `WatchAppSessions`: `bool`, default `true` — `src/Notch.Core/Settings/AppSettings.cs:160`
-- [ ] `GlobalAgentHooks`: `bool`, default `false` — `src/Notch.Core/Settings/AppSettings.cs:167`
-- [ ] `ClipboardHistory`: `bool`, default `false` — `src/Notch.Core/Settings/AppSettings.cs:170`
-- [ ] `MirrorNotifications`: `bool`, default `false` — `src/Notch.Core/Settings/AppSettings.cs:173`
-- [ ] `MirroredApps`: `List<string>`, default `[]` (empty means all apps) — `src/Notch.Core/Settings/AppSettings.cs:176`
+- [x] `WatchAppSessions`: `bool`, default `true` — `src/Notch.Core/Settings/AppSettings.cs:160`
+- [x] `GlobalAgentHooks`: `bool`, default `false` — `src/Notch.Core/Settings/AppSettings.cs:167`
+- [x] `ClipboardHistory`: `bool`, default `false` — `src/Notch.Core/Settings/AppSettings.cs:170`
+- [x] `MirrorNotifications`: `bool`, default `false` — `src/Notch.Core/Settings/AppSettings.cs:173`
+- [x] `MirroredApps`: `List<string>`, default `[]` (empty means all apps) — `src/Notch.Core/Settings/AppSettings.cs:176`
 
 ### Data files and folders
-- [ ] Folder name: `Notch`, or `Notch-Debug` in a DEBUG build unless `--shared-data` is on the command line (checked ignoring case against `Environment.GetCommandLineArgs()`) — `src/Notch.Core/Settings/DataFolders.cs:15`
-- [ ] Roaming root `%AppData%\<Name>` (settings and plugins); Local root `%LocalAppData%\<Name>` (logs, caches, downloads) — `src/Notch.Core/Settings/DataFolders.cs:27`
-- [ ] `SeedSettings`: copies `%AppData%\Notch\settings.json` to this build's `settings.json` only when the target is missing, the source exists and the paths differ. The copy has `WebhookEnabled=false` and `GlobalAgentHooks=false`. Called at every startup (a no-op in release) — `src/Notch.Core/Settings/DataFolders.cs:38`
-- [ ] `%AppData%\Notch\settings.json` (with `settings.json.tmp` while saving) — `src/Notch.App/App.xaml.cs:116`
+- [x] Folder name: `Notch`, or `Notch-Debug` in a DEBUG build unless `--shared-data` is on the command line (checked ignoring case against `Environment.GetCommandLineArgs()`) — `src/Notch.Core/Settings/DataFolders.cs:15`
+- [x] Roaming root `%AppData%\<Name>` (settings and plugins); Local root `%LocalAppData%\<Name>` (logs, caches, downloads) — `src/Notch.Core/Settings/DataFolders.cs:27`
+- [x] `SeedSettings`: copies `%AppData%\Notch\settings.json` to this build's `settings.json` only when the target is missing, the source exists and the paths differ. The copy has `WebhookEnabled=false` and `GlobalAgentHooks=false`. Called at every startup (a no-op in release) — `src/Notch.Core/Settings/DataFolders.cs:38`
+- [x] `%AppData%\Notch\settings.json` (with `settings.json.tmp` while saving) — `src/Notch.App/App.xaml.cs:116`
 - [ ] `%AppData%\Notch\plugins\` holds the installed plugins, one folder each with `plugin.json` — `src/Notch.App/App.xaml.cs:152`
 - [ ] Plugin folder temporaries: `.installing-<guid>` (staging), `.installing-<guid>.zip` (download), `.update-<folder>` (pending update, swapped in at the next start), `.old-<folder>`; leftovers are cleaned up — `src/Notch.Core/Plugins/PluginInstaller.cs:60`
 - [ ] Plugin install limits: download at most 64 MB, unpacked at most 256 MB, at most 2000 entries; User-Agent `Notch-Plugins` — `src/Notch.Core/Plugins/PluginInstaller.cs:55`
@@ -116,7 +116,7 @@ Contents:
 - [ ] `%AppData%\Notch\clipboard-pins.json` holds only pinned items, as `ClipboardItem{Id,Kind(number: 0 Text,1 Image,2 Files),CopiedAt,Text,Image(base64 PNG),Files,Source,Pinned}`. The file is deleted when nothing is pinned; saved via `.tmp` — `src/Notch.Core/Clipboard/ClipboardHistory.cs:255`
 - [ ] The rest of the clipboard history is in memory only: capacity 50, text at most 100 000 characters, image at most 4 MB, at most 50 files — `src/Notch.Core/Clipboard/ClipboardHistory.cs:58`
 - [ ] Clipboard path from the window — `src/Notch.App/Shell/NotchWindow.Clipboard.cs:22`
-- [ ] Notes and to-dos have no separate files; they are stored inside `settings.json` `HomeWidgets[].Options` — `src/Notch.App/Shell/NotchWindow.HomeWidgets.cs:648`
+- [x] Notes and to-dos have no separate files; they are stored inside `settings.json` `HomeWidgets[].Options` — `src/Notch.App/Shell/NotchWindow.HomeWidgets.cs:648`
 - [ ] `%LocalAppData%\Notch\errors.log`: unhandled UI exceptions are appended as `{u time} {exception}` plus a blank line — `src/Notch.App/App.xaml.cs:656`
 - [ ] `%LocalAppData%\Notch\hover.log` is overwritten on each run, only with `--trace-hover` — `src/Notch.App/Shell/HoverTrace.cs:19`
 - [ ] `%LocalAppData%\Notch\updates\` holds update downloads `Notch-Setup-<Version>.exe` (with `.part` while downloading). The folder is deleted at every start — `src/Notch.App/Updates/UpdateService.cs:38`
@@ -135,23 +135,23 @@ Contents:
 - [ ] Debug: `notchctl webhook` reads `DataFolders.Roaming`, so a debug notchctl reads `Notch-Debug` unless it was given `--shared-data` — `src/Notch.Cli/WebhookInfo.cs:11`
 
 ### Commands (CommandParser, notch://, notchctl, webhook)
-- [ ] Limits: input at most 2048 characters (URL length, or the sum of the argument lengths), title 120, detail 300, glyph 8, page id 64, timer at most 24 h, toast lifetime capped at 30 s — `src/Notch.Core/Automation/CommandParser.cs:17`
-- [ ] Valid tabs: `home`, `terminal`, `stats`, `shelf`, `plugins`, `clipboard` — `src/Notch.Core/Automation/CommandParser.cs:26`
-- [ ] URL parsing: the scheme `notch` is matched ignoring case. The verb is `uri.Host` when that is non-empty, otherwise `AbsolutePath` trimmed of `/`, so `notch://verb?..`, `notch:verb` and `notch:///verb` all work — `src/Notch.Core/Automation/CommandParser.cs:29`
-- [ ] Query parsing: `+` becomes a space, values are unescaped, a key without `=` gets `"true"`, the first occurrence wins, and keys ignore case — `src/Notch.Core/Automation/CommandParser.cs:349`
-- [ ] Argument parsing: the verb is lowercased. `--name=value`, `--name value` (when the next word does not start with `--`) and a bare `--name` (= `"true"`) are read. The first positional fills the verb's main parameter. For `open`, a second positional fills `page` — `src/Notch.Core/Automation/CommandParser.cs:54`
-- [ ] Main parameters: install/plugin take `id`, timer takes `d`, open takes `tab`, toast takes `title` — `src/Notch.Core/Automation/CommandParser.cs:187`
-- [ ] `install id=<plugin-id>` produces `InstallPluginCommand`; the error is "install needs a plugin id." — `src/Notch.Core/Automation/CommandParser.cs:115`
-- [ ] `plugin id=<id> enable=true|1|yes|on|false|0|no|off` produces `SetPluginEnabledCommand` — `src/Notch.Core/Automation/CommandParser.cs:125`
-- [ ] `timer` reads `d`, then `duration`, then `action`. `stop`/`reset`/`cancel` stop it, `pause` pauses, `resume` resumes; otherwise the value is a duration greater than 0 and at most 24 h, which produces `StartTimerCommand` — `src/Notch.Core/Automation/CommandParser.cs:196`
-- [ ] Duration grammar: a bare number is minutes (decimals allowed, invariant culture); `m:s` or `h:m:s` is a clock; otherwise units `h|hr|hrs|hour|hours|m|min|mins|minute|minutes|s|sec|secs|second|seconds`, which can repeat and ignore case. The result must be 1 s..24 h and is rounded to whole seconds — `src/Notch.Core/Widgets/DurationParser.cs:18`
-- [ ] `Describe` writes the shortest form, such as `1h30m`, `45s` or `0s` — `src/Notch.Core/Widgets/DurationParser.cs:54`
-- [ ] `open tab=<tab>` produces `OpenTabCommand`. `page=<id/page>`, `tab=page`, or a tab containing `/` produces `OpenPageCommand`, using page, or tab when page is empty — `src/Notch.Core/Automation/CommandParser.cs:144`
-- [ ] `toast title|text=..., detail, glyph, color (name or #rrggbb), lifetime (duration, capped at 30 s)` produces `ToastCommand` — `src/Notch.Core/Automation/CommandParser.cs:240`
-- [ ] `palette` produces `OpenPaletteCommand`; `settings` produces `OpenSettingsCommand`; any other verb gives "Unknown command." — `src/Notch.Core/Automation/CommandParser.cs:172`
-- [ ] Plugin id regex `^[a-z0-9]+([.-][a-z0-9]+)*$`, 1..64 characters. A page key is `<pluginid>/<page>`, where page is 1..64 characters, has no control characters, and has no surrounding whitespace — `src/Notch.Core/Automation/CommandParser.cs:318`
-- [ ] Colour parse: exactly `#rrggbb`, or a preset name (ignoring case) — `src/Notch.Core/Automation/CommandParser.cs:298`
-- [ ] Command records: Install, SetPluginEnabled, StartTimer, TimerAction(Stop/Pause/Resume), OpenTab, OpenPage, Toast, OpenPalette, OpenSettings — `src/Notch.Core/Automation/NotchCommand.cs:13`
+- [x] Limits: input at most 2048 characters (URL length, or the sum of the argument lengths), title 120, detail 300, glyph 8, page id 64, timer at most 24 h, toast lifetime capped at 30 s — `src/Notch.Core/Automation/CommandParser.cs:17`
+- [x] Valid tabs: `home`, `terminal`, `stats`, `shelf`, `plugins`, `clipboard` — `src/Notch.Core/Automation/CommandParser.cs:26`
+- [x] URL parsing: the scheme `notch` is matched ignoring case. The verb is `uri.Host` when that is non-empty, otherwise `AbsolutePath` trimmed of `/`, so `notch://verb?..`, `notch:verb` and `notch:///verb` all work — `src/Notch.Core/Automation/CommandParser.cs:29`
+- [x] Query parsing: `+` becomes a space, values are unescaped, a key without `=` gets `"true"`, the first occurrence wins, and keys ignore case — `src/Notch.Core/Automation/CommandParser.cs:349`
+- [x] Argument parsing: the verb is lowercased. `--name=value`, `--name value` (when the next word does not start with `--`) and a bare `--name` (= `"true"`) are read. The first positional fills the verb's main parameter. For `open`, a second positional fills `page` — `src/Notch.Core/Automation/CommandParser.cs:54`
+- [x] Main parameters: install/plugin take `id`, timer takes `d`, open takes `tab`, toast takes `title` — `src/Notch.Core/Automation/CommandParser.cs:187`
+- [x] `install id=<plugin-id>` produces `InstallPluginCommand`; the error is "install needs a plugin id." — `src/Notch.Core/Automation/CommandParser.cs:115`
+- [x] `plugin id=<id> enable=true|1|yes|on|false|0|no|off` produces `SetPluginEnabledCommand` — `src/Notch.Core/Automation/CommandParser.cs:125`
+- [x] `timer` reads `d`, then `duration`, then `action`. `stop`/`reset`/`cancel` stop it, `pause` pauses, `resume` resumes; otherwise the value is a duration greater than 0 and at most 24 h, which produces `StartTimerCommand` — `src/Notch.Core/Automation/CommandParser.cs:196`
+- [x] Duration grammar: a bare number is minutes (decimals allowed, invariant culture); `m:s` or `h:m:s` is a clock; otherwise units `h|hr|hrs|hour|hours|m|min|mins|minute|minutes|s|sec|secs|second|seconds`, which can repeat and ignore case. The result must be 1 s..24 h and is rounded to whole seconds — `src/Notch.Core/Widgets/DurationParser.cs:18`
+- [x] `Describe` writes the shortest form, such as `1h30m`, `45s` or `0s` — `src/Notch.Core/Widgets/DurationParser.cs:54`
+- [x] `open tab=<tab>` produces `OpenTabCommand`. `page=<id/page>`, `tab=page`, or a tab containing `/` produces `OpenPageCommand`, using page, or tab when page is empty — `src/Notch.Core/Automation/CommandParser.cs:144`
+- [x] `toast title|text=..., detail, glyph, color (name or #rrggbb), lifetime (duration, capped at 30 s)` produces `ToastCommand` — `src/Notch.Core/Automation/CommandParser.cs:240`
+- [x] `palette` produces `OpenPaletteCommand`; `settings` produces `OpenSettingsCommand`; any other verb gives "Unknown command." — `src/Notch.Core/Automation/CommandParser.cs:172`
+- [x] Plugin id regex `^[a-z0-9]+([.-][a-z0-9]+)*$`, 1..64 characters. A page key is `<pluginid>/<page>`, where page is 1..64 characters, has no control characters, and has no surrounding whitespace — `src/Notch.Core/Automation/CommandParser.cs:318`
+- [x] Colour parse: exactly `#rrggbb`, or a preset name (ignoring case) — `src/Notch.Core/Automation/CommandParser.cs:298`
+- [x] Command records: Install, SetPluginEnabled, StartTimer, TimerAction(Stop/Pause/Resume), OpenTab, OpenPage, Toast, OpenPalette, OpenSettings — `src/Notch.Core/Automation/NotchCommand.cs:13`
 - [ ] Dispatch of arguments: no arguments, or a first argument starting with `--`, reveals the notch, or opens settings when `--settings` is among them. This does nothing when the arguments contain `--updated` or `--wait-for=` — `src/Notch.App/Automation/CommandDispatcher.cs:28`
 - [ ] Quiet-launch flags list — `src/Notch.Core/Automation/ForwardedLaunch.cs:11`
 - [ ] A first argument starting with `notch:` is parsed as a URL; anything else is parsed as notchctl-style arguments — `src/Notch.App/Automation/CommandDispatcher.cs:53`
