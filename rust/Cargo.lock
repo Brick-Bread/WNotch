@@ -1781,6 +1781,7 @@ dependencies = [
 name = "notch-core"
 version = "0.21.0"
 dependencies = [
+ "chrono",
  "getrandom 0.4.3",
  "indexmap 2.14.2",
  "serde",
