@@ -16,6 +16,7 @@ notch-core = { path = "crates/notch-core" }
 notch-ipc = { path = "crates/notch-ipc" }
 notch-platform = { path = "crates/notch-platform" }
 
+base64 = "0.22.1"
 chrono = { version = "0.4.45", default-features = false, features = ["std", "clock"] }
 getrandom = "0.4.3"
 indexmap = "2.14.2"
