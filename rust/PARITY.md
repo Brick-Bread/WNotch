@@ -60,23 +60,23 @@ Contents:
 - [x] `HomeWidget.Options`: `Dictionary<string,string>`, default `{}`; toggle values are `"true"`/`"false"` — `src/Notch.Core/Widgets/HomeLayout.cs:28`
 - [x] `HomeWidget.Source`: `string?` `"plugin-id/type-id"`, used by `plugin-widget` — `src/Notch.Core/Widgets/HomeLayout.cs:31`
 - [x] Widget kinds (stored, never renamed): `media`, `agents`, `timer`, `calendar`, `clock`, `stats`, `shelf`, `clipboard`, `weather`, `note`, `todo`, `launcher`, `command`, `feed`, `plugin`, `plugin-widget` — `src/Notch.Core/Widgets/HomeLayout.cs:53`
-- [ ] Shared option keys: `title` (`TitleKey`) and note text `text` (`NoteTextKey`) — `src/Notch.Core/Widgets/HomeLayout.cs:122`
-- [ ] Single-instance widgets: media, agents, timer, calendar, shelf, clipboard — `src/Notch.Core/Widgets/HomeLayout.cs:130`
-- [ ] Clock options: `title`, `zone`, `hours24`=false, `seconds`=false (Half) — `src/Notch.Core/Widgets/HomeLayout.cs:136`
-- [ ] Stats options: `cpu`=true, `memory`=true, `gpu`=false, `network`=false, `battery`=false (Half) — `src/Notch.Core/Widgets/HomeLayout.cs:143`
-- [ ] Weather options: `city`, and `units` = `Celsius` (choices `Celsius`/`Fahrenheit`), from Open-Meteo — `src/Notch.Core/Widgets/HomeLayout.cs:153`
-- [ ] Note options: `title` = `"Note"`; the typed text is kept in `Options["text"]` — `src/Notch.Core/Widgets/HomeLayout.cs:158`
-- [ ] Todo options: `title` = `"To do"`; items kept as JSON in `Options["items"]` (`[{Text,Done}]`), at most 100 items of 300 characters each — `src/Notch.Core/Widgets/TodoList.cs:13`
-- [ ] Launcher options: `title` = `"Launcher"`, `items` (lines `Name = path|folder|url`) — `src/Notch.Core/Widgets/HomeLayout.cs:166`
-- [ ] Command options: `title` = `"Commands"`, `commands` (lines `Name = command`), `run` = `"Terminal tab"` (choices `"Terminal tab"`/`"In the background"`) — `src/Notch.Core/Widgets/HomeLayout.cs:171`
-- [ ] Feed options: `title` = `"Feed"`, `url`, `field` (JSON path such as `data.status` or `items.0.title`), `minutes` = `"15 min"` (choices `1/5/15/60 min`) — `src/Notch.Core/Widgets/HomeLayout.cs:177`
-- [ ] Plugin card options: `card` (choice filled in by the app) — `src/Notch.Core/Widgets/HomeLayout.cs:184`
-- [ ] `HomeLayout.MaxWidgets = 24`; `Normalize` drops unknown kinds, `plugin-widget` without a `Source`, and duplicate single widgets; it fixes ids, empty options and invalid widths — `src/Notch.Core/Widgets/HomeLayout.cs:266`
-- [ ] Row layout: a Full widget sits alone, consecutive Half widgets pair up, and an unpaired Half sits alone on the left — `src/Notch.Core/Widgets/HomeLayout.cs:227`
+- [x] Shared option keys: `title` (`TitleKey`) and note text `text` (`NoteTextKey`) — `src/Notch.Core/Widgets/HomeLayout.cs:122`
+- [x] Single-instance widgets: media, agents, timer, calendar, shelf, clipboard — `src/Notch.Core/Widgets/HomeLayout.cs:130`
+- [x] Clock options: `title`, `zone`, `hours24`=false, `seconds`=false (Half) — `src/Notch.Core/Widgets/HomeLayout.cs:136`
+- [x] Stats options: `cpu`=true, `memory`=true, `gpu`=false, `network`=false, `battery`=false (Half) — `src/Notch.Core/Widgets/HomeLayout.cs:143`
+- [x] Weather options: `city`, and `units` = `Celsius` (choices `Celsius`/`Fahrenheit`), from Open-Meteo — `src/Notch.Core/Widgets/HomeLayout.cs:153`
+- [x] Note options: `title` = `"Note"`; the typed text is kept in `Options["text"]` — `src/Notch.Core/Widgets/HomeLayout.cs:158`
+- [x] Todo options: `title` = `"To do"`; items kept as JSON in `Options["items"]` (`[{Text,Done}]`), at most 100 items of 300 characters each — `src/Notch.Core/Widgets/TodoList.cs:13`
+- [x] Launcher options: `title` = `"Launcher"`, `items` (lines `Name = path|folder|url`) — `src/Notch.Core/Widgets/HomeLayout.cs:166`
+- [x] Command options: `title` = `"Commands"`, `commands` (lines `Name = command`), `run` = `"Terminal tab"` (choices `"Terminal tab"`/`"In the background"`) — `src/Notch.Core/Widgets/HomeLayout.cs:171`
+- [x] Feed options: `title` = `"Feed"`, `url`, `field` (JSON path such as `data.status` or `items.0.title`), `minutes` = `"15 min"` (choices `1/5/15/60 min`) — `src/Notch.Core/Widgets/HomeLayout.cs:177`
+- [x] Plugin card options: `card` (choice filled in by the app) — `src/Notch.Core/Widgets/HomeLayout.cs:184`
+- [x] `HomeLayout.MaxWidgets = 24`; `Normalize` drops unknown kinds, `plugin-widget` without a `Source`, and duplicate single widgets; it fixes ids, empty options and invalid widths — `src/Notch.Core/Widgets/HomeLayout.cs:266`
+- [x] Row layout: a Full widget sits alone, consecutive Half widgets pair up, and an unpaired Half sits alone on the left — `src/Notch.Core/Widgets/HomeLayout.cs:227`
 - [x] `CalendarFeeds`: `List<string>` of .ics URLs, default `[]` — `src/Notch.Core/Settings/AppSettings.cs:127`
 - [x] `EnabledPlugins`: `List<string>` of plugin ids, default `[]` — `src/Notch.Core/Settings/AppSettings.cs:130`
 - [x] `TerminalPresets`: `List<string>`, default `["Claude = claude","Codex = codex","opencode = opencode","Shell = powershell"]` — `src/Notch.Core/Terminal/TerminalProfile.cs:39`
-- [ ] Terminal preset line grammar: `Name = [VAR=value ...] command [args]`; double quotes group words, and an unbalanced quote rejects the line. A variable name is letters, digits and `_` and does not start with a digit. At most `MaxPresets = 6`; when no line is usable, the defaults are used. The id is a slug of the name, with `-2`, `-3`… on collision and `terminal` when empty. The agent is detected from the command name ("claude" substring, or `AgentCatalog.ForCommand`) — `src/Notch.Core/Terminal/TerminalPresets.cs:14`
+- [x] Terminal preset line grammar: `Name = [VAR=value ...] command [args]`; double quotes group words, and an unbalanced quote rejects the line. A variable name is letters, digits and `_` and does not start with a digit. At most `MaxPresets = 6`; when no line is usable, the defaults are used. The id is a slug of the name, with `-2`, `-3`… on collision and `terminal` when empty. The agent is detected from the command name ("claude" substring, or `AgentCatalog.ForCommand`) — `src/Notch.Core/Terminal/TerminalPresets.cs:14`
 - [x] `RecentFolders`: `List<string>`, default `[]`; most recent first, deduplicated ignoring case, at most 8 — `src/Notch.Core/Settings/AppSettings.cs:139`
 - [x] `WebhookEnabled`: `bool`, default `false` — `src/Notch.Core/Settings/AppSettings.cs:142`
 - [x] `WebhookPort`: `int`, default `47890` — `src/Notch.Core/Automation/WebhookRequest.cs:27`
@@ -84,7 +84,7 @@ Contents:
 - [x] `PaletteHotkey`: `string`, default `"Alt+Shift+P"` — `src/Notch.Core/Settings/AppSettings.cs:151`
 - [x] `DetectAgents`: `bool`, default `true` — `src/Notch.Core/Settings/AppSettings.cs:154`
 - [x] `HiddenAgents`: `List<string>` of AgentCatalog ids, default `[]` — `src/Notch.Core/Settings/AppSettings.cs:157`
-- [ ] AgentCatalog ids: `claude`, `codex`, `gemini`, `aider`, `opencode` — `src/Notch.Core/Agents/AgentCatalog.cs:46`
+- [x] AgentCatalog ids: `claude`, `codex`, `gemini`, `aider`, `opencode` — `src/Notch.Core/Agents/AgentCatalog.cs:46`
 - [x] `WatchAppSessions`: `bool`, default `true` — `src/Notch.Core/Settings/AppSettings.cs:160`
 - [x] `GlobalAgentHooks`: `bool`, default `false` — `src/Notch.Core/Settings/AppSettings.cs:167`
 - [x] `ClipboardHistory`: `bool`, default `false` — `src/Notch.Core/Settings/AppSettings.cs:170`
@@ -153,7 +153,7 @@ Contents:
 - [x] Colour parse: exactly `#rrggbb`, or a preset name (ignoring case) — `src/Notch.Core/Automation/CommandParser.cs:298`
 - [x] Command records: Install, SetPluginEnabled, StartTimer, TimerAction(Stop/Pause/Resume), OpenTab, OpenPage, Toast, OpenPalette, OpenSettings — `src/Notch.Core/Automation/NotchCommand.cs:13`
 - [ ] Dispatch of arguments: no arguments, or a first argument starting with `--`, reveals the notch, or opens settings when `--settings` is among them. This does nothing when the arguments contain `--updated` or `--wait-for=` — `src/Notch.App/Automation/CommandDispatcher.cs:28`
-- [ ] Quiet-launch flags list — `src/Notch.Core/Automation/ForwardedLaunch.cs:11`
+- [x] Quiet-launch flags list — `src/Notch.Core/Automation/ForwardedLaunch.cs:11`
 - [ ] A first argument starting with `notch:` is parsed as a URL; anything else is parsed as notchctl-style arguments — `src/Notch.App/Automation/CommandDispatcher.cs:53`
 - [ ] Results: a timer start answers "Timer started: <describe>."; a missing page answers "There is no page X. Is its plugin switched on?"; after a page opens the notch is revealed — `src/Notch.App/Automation/CommandDispatcher.cs:72`
 - [ ] Enabling a plugin always asks the user: a review prompt when it is unapproved, otherwise a Yes/No box. Only one question at a time, otherwise "Notch is already asking about a plugin."; "Cancelled." when declined; "X is not installed." when missing — `src/Notch.App/Automation/CommandDispatcher.cs:114`
@@ -166,15 +166,15 @@ Contents:
 - [ ] notchctl exit codes: 0 ok (message to stdout), 1 refused (message to stderr), 2 not running ("Notch is not running. Start it, or use --start."), 3 connected but no answer in time — `src/Notch.Cli/Program.cs:57`
 - [ ] Webhook listener on `http://127.0.0.1:<port>/` only; the port must be 1024..65535, otherwise an error string — `src/Notch.Platform/Automation/WebhookServer.cs:32`
 - [ ] Rate limit: 30 requests per fixed 1 s window, then 429 "Too many requests." (checked before auth) — `src/Notch.Platform/Automation/WebhookServer.cs:166`
-- [ ] Auth order: any `Origin` header gives 403. `Host` must be exactly `127.0.0.1:<port>`, `localhost:<port>` or `[::1]:<port>`, otherwise 403. No token configured gives 503. `Authorization: Bearer <token>` (prefix ignores case, value trimmed, compared in constant time) or 401 — `src/Notch.Core/Automation/WebhookRequest.cs:38`
-- [ ] Token: 32 random bytes, base64url without padding — `src/Notch.Core/Automation/WebhookRequest.cs:286`
+- [x] Auth order: any `Origin` header gives 403. `Host` must be exactly `127.0.0.1:<port>`, `localhost:<port>` or `[::1]:<port>`, otherwise 403. No token configured gives 503. `Authorization: Bearer <token>` (prefix ignores case, value trimmed, compared in constant time) or 401 — `src/Notch.Core/Automation/WebhookRequest.cs:38`
+- [x] Token: 32 random bytes, base64url without padding — `src/Notch.Core/Automation/WebhookRequest.cs:286`
 - [ ] Body limit 64 KiB: Content-Length over the limit gives 413, a stream that grows past it while being read gives 413, and a missing or too-large body on POST gives 413 — `src/Notch.Platform/Automation/WebhookServer.cs:122`
-- [ ] Routing: the query is stripped and trailing `/` trimmed. `/v1/activity/<id>` needs DELETE (otherwise 405 "Use DELETE…") and an invalid id gives 400. `/v1/activity`, `/v1/notify` and `/v1/command` need POST (otherwise 405 "Use POST."). Anything else gives 404 — `src/Notch.Core/Automation/WebhookRequest.cs:66`
-- [ ] The body must be valid JSON (otherwise 400 "not valid JSON") and a JSON object (otherwise 400) — `src/Notch.Core/Automation/WebhookRequest.cs:103`
-- [ ] `POST /v1/activity` fields: `id` (`^[A-Za-z0-9._-]+$`, at most 64, published as `webhook.<id>`), `title` (1..120, trimmed), `detail` (≤300), `glyph` (≤8), `tier` (`transient` default, `ongoing`, `attention`, `glance`), `progress` (number clamped 0..1, NaN becomes 0), `glow` (colour string, giving Steady, or `{color, pattern: Steady|Breathe|Pulse|Flash|Audio, strength 0..1 default 1}`), `lifetimeMs` (>0, capped at 5 min, Transient only) — `src/Notch.Core/Automation/WebhookRequest.cs:162`
-- [ ] `POST /v1/notify` takes the same fields as the toast command — `src/Notch.Core/Automation/WebhookRequest.cs:122`
-- [ ] `POST /v1/command`: the verb comes from `command` or `verb`, and the other string, number and bool fields become values. install and plugin are refused with 403; parse errors give 400 — `src/Notch.Core/Automation/WebhookRequest.cs:127`
-- [ ] `DELETE /v1/activity/<id>` removes `webhook.<id>` — `src/Notch.Core/Automation/WebhookRequest.cs:71`
+- [x] Routing: the query is stripped and trailing `/` trimmed. `/v1/activity/<id>` needs DELETE (otherwise 405 "Use DELETE…") and an invalid id gives 400. `/v1/activity`, `/v1/notify` and `/v1/command` need POST (otherwise 405 "Use POST."). Anything else gives 404 — `src/Notch.Core/Automation/WebhookRequest.cs:66`
+- [x] The body must be valid JSON (otherwise 400 "not valid JSON") and a JSON object (otherwise 400) — `src/Notch.Core/Automation/WebhookRequest.cs:103`
+- [x] **[changed: a glow pattern that is not one of the five names, or a lone surrogate in a string, is refused with 400; C# accepts the undefined pattern, and answers 500 for the surrogate]** `POST /v1/activity` fields: `id` (`^[A-Za-z0-9._-]+$`, at most 64, published as `webhook.<id>`), `title` (1..120, trimmed), `detail` (≤300), `glyph` (≤8), `tier` (`transient` default, `ongoing`, `attention`, `glance`), `progress` (number clamped 0..1, NaN becomes 0), `glow` (colour string, giving Steady, or `{color, pattern: Steady|Breathe|Pulse|Flash|Audio, strength 0..1 default 1}`), `lifetimeMs` (>0, capped at 5 min, Transient only) — `src/Notch.Core/Automation/WebhookRequest.cs:162`
+- [x] `POST /v1/notify` takes the same fields as the toast command — `src/Notch.Core/Automation/WebhookRequest.cs:122`
+- [x] `POST /v1/command`: the verb comes from `command` or `verb`, and the other string, number and bool fields become values. install and plugin are refused with 403; parse errors give 400 — `src/Notch.Core/Automation/WebhookRequest.cs:127`
+- [x] `DELETE /v1/activity/<id>` removes `webhook.<id>` — `src/Notch.Core/Automation/WebhookRequest.cs:71`
 - [ ] Reply JSON is `{"ok":bool,"message":string}` with `application/json; charset=utf-8` and no CORS headers. A handler result gives 200, or 422 when ok is false. An unexpected exception gives 500 "Something went wrong." — `src/Notch.Platform/Automation/WebhookServer.cs:199`
 - [ ] At most 20 non-transient webhook activities live at once; over the limit the request is refused (422) with the message "Too many activities are showing…". Publishing an id as transient removes it from the live set — `src/Notch.App/Automation/WebhookService.cs:16`
 - [ ] `Apply()` on startup and on each settings save: stop when the webhook is off, otherwise generate the token if needed and start. A start problem is logged to errors.log at startup and shown in a MessageBox after save — `src/Notch.App/Automation/WebhookService.cs:38`
@@ -183,32 +183,32 @@ Contents:
 - [ ] Single-instance mutex `Local\Notch.SingleInstance` (DEBUG: `Local\Notch.SingleInstance.Debug`). A `--screenshots=` run skips the check — `src/Notch.App/App.xaml.cs:84`
 - [ ] A second instance forwards its arguments (minus `--wait-for=`) through the command pipe with a 3 s timeout, then quits — `src/Notch.App/App.xaml.cs:94`
 - [ ] Command pipe name `notch-command` (DEBUG `notch-command-debug`), InOut, byte mode, max instances, `CurrentUserOnly` — `src/Notch.Core/Automation/CommandPipe.cs:24`
-- [ ] Command pipe request: one UTF-8 line holding a JSON array of strings plus `\n`, at most 8 KiB, read within 5 s. An unreadable request gets `{ok:false,message:"That request could not be read."}` — `src/Notch.Core/Automation/CommandPipe.cs:29`
-- [ ] Command pipe answer: one line of `CommandResult` JSON with web (camelCase) naming, `{"ok":bool,"message":string|null}`. When the client gets EOF without a line it treats that as ok — `src/Notch.Core/Automation/CommandPipe.cs:81`
+- [x] **[changed: a `null` among the arguments gets "That request could not be read."; C# passes it on to its handler]** Command pipe request: one UTF-8 line holding a JSON array of strings plus `\n`, at most 8 KiB, read within 5 s. An unreadable request gets `{ok:false,message:"That request could not be read."}` — `src/Notch.Core/Automation/CommandPipe.cs:29`
+- [x] Command pipe answer: one line of `CommandResult` JSON with web (camelCase) naming, `{"ok":bool,"message":string|null}`. When the client gets EOF without a line it treats that as ok — `src/Notch.Core/Automation/CommandPipe.cs:81`
 - [ ] Client `ExchangeAsync` takes separate connect and answer timeouts and reports Connected versus not — `src/Notch.Core/Automation/CommandPipe.cs:62`
 - [ ] Per-process agent pipe `notch-agent-<pid>`, passed to terminal sessions in `NOTCH_PIPE` — `src/Notch.Platform/Agents/AgentHookServer.cs:19`
-- [ ] Shared agent pipe `notch-agent-shared` (DEBUG `notch-agent-shared-debug`) — `src/Notch.Core/Agents/AgentHooks.cs:56`
+- [x] Shared agent pipe `notch-agent-shared` (DEBUG `notch-agent-shared-debug`) — `src/Notch.Core/Agents/AgentHooks.cs:56`
 - [ ] The agent server listens on both pipes: InOut (needed by opencode), max instances, CurrentUserOnly. It reads one line within 5 s and ignores lines over 256 KiB; nothing is written back — `src/Notch.Platform/Agents/AgentHookServer.cs:48`
-- [ ] Hook line format: `{"session":string,"payload":string(JSON text),"pid":int}` plus `\n` — `src/Notch.Core/Agents/AgentHooks.cs:63`
-- [ ] Hook parsing: the event is `payload.hook_event_name`, falling back to `payload.type`. Folder comes from `payload.cwd`, agent from `payload.agent`. An empty session means the agent was started outside Notch — `src/Notch.Core/Agents/AgentHooks.cs:74`
+- [x] Hook line format: `{"session":string,"payload":string(JSON text),"pid":int}` plus `\n` — `src/Notch.Core/Agents/AgentHooks.cs:63`
+- [x] Hook parsing: the event is `payload.hook_event_name`, falling back to `payload.type`. Folder comes from `payload.cwd`, agent from `payload.agent`. An empty session means the agent was started outside Notch — `src/Notch.Core/Agents/AgentHooks.cs:74`
 - [ ] Env vars set for terminal sessions: `NOTCH_PIPE=<per-process pipe>` and `NOTCH_SESSION=<session id>`, plus the preset's own variables, merged over the parent environment ignoring case — `src/Notch.App/Terminal/TerminalController.cs:182`
 - [ ] Notch.Hook.exe: uses `NOTCH_PIPE` and `NOTCH_SESSION` when both are set, otherwise the shared pipe with an empty session. The payload is the last argument when it starts with `{` (Codex), otherwise stdin read within 2 s and trimmed (Claude). It connects Out-only with a 1000 ms timeout, sends its own pid, prints nothing and always exits 0 — `src/Notch.Hook/Program.cs:13`
 - [ ] Claude per-session args `--settings <LocalAppData>\Notch\claude-hooks.json`, with a JSON hooks object for the 6 events, each `[{hooks:[{type:"command",command:<path with forward slashes, quoted if it has a space>}]}]` — `src/Notch.Core/Agents/AgentHooks.cs:22`
-- [ ] Codex per-session args `-c notify=['<hook path>']`, left out when the path contains `'` — `src/Notch.Core/Agents/AgentHooks.cs:47`
+- [x] Codex per-session args `-c notify=['<hook path>']`, left out when the path contains `'` — `src/Notch.Core/Agents/AgentHooks.cs:47`
 - [ ] PowerShell profile: `pwsh` is preferred over `powershell`; a bare powershell gets `-NoLogo` — `src/Notch.App/Terminal/TerminalController.cs:199`
-- [ ] Global Claude hooks: the same 6 events are added to the user's settings.json. A group counts as Notch's when its command contains `Notch.Hook` (ignoring case). Removal keeps other hooks and drops empty arrays and an empty `hooks` key. Output is indented — `src/Notch.Core/Agents/AgentHookEditor.cs:39`
-- [ ] Global Codex hook: the block `# Notch: reports when Codex finishes a turn. Remove it in Notch's settings.` plus `notify = ['<path>']` goes at the top of config.toml, using the file's own newline style. A top-level `notify` before the first `[table]` that is not Notch's is refused. Removal also takes the comment line and one blank line after it — `src/Notch.Core/Agents/AgentHookEditor.cs:185`
-- [ ] opencode plugin file `notch.js` has marker `notch-opencode-plugin`. It is only overwritten when the existing file has the marker. Comparing copies treats CRLF and LF the same and trims the end — `src/Notch.Core/Agents/OpenCodePlugin.cs:12`
+- [x] **[changed: a hook group or command that is not an object, or a duplicate key, counts as not Notch's; C# throws and does not catch it]** Global Claude hooks: the same 6 events are added to the user's settings.json. A group counts as Notch's when its command contains `Notch.Hook` (ignoring case). Removal keeps other hooks and drops empty arrays and an empty `hooks` key. Output is indented — `src/Notch.Core/Agents/AgentHookEditor.cs:39`
+- [x] Global Codex hook: the block `# Notch: reports when Codex finishes a turn. Remove it in Notch's settings.` plus `notify = ['<path>']` goes at the top of config.toml, using the file's own newline style. A top-level `notify` before the first `[table]` that is not Notch's is refused. Removal also takes the comment line and one blank line after it — `src/Notch.Core/Agents/AgentHookEditor.cs:185`
+- [x] opencode plugin file `notch.js` has marker `notch-opencode-plugin`. It is only overwritten when the existing file has the marker. Comparing copies treats CRLF and LF the same and trims the end — `src/Notch.Core/Agents/OpenCodePlugin.cs:12`
 - [ ] notch.js uses `NOTCH_PIPE` + `NOTCH_SESSION` when both are set, otherwise writes to both `notch-agent-shared` and `notch-agent-shared-debug`. Payload `{hook_event_name, cwd, agent:"opencode"}`, 1000 ms socket timeout, pipe path `\\.\pipe\<name>` — `src/Notch.App/Assets/opencode/notch.js:12`
 - [ ] notch.js event mapping: `session.execution.started` sends UserPromptSubmit. `succeeded` and `failed` send Stop once the folder's last session ends; `interrupted` sends SessionEnd. `permission.asked` sends Notification; `permission.replied` and `permission.rejected` send PostToolUse. Plugin `id:"notch"` — `src/Notch.App/Assets/opencode/notch.js:64`
-- [ ] Hook event names handled: `UserPromptSubmit`, `PreToolUse` and `PostToolUse` mean Working; `Notification` means NeedsInput; `Stop` and Codex `agent-turn-complete` mean Done; `SessionEnd` means Idle — `src/Notch.Core/Agents/AgentStatusTracker.cs:44`
+- [x] Hook event names handled: `UserPromptSubmit`, `PreToolUse` and `PostToolUse` mean Working; `Notification` means NeedsInput; `Stop` and Codex `agent-turn-complete` mean Done; `SessionEnd` means Idle — `src/Notch.Core/Agents/AgentStatusTracker.cs:44`
 - [ ] Terminal inference: Codex input containing `\r` means Working; a bell while Working means NeedsInput; 15 s of silence (checked every 5 s) while Working means Idle. Any input while NeedsInput means Working. Viewing a Done session makes it Idle — `src/Notch.App/Terminal/TerminalController.cs:19`
 - [ ] Shared-pipe routing: the message is ignored when the session is non-empty, when pid ≤ 0 and it is not opencode, or when DetectAgents is off. Otherwise the agent is found by hook pid, rescanning when needed. opencode is routed by folder, first to Notch's terminal sessions and then to detected opencode processes in that folder — `src/Notch.App/Agents/AgentTracker.cs:230`
 - [ ] Env var `CLAUDE_CONFIG_DIR` overrides `~\.claude` (hook settings and transcripts) — `src/Notch.App/Agents/AppSessionReader.cs:45`
 - [ ] Env var `CODEX_HOME` overrides `~\.codex` — `src/Notch.App/Agents/AppSessionReader.cs:49`
 - [ ] Env var `OPENCODE_CONFIG_DIR` overrides `~\.config\opencode` — `src/Notch.App/Agents/AgentHookFiles.cs:31`
 - [ ] Env var `NOTCH_DEV_RELOAD`: any non-empty value has the same effect as `--dev-reload` — `src/Notch.App/App.xaml.cs:263`
-- [ ] Env vars `PATH` and `PATHEXT` are used to resolve terminal commands — `src/Notch.Core/Terminal/CommandResolver.cs:52`
+- [x] Env vars `PATH` and `PATHEXT` are used to resolve terminal commands — `src/Notch.Core/Terminal/CommandResolver.cs:52`
 - [ ] Build-time env vars: `UPDATE_SIGNING_KEY`, `CODESIGN_PFX_BASE64`, `CODESIGN_PFX_PASSWORD` — `installer/sign-update.ps1:17`
 
 ### Notch.exe command-line flags
@@ -262,9 +262,9 @@ Contents:
 - [ ] **[changed: Rust binaries plus the self-contained .NET plugin host; zip appended to the Tauri setup stub]** Build: self-contained win-x64 publish of App, Hook and Cli into one folder; Authenticode signing; drop .pdb files; zip; append to `Notch.Setup.exe`, giving `artifacts\Notch-Setup-<ver>.exe` — `installer/build.ps1:32`
 - [ ] Release assets: `Notch-Setup-<ver>.exe`, `Notch-Setup-<ver>.exe.sig`, `Notch-Update-<ver>.exe` (same bytes), `Notch-Update-<ver>.exe.sig`, `BreakReminder-plugin.zip` — `.github/workflows/release.yml:66`
 - [ ] Update feed: `https://api.github.com/repos/Brick-Bread/WNotch/releases/latest` with User-Agent `Notch-Updater` and Accept `application/vnd.github+json` — `src/Notch.Core/Updates/Updater.cs:14`
-- [ ] Feed parsing: `tag_name` read as `v1.2.3` (a `-`/`+` suffix is dropped and the version normalised to 3 parts). `Notch-Update-*.exe` is preferred over `Notch-Setup-*.exe`. The URL must start with `https://github.com/Brick-Bread/WNotch/releases/download/`. `digest` is `sha256:<hex>`, also read are `size` and the signature `<asset name>.sig` — `src/Notch.Core/Updates/ReleaseFeed.cs:13`
+- [x] **[changed: a repeated name in the feed takes the last value; C# throws and does not catch it]** Feed parsing: `tag_name` read as `v1.2.3` (a `-`/`+` suffix is dropped and the version normalised to 3 parts). `Notch-Update-*.exe` is preferred over `Notch-Setup-*.exe`. The URL must start with `https://github.com/Brick-Bread/WNotch/releases/download/`. `digest` is `sha256:<hex>`, also read are `size` and the signature `<asset name>.sig` — `src/Notch.Core/Updates/ReleaseFeed.cs:13`
 - [ ] Download checks: the file must be non-empty and match `size` (when that is >0). With a public key configured, the `.sig` (≤1024 bytes) is required and must verify. Without a key the sha256 digest is required. The sha256 is checked whenever it is present — `src/Notch.Core/Updates/Updater.cs:58`
-- [ ] Signature format: ECDSA P-256 over SHA-256, IEEE P1363 r‖s (64 bytes) in base64. The public key is a base64 SubjectPublicKeyInfo, currently `""` (not configured); the private key is base64 PKCS#8 — `src/Notch.Core/Updates/UpdateSigning.cs:18`
+- [x] Signature format: ECDSA P-256 over SHA-256, IEEE P1363 r‖s (64 bytes) in base64. The public key is a base64 SubjectPublicKeyInfo, currently `""` (not configured); the private key is base64 PKCS#8 — `src/Notch.Core/Updates/UpdateSigning.cs:18`
 - [ ] Update schedule: first check after 45 s, then every 4 h, or 5 s after settings are saved (`CheckSoon`). The HTTP timeout is 10 min — `src/Notch.App/Updates/UpdateService.cs:28`
 - [ ] Update notices: activity id `update`, "Notch <tag> is ready" (Blue Flash, 10 s), once per tag. `LastNotifiedUpdateTag` is saved before the notice is shown — `src/Notch.App/Updates/UpdateService.cs:224`
 - [ ] Forced update: download and confirm, then run `<installer> /S /UPDATE` with UseShellExecute=false and shut down. The messages for not-installed, already-latest and downloaded-not-restarted are specific — `src/Notch.App/Updates/UpdateService.cs:140`
@@ -552,13 +552,13 @@ Contents:
 - [ ] Widget source key `<pluginId>/<typeId>` stored in `HomeWidget.Source`; kind is "plugin-widget" — `src/Notch.Core/Plugins/PluginWidgets.cs:128`
 - [ ] Threading: all widget-type callbacks run via Task.Run, and exceptions are logged ("A callback of … failed.") — `src/Notch.Core/Plugins/PluginHost.cs:321`
 - [ ] When a plugin stops, its widgets stay where they are and say the plugin is not running — `docs/plugins.md:425`
-- [ ] `WidgetOptionType` enum — `src/Notch.Core/Widgets/HomeLayout.cs:75`
-- [ ] `WidgetOptionType.Text` — `src/Notch.Core/Widgets/HomeLayout.cs:78`
-- [ ] `WidgetOptionType.Lines` — `src/Notch.Core/Widgets/HomeLayout.cs:81`
-- [ ] `WidgetOptionType.Toggle` ("true"/"false") — `src/Notch.Core/Widgets/HomeLayout.cs:84`
-- [ ] `WidgetOptionType.Choice` (null Choices are app-filled) — `src/Notch.Core/Widgets/HomeLayout.cs:87`
-- [ ] `WidgetOption(Key, Label, Type, Default = "", Choices = null, Hint = null)` record — `src/Notch.Core/Widgets/HomeLayout.cs:91`
-- [ ] `WidgetOption.On` = "true", `WidgetOption.Off` = "false" — `src/Notch.Core/Widgets/HomeLayout.cs:99`
+- [x] `WidgetOptionType` enum — `src/Notch.Core/Widgets/HomeLayout.cs:75`
+- [x] `WidgetOptionType.Text` — `src/Notch.Core/Widgets/HomeLayout.cs:78`
+- [x] `WidgetOptionType.Lines` — `src/Notch.Core/Widgets/HomeLayout.cs:81`
+- [x] `WidgetOptionType.Toggle` ("true"/"false") — `src/Notch.Core/Widgets/HomeLayout.cs:84`
+- [x] `WidgetOptionType.Choice` (null Choices are app-filled) — `src/Notch.Core/Widgets/HomeLayout.cs:87`
+- [x] `WidgetOption(Key, Label, Type, Default = "", Choices = null, Hint = null)` record — `src/Notch.Core/Widgets/HomeLayout.cs:91`
+- [x] `WidgetOption.On` = "true", `WidgetOption.Off` = "false" — `src/Notch.Core/Widgets/HomeLayout.cs:99`
 
 ### Palette (IPluginPalette / PluginPaletteEntry)
 - [ ] `IPluginPalette` interface (v9) — `src/Notch.Core/Plugins/PluginPalette.cs:7`
@@ -586,8 +586,8 @@ Contents:
 - [ ] `IPluginHotkeys` interface (v9) — `src/Notch.Core/Plugins/PluginHotkeys.cs:6`
 - [ ] `Register(string chord, Action pressed)` → IDisposable; Dispose releases it, and so does plugin stop — `src/Notch.Core/Plugins/PluginHotkeys.cs:18`
 - [ ] Throws ArgumentException for an unparseable chord ("…is not a hotkey Notch can read. Write it like Alt+Shift+C.") — `src/Notch.Core/Plugins/PluginHost.cs:412`
-- [ ] Chord grammar: modifiers Ctrl/Control, Alt, Shift and Win/Windows joined by "+"; at least one non-Shift modifier; key A–Z, 0–9, F1–F24 or Space; case-insensitive — `src/Notch.Core/Shell/Hotkey.cs:26`
-- [ ] Canonical form: Ctrl+Alt+Shift+Win order, key last — `src/Notch.Core/Shell/Hotkey.cs:64`
+- [x] Chord grammar: modifiers Ctrl/Control, Alt, Shift and Win/Windows joined by "+"; at least one non-Shift modifier; key A–Z, 0–9, F1–F24 or Space; case-insensitive — `src/Notch.Core/Shell/Hotkey.cs:26`
+- [x] Canonical form: Ctrl+Alt+Shift+Win order, key last — `src/Notch.Core/Shell/Hotkey.cs:64`
 - [ ] Refused (warning logged, no-op handle) when used by Notch's own open or palette hotkey — `src/Notch.Core/Plugins/PluginHotkeys.cs:51`
 - [ ] Refused when already registered by the same plugin, or used by another plugin (message names it) — `src/Notch.Core/Plugins/PluginHotkeys.cs:60`
 - [ ] Refused when Windows or another app holds it (dropped afterwards, warning logged) — `src/Notch.Core/Plugins/PluginHotkeys.cs:139`
@@ -994,7 +994,7 @@ Contents:
 - [ ] The window shrinks back once the island has settled, is closed, and the pointer is off it (also re-checked by housekeeping) — `src/Notch.App/Shell/NotchWindow.xaml.cs:518`
 - [ ] At the bottom (taskbar) position the window always stays large, so the frame never jumps — `src/Notch.App/Shell/NotchWindow.xaml.cs:415`
 - [ ] NotchStyle.Notch: attached to the screen edge, flush corners (clip extends one radius past the edge), with "shoulder" curves on both sides at the top — `src/Notch.App/Shell/NotchWindow.xaml.cs:885`
-- [ ] NotchStyle.Island: floating pill rounded on all sides; 8 DIP gap from the top, or centred vertically in the taskbar (at least 4 DIP) — `src/Notch.Core/Shell/IslandPlacement.cs:33`
+- [x] NotchStyle.Island: floating pill rounded on all sides; 8 DIP gap from the top, or centred vertically in the taskbar (at least 4 DIP) — `src/Notch.Core/Shell/IslandPlacement.cs:33`
 - [ ] Edge bridge: a strip that is almost invisible (#01 alpha) between a floating island and the screen edge. It counts as the island for hover, click and drop — `src/Notch.App/Shell/NotchWindow.xaml.cs:143`
 - [ ] Position TopCenter: centred on the top edge of the display; grows downward and to both sides — `src/Notch.App/Shell/NotchWindow.xaml.cs:423`
 - [ ] Position TaskbarLeft: bottom-left corner with a 12 DIP side inset; grows up and to the right; content anchors bottom-left (margins 18,0,0,18) — `src/Notch.App/Shell/NotchWindow.xaml.cs:436`
@@ -1009,7 +1009,7 @@ Contents:
 - [ ] Expanded sizes: Terminal 920×540, Stats 640×290, Shelf 640×(100+rows×104, 1–3 rows), Plugins 640×(76+rows×107, 1–3 rows), Clipboard 640×430, Palette 640×392, Page large 920×540 or compact 640×fit, Home 640×content height. All have radius 32 — `src/Notch.App/Shell/NotchWindow.xaml.cs:193`
 - [ ] Home height = measured content (+14+tabs+18), capped at 660 or display height − gap − 40. Past the cap it scrolls — `src/Notch.App/Shell/NotchWindow.Home.cs:77`
 - [ ] A theme can scale the corner radius (`IslandRadiusScale`, clamped 0–2) — `src/Notch.App/Shell/ThemeManager.cs:222`
-- [ ] Mode resolution: expanded → Expanded; no activities → Idle; top activity transient → Peek; otherwise Compact — `src/Notch.Core/Shell/NotchMode.cs:24`
+- [x] Mode resolution: expanded → Expanded; no activities → Idle; top activity transient → Peek; otherwise Compact — `src/Notch.Core/Shell/NotchMode.cs:24`
 - [ ] Spring animation of width/height (stiffness 380, damping 26, visible overshoot) and radius (300/30). Steps per rendered frame with sub-stepping (max 1/240 s) — `src/Notch.App/Shell/NotchAnimator.cs:11`
 - [x] The spring snaps to target when it is within 0.05 and velocity is below 0.5 — `src/Notch.Core/Animation/Spring.cs:28`
 - [ ] Height never drops below the resting height while shrinking (no undershoot) — `src/Notch.App/Shell/NotchWindow.xaml.cs:845`
@@ -1063,8 +1063,8 @@ Contents:
 - [ ] Media in pill: art or music glyph; title + " · artist"; animated 4-bar wave (0.45 s, staggered), bars tinted with the art accent — `src/Notch.App/Shell/NotchWindow.Pill.cs:187`
 - [x] Media activity is Ongoing while playing, with a violet Audio glow (0.85) that the art accent replaces; it is removed when paused or stopped — `src/Notch.Core/Media/MediaActivityPublisher.cs:27`
 - [ ] Agent in pill: with a logo, the subtitle shows only the folder. Working = three blinking dots (0.6 s, staggered 0.2 s); NeedsInput = "Needs you" in the attention colour; Done = check glyph + "Done" in green. A "+N" suffix counts other sessions — `src/Notch.App/Shell/NotchWindow.Pill.cs:193`
-- [ ] Agent activities: Working = Ongoing, cyan breathe 0.8; NeedsInput = Attention, amber pulse; Done = Attention, green steady 0.8; Idle = none — `src/Notch.Core/Agents/AgentActivities.cs:20`
-- [ ] Every board entry is republished with a count of the other non-idle sessions — `src/Notch.Core/Agents/AgentBoard.cs:149`
+- [x] Agent activities: Working = Ongoing, cyan breathe 0.8; NeedsInput = Attention, amber pulse; Done = Attention, green steady 0.8; Idle = none — `src/Notch.Core/Agents/AgentActivities.cs:20`
+- [x] Every board entry is republished with a count of the other non-idle sessions — `src/Notch.Core/Agents/AgentBoard.cs:149`
 - [ ] Agent logos (claude, codex, …) are geometry resources — `src/Notch.App/Themes/AgentLogos.xaml:1`
 
 ### Pill: HUDs & notices
@@ -1076,7 +1076,7 @@ Contents:
 - [ ] Bluetooth HUD: device name, "Connected"/"Disconnected", blue flash, 3.5 s. Covers paired Classic and LE devices; the starting state is only a baseline — `src/Notch.Platform/Hud/BluetoothWatcher.cs:66`
 - [ ] Caps Lock HUD: "Caps Lock" On/Off, 2 s. Caps Lock is polled every 150 ms (no keyboard hook) — `src/Notch.App/Shell/NotchWindow.Keyboard.cs:47`
 - [ ] Missing hardware (no battery, no dimmable panel, no BT radio) is skipped quietly — `src/Notch.Platform/Hud/SystemHudSources.cs:44`
-- [ ] Notification mirror: Windows toast → transient "sender/subject" + app name, blue flash 0.8, 5 s. The body is never shown. Title max 80, app max 40, one line — `src/Notch.Core/Shell/NotificationMirror.cs:31`
+- [x] Notification mirror: Windows toast → transient "sender/subject" + app name, blue flash 0.8, 5 s. The body is never shown. Title max 80, app max 40, one line — `src/Notch.Core/Shell/NotificationMirror.cs:31`
 - [ ] Notifications are polled every 2 s. The first poll only primes (no replay of the action centre). Dismissed ids are forgotten — `src/Notch.Platform/Notifications/NotificationWatcher.cs:62`
 - [ ] App filter: show all when the list is empty, otherwise apps whose name contains a listed word (case-insensitive) — `src/Notch.Core/Shell/NotificationMirror.cs:23`
 - [ ] Windows notification access is requested when the feature is switched on. If refused, a message box explains it (only when the user just saved) — `src/Notch.Platform/Notifications/NotificationWatcher.cs:29`
@@ -1101,9 +1101,9 @@ Contents:
 - [ ] If the Plugins tab is open when the last card goes away, it falls back to Home — `src/Notch.App/Shell/NotchWindow.Plugins.cs:53`
 
 ### Home tab: layout & editing
-- [ ] Widgets laid out in rows: a full-width widget alone; two consecutive half-width widgets share a row (14 px gap); a lone half-width widget sits left. Hidden widgets take no room — `src/Notch.Core/Widgets/HomeLayout.cs:227`
-- [ ] Default layout: Media (full), Agents (full), Timer (half) + Calendar (half) — `src/Notch.Core/Widgets/HomeLayout.cs:214`
-- [ ] Normalize on load: drop unknown kinds, plugin widgets without a source, and duplicates of single widgets; fix ids; max 24 widgets — `src/Notch.Core/Widgets/HomeLayout.cs:266`
+- [x] Widgets laid out in rows: a full-width widget alone; two consecutive half-width widgets share a row (14 px gap); a lone half-width widget sits left. Hidden widgets take no room — `src/Notch.Core/Widgets/HomeLayout.cs:227`
+- [x] Default layout: Media (full), Agents (full), Timer (half) + Calendar (half) — `src/Notch.Core/Widgets/HomeLayout.cs:214`
+- [x] Normalize on load: drop unknown kinds, plugin widgets without a source, and duplicates of single widgets; fix ids; max 24 widgets — `src/Notch.Core/Widgets/HomeLayout.cs:266`
 - [ ] Empty Home message: "Nothing on Home. Click the pencil to add widgets." — `src/Notch.App/Shell/NotchWindow.xaml:139`
 - [ ] "Hide when there is nothing to show" (default on) for widgets that can be empty (Media, Agents, Shelf, Clipboard, Plugin card); otherwise an empty-state card with text is shown — `src/Notch.App/Shell/NotchWindow.Home.cs:161`
 - [ ] Edit mode: every widget is covered by chrome (88 % backdrop, outline, glyph, name, and a "Hidden while empty" note) — `src/Notch.App/Shell/NotchWindow.Home.cs:770`
@@ -1134,18 +1134,18 @@ Contents:
 ### Home widget: Agents
 - [ ] Catalog entry: "Coding agents and what they are doing", full, single, can be empty ("No coding agents running") — `src/Notch.Core/Widgets/HomeLayout.cs:133`
 - [ ] Up to 4 rows sorted NeedsInput, Done, Working, then others. Each row: logo or glyph, "Name · folder", where it runs ("Notch terminal" or the host app), and state text in its colour — `src/Notch.App/Shell/NotchWindow.Agents.cs:25`
-- [ ] State text: Working / Needs input / Done / Idle (Notch sessions) / Open (detected sessions with no hook state) — `src/Notch.Core/Agents/AgentBoard.cs:33`
+- [x] State text: Working / Needs input / Done / Idle (Notch sessions) / Open (detected sessions with no hook state) — `src/Notch.Core/Agents/AgentBoard.cs:33`
 - [ ] Clicking a row opens a Notch session's terminal tab, or brings a detected agent's window to the front. Tooltips: "Show this session" / "Bring its window to the front" — `src/Notch.App/Shell/NotchWindow.Agents.cs:61`
 
 ### Home widget: Timer / Pomodoro
 - [ ] Catalog entry: "Pomodoro and one-click timers", half, single, min height 150 — `src/Notch.Core/Widgets/HomeLayout.cs:134`
 - [ ] Large digits ("0:00" when idle, "Done" when finished; m:ss or h:mm:ss, rounded up) coloured red for focus, green for breaks, orange for a plain timer — `src/Notch.App/Shell/NotchWindow.Widgets.cs:160`
-- [ ] Label shows "Timer", the preset name, or the Pomodoro phase ("Focus 2/4", "Short break", "Long break") — `src/Notch.Core/Widgets/PomodoroCycle.cs:36`
+- [x] Label shows "Timer", the preset name, or the Pomodoro phase ("Focus 2/4", "Short break", "Long break") — `src/Notch.Core/Widgets/PomodoroCycle.cs:36`
 - [ ] Idle row: "Pomodoro" button plus a button per preset (label = name or length; tooltip = length when it has a name). Wraps to a second row — `src/Notch.App/Shell/NotchWindow.Widgets.cs:168`
 - [ ] "+ Custom" opens an entry box (label becomes the hint "Timer: 12, 1:30, 90s, 1h20m"). Start / Cancel buttons; Enter starts, Esc cancels; a red border marks input it cannot read. The notch takes the keyboard while it is open and gives it back after — `src/Notch.App/Shell/NotchWindow.Widgets.cs:202`
 - [ ] Duration parsing: a bare number is minutes (decimals allowed); h:mm:ss or m:ss; units h/m/s and their words; 1 s to 24 h — `src/Notch.Core/Widgets/DurationParser.cs:18`
 - [ ] Running row: Pause/Resume and Cancel. When finished: only "Dismiss" — `src/Notch.App/Shell/NotchWindow.Widgets.cs:384`
-- [ ] Pomodoro cycles focus → short break, with a long break every 4 focuses. Moves on automatically with a chime and a notice — `src/Notch.Core/Widgets/PomodoroCycle.cs:44`
+- [x] Pomodoro cycles focus → short break, with a long break every 4 focuses. Moves on automatically with a chime and a notice — `src/Notch.Core/Widgets/PomodoroCycle.cs:44`
 - [ ] Publishes `notch.timer` events (started/paused/resumed/cancelled/finished; kind; seconds; name) to plugins — `src/Notch.App/Shell/NotchWindow.Widgets.cs:300`
 
 ### Home widget: Calendar
@@ -1155,11 +1155,11 @@ Contents:
 - [ ] ICS feeds refreshed every 15 minutes and after Save. webcal:// is treated as https. 7-day horizon with recurrences expanded; all-day and floating times are handled; failed feeds keep the previous events — `src/Notch.Core/Widgets/CalendarService.cs:20`
 
 ### Home widget: Clock
-- [ ] Options: Label, Time zone (empty = local; matches UTC/GMT, a zone id, standard name, display name or city), 24-hour toggle, Show seconds toggle — `src/Notch.Core/Widgets/HomeLayout.cs:136`
+- [x] Options: Label, Time zone (empty = local; matches UTC/GMT, a zone id, standard name, display name or city), 24-hour toggle, Show seconds toggle — `src/Notch.Core/Widgets/HomeLayout.cs:136`
 - [ ] Large time; date line with " · tomorrow"/" · yesterday" when the zone's date differs; "Time zone not found; showing this computer's" — `src/Notch.App/Shell/NotchWindow.HomeWidgets.cs:113`
 
 ### Home widget: System stats
-- [ ] Toggles: CPU (on), Memory (on), GPU, Network, Battery — `src/Notch.Core/Widgets/HomeLayout.cs:143`
+- [x] Toggles: CPU (on), Memory (on), GPU, Network, Battery — `src/Notch.Core/Widgets/HomeLayout.cs:143`
 - [ ] A line per metric in its colour. With 2 or fewer metrics, CPU/Memory/GPU get sparklines. With none chosen: "Pick what to show with the gear in edit mode." — `src/Notch.App/Shell/NotchWindow.HomeWidgets.cs:152`
 - [ ] Sampled every second while it is visible on Home — `src/Notch.App/Shell/NotchWindow.Widgets.cs:470`
 
@@ -1170,7 +1170,7 @@ Contents:
 - [ ] The last 3 copied items (preview + source · age). Click copies again. Empty texts: "Nothing copied yet" or "Clipboard history is off in Settings" — `src/Notch.App/Shell/NotchWindow.HomeWidgets.cs:288`
 
 ### Home widget: Weather
-- [ ] Options: City, Units (Celsius/Fahrenheit) — `src/Notch.Core/Widgets/HomeLayout.cs:153`
+- [x] Options: City, Units (Celsius/Fahrenheit) — `src/Notch.Core/Widgets/HomeLayout.cs:153`
 - [ ] Card: place name, temperature, sun/moon/cloud glyph, description, "H x° L y° · wind N km/h|mph". Without a city: "Set a city with the gear in edit mode" — `src/Notch.App/Shell/NotchWindow.HomeWidgets.cs:395`
 - [ ] Open-Meteo geocoding (cached per city) and forecast; refreshes every 30 min; on error shows "Could not reach Open-Meteo / Trying again in a few minutes" and retries after 2 min — `src/Notch.App/Shell/NotchWindow.HomeWidgets.cs:407`
 - [ ] Clicking the card opens the "Weather in X" detail sheet: now (big temperature, description, feels-like, H/L), six tiles (Humidity, Wind + compass, Rain %, UV, Sunrise, Sunset), the next 12 hours (time, glyph with tooltip, temperature, rain %), and the next 7 days (name, glyph, words, rain %, low, high) — `src/Notch.App/Shell/NotchWindow.HomeWidgets.cs:447`
@@ -1184,15 +1184,15 @@ Contents:
 - [ ] Double-click edits the text inline (Enter keeps, Esc reverts, empty deletes). Drag reorders within the item's own group. "Clear done" header button; up to 7 rows visible, then it scrolls — `src/Notch.App/Shell/NotchWindow.HomeWidgets.cs:816`
 
 ### Home widget: Launcher
-- [ ] Options: Title, Buttons (lines "Name = path/folder/URL"; names default to the file name or link host; # comments; max 8) — `src/Notch.Core/Widgets/HomeWidgetData.cs:21`
+- [x] Options: Title, Buttons (lines "Name = path/folder/URL"; names default to the file name or link host; # comments; max 8) — `src/Notch.Core/Widgets/HomeWidgetData.cs:21`
 - [ ] Clicking a button shell-opens the target (environment variables expanded); tooltip = target; hint when there are no buttons — `src/Notch.App/Shell/NotchWindow.HomeWidgets.cs:995`
 
 ### Home widget: Commands
-- [ ] Options: Title, Buttons ("Name = command"), Run in ("Terminal tab" / "In the background") — `src/Notch.Core/Widgets/HomeLayout.cs:171`
+- [x] Options: Title, Buttons ("Name = command"), Run in ("Terminal tab" / "In the background") — `src/Notch.Core/Widgets/HomeLayout.cs:171`
 - [ ] "Terminal tab" opens a terminal session that runs the command. "In the background" runs it through `cmd /d /s /c` in the terminal folder; the button is disabled while it runs, then a finished/failed notice appears — `src/Notch.App/Shell/NotchWindow.HomeWidgets.cs:1007`
 
 ### Home widget: Web feed
-- [ ] Options: Title, Link, JSON field (dotted path, array indices), Refresh every (1/5/15/60 min) — `src/Notch.Core/Widgets/HomeLayout.cs:177`
+- [x] Options: Title, Link, JSON field (dotted path, array indices), Refresh every (1/5/15/60 min) — `src/Notch.Core/Widgets/HomeLayout.cs:177`
 - [ ] Fetches with User-Agent "Notch". HTML is stripped of tags, JSON fields are extracted, text is capped at 600 characters. Shows "Updated <time>" or "Could not load the link. / Trying again in a minute" — `src/Notch.App/Shell/NotchWindow.HomeWidgets.cs:1086`
 
 ### Home widget: Plugin card / plugin widget
@@ -1202,8 +1202,8 @@ Contents:
 
 ### Terminal tab
 - [ ] **[changed: xterm.js runs inside the main Tauri web view; no second WebView2]** One WebView2 (composition control) hosting an xterm.js page for all sessions, served under a virtual host. Context menu, devtools, zoom, status bar and browser accelerators are off; dropping files is blocked; clipboard read is allowed — `src/Notch.App/Terminal/TerminalBridge.cs:78`
-- [ ] Presets: lines "Name = [VAR=value …] command args". Arguments with spaces in quotes; up to 6; defaults are Claude/Codex/opencode/Shell(powershell). Unique ids — `src/Notch.Core/Terminal/TerminalPresets.cs:17`
-- [ ] Agent kind is detected from the command name (claude, codex, gemini, aider, opencode) to pick the glyph and status tracking — `src/Notch.Core/Terminal/TerminalPresets.cs:76`
+- [x] Presets: lines "Name = [VAR=value …] command args". Arguments with spaces in quotes; up to 6; defaults are Claude/Codex/opencode/Shell(powershell). Unique ids — `src/Notch.Core/Terminal/TerminalPresets.cs:17`
+- [x] Agent kind is detected from the command name (claude, codex, gemini, aider, opencode) to pick the glyph and status tracking — `src/Notch.Core/Terminal/TerminalPresets.cs:76`
 - [ ] Launcher buttons "+ Name" (tooltip = preset line), one per preset — `src/Notch.App/Shell/NotchWindow.Terminal.cs:102`
 - [ ] Folder button "📁 name" (tooltip "New sessions start in …"). Its menu lists recent folders that still exist (checked = current), then a separator and "Browse…" (folder dialog). The menu holds the notch open — `src/Notch.App/Shell/NotchWindow.Terminal.cs:234`
 - [ ] Recent folders: up to 8, most recent first, saved whenever a session starts or the folder is chosen. Starts in the first recent folder that exists, else the user profile — `src/Notch.Core/Settings/AppSettings.cs:213`
@@ -1229,7 +1229,7 @@ Contents:
 ### Stats tab
 - [ ] 3×2 cards: CPU % (blue) + temperature + sparkline; Memory % (violet) + "X of Y" + sparkline; GPU % or "n/a" (green) + temperature + sparkline; Download rate (cyan); Upload rate (orange); Battery % or "None" (green above 50, amber 21–50, red at 20 or below) — `src/Notch.App/Shell/NotchWindow.Widgets.cs:492`
 - [ ] Sampled every second off the UI thread, only while visible. Temperatures in °C or °F by region. Sparklines hold 60 points with a gradient fill — `src/Notch.App/Shell/Sparkline.cs:9`
-- [ ] Formats: bytes with one decimal under 10 (B…TB), "/s" rates, whole percents — `src/Notch.Core/Widgets/SystemStats.cs:28`
+- [x] Formats: bytes with one decimal under 10 (B…TB), "/s" rates, whole percents — `src/Notch.Core/Widgets/SystemStats.cs:28`
 
 ### Shelf tab
 - [ ] Dropping files anywhere on the notch (terminal and text boxes included) adds them, using copy or link effects only, never move. Other drags are refused — `src/Notch.App/Shell/NotchWindow.Shelf.cs:166`
@@ -1288,15 +1288,15 @@ Contents:
 
 ### Keyboard shortcuts & hotkeys
 - [ ] Open/close hotkey (default Alt+Shift+N). It opens and holds the notch open; pressed again it closes and hands focus back. It is ignored while hidden for fullscreen — `src/Notch.App/Shell/NotchWindow.Keyboard.cs:153`
-- [ ] Hotkey format: Ctrl/Alt/Shift/Win + A–Z, 0–9, F1–F24 or Space, with at least one modifier other than Shift; normalised spelling — `src/Notch.Core/Shell/Hotkey.cs:26`
+- [x] Hotkey format: Ctrl/Alt/Shift/Win + A–Z, 0–9, F1–F24 or Space, with at least one modifier other than Shift; normalised spelling — `src/Notch.Core/Shell/Hotkey.cs:26`
 - [ ] If registering a hotkey fails ("already used by Windows or another app" / "not a hotkey Notch can use"), a message box appears after saving settings — `src/Notch.App/App.xaml.cs:587`
 - [ ] Plugin global hotkeys are registered and released as plugins change; chords Notch already uses are refused; registration failures are reported to the plugin — `src/Notch.App/Shell/NotchWindow.Keyboard.cs:111`
 - [ ] In-notch keys: timer entry Enter/Esc; widget form Enter (single-line field)/Esc; note Esc; to-do Enter/Esc and edit Enter/Esc; palette Esc/↑/↓/Enter; page input Enter/↑/↓; page text field Enter or Ctrl+Enter; terminal Ctrl+C/Ctrl+V; Settings plugin source box Enter installs — `src/Notch.App/Shell/NotchWindow.Widgets.cs:99`
 
 ### Agents (detection, states, app sessions, hooks)
 - [ ] Process scan every 3 s for Claude, Codex, Gemini, Aider and opencode. Agents are matched by executable name, or by a runtime (node/bun/python/…) plus a command-line marker — `src/Notch.Core/Agents/AgentCatalog.cs:46`
-- [ ] Excluded from detection: Electron helpers (`--type=`), background/server/print modes, desktop-app folders, opencode subcommands (serve/run/…), Notch's own children, and helper processes nested under an agent — `src/Notch.Core/Agents/AgentCatalog.cs:90`
-- [ ] Host name from the ancestor process (Windows Terminal, VS Code, Cursor, Windsurf, WezTerm, Alacritty, kitty, Hyper, Tabby, Console, JetBrains IDEs, Visual Studio) — `src/Notch.Core/Agents/AgentDetector.cs:25`
+- [x] Excluded from detection: Electron helpers (`--type=`), background/server/print modes, desktop-app folders, opencode subcommands (serve/run/…), Notch's own children, and helper processes nested under an agent — `src/Notch.Core/Agents/AgentCatalog.cs:90`
+- [x] Host name from the ancestor process (Windows Terminal, VS Code, Cursor, Windsurf, WezTerm, Alacritty, kitty, Hyper, Tabby, Console, JetBrains IDEs, Visual Studio) — `src/Notch.Core/Agents/AgentDetector.cs:25`
 - [ ] Per-agent hide toggles (HiddenAgents) and a master on/off — `src/Notch.App/Agents/AgentTracker.cs:118`
 - [ ] Global hook messages (shared pipe; session empty; the hook's pid is mapped to an agent through its ancestors) update a detected agent's state and folder. If the agent is unknown, a rescan runs — `src/Notch.App/Agents/AgentTracker.cs:231`
 - [ ] opencode plugin events are routed by folder: to Notch terminal sessions first, then to detected opencode windows in that folder (or the only one) — `src/Notch.App/Agents/AgentTracker.cs:267`
@@ -1307,7 +1307,7 @@ Contents:
 - [ ] Hook install plan/apply: adds 6 hooks to `~/.claude/settings.json` (CLAUDE_CONFIG_DIR respected), a notify line to `~/.codex/config.toml` (CODEX_HOME respected; an existing notify is never replaced), and `plugins/notch.js` to opencode's config (only if opencode is installed) — `src/Notch.App/Agents/AgentHookFiles.cs:59`
 - [ ] A one-time `.notch-backup` is made of each edited file; writes are atomic; removal takes out only Notch's entries and deletes the opencode plugin — `src/Notch.App/Agents/AgentHookFiles.cs:227`
 - [ ] The "installed" state is read from the files themselves, not the setting — `src/Notch.App/Agents/AgentHookFiles.cs:56`
-- [ ] Hook paths are written with forward slashes, quoted if they contain spaces (Claude runs hooks through bash) — `src/Notch.Core/Agents/AgentHooks.cs:144`
+- [x] Hook paths are written with forward slashes, quoted if they contain spaces (Claude runs hooks through bash) — `src/Notch.Core/Agents/AgentHooks.cs:144`
 
 ### Settings window (shell)
 - [ ] 880×640, minimise only, centred; custom title bar (drag area 44 px, rounded corners via a glass frame); a single instance (re-activated if already open) — `src/Notch.App/Settings/SettingsWindow.xaml:1`
