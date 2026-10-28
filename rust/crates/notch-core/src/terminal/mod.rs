@@ -1,6 +1,11 @@
 //! Terminal sessions: presets and the commands they run. Ported from `src/Notch.Core/Terminal`.
 
+pub mod command_resolver;
+pub mod presets;
+pub mod profile;
 pub mod windows_path;
+
+pub use profile::TerminalProfile;
 
 /// The terminal buttons a new install starts with, one per line as the settings keep them.
 pub const DEFAULT_PRESETS: [&str; 4] =
