@@ -9,4 +9,6 @@
 pub mod conpty;
 pub mod display;
 #[cfg(windows)]
+pub mod pipes;
+#[cfg(windows)]
 pub mod registry;
