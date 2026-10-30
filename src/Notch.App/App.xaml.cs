@@ -212,6 +212,12 @@ public partial class App : Application
             ThemeManager.Override = theme;
         }
 
+        // --look=classic|frosted|paper|hairline shows that look for this run only.
+        if (Enum.TryParse(Option(e, "--look="), ignoreCase: true, out NotchLook look))
+        {
+            ThemeManager.LookOverride = look;
+        }
+
         // The demo's shelf is made up and never saved, so it cannot touch the real one.
         FileShelf shelf;
         if (demo)

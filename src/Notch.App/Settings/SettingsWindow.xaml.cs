@@ -85,6 +85,8 @@ public partial class SettingsWindow : Window
 
         Position.SelectedIndex = (int)settings.Position;
         IslandStyle.SelectedIndex = (int)settings.Style;
+        Look.SelectedIndex = (int)settings.Look;
+        BlurBehindGlass.IsChecked = settings.BlurBehindGlass;
         ListAccents(settings.AccentColor);
         StartWithWindows.IsChecked = StartupRegistration.IsEnabled;
         ExpandOnHover.IsChecked = settings.ExpandOnHover;
@@ -491,6 +493,8 @@ public partial class SettingsWindow : Window
         _settings.ShelfOpensOnDrag = ShelfOpensOnDrag.IsChecked == true;
         _settings.Theme = (NotchTheme)Math.Max(0, Theme.SelectedIndex);
         _settings.PluginTheme = _chosenPluginTheme;
+        _settings.Look = (NotchLook)Math.Max(0, Look.SelectedIndex);
+        _settings.BlurBehindGlass = BlurBehindGlass.IsChecked == true;
         _settings.Position = (NotchPosition)Math.Max(0, Position.SelectedIndex);
         _settings.Style = (NotchStyle)Math.Max(0, IslandStyle.SelectedIndex);
         _settings.AccentColor = AccentSwatches.Children.OfType<RadioButton>()

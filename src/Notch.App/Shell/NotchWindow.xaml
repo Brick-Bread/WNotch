@@ -830,6 +830,10 @@
                     </DockPanel>
                 </Grid>
             </Grid>
+
+            <!-- The island's rim, for the looks that have one (Frosted, Paper, Hairline). Shaped in ApplyShape. -->
+            <Border x:Name="IslandRim" BorderBrush="{DynamicResource IslandBorderBrush}"
+                    BorderThickness="{DynamicResource IslandBorderThickness}" IsHitTestVisible="False" />
         </Grid>
     </Grid>
 </Window>

@@ -31,6 +31,42 @@ public class SettingsTests
     }
 
     [Fact]
+    public void Look_defaults_to_classic_with_blur_and_is_saved_by_name()
+    {
+        WithStore(store =>
+        {
+            AppSettings fresh = store.Load();
+            Assert.Equal(NotchLook.Classic, fresh.Look);
+            Assert.True(fresh.BlurBehindGlass);
+
+            store.Save(new AppSettings { Look = NotchLook.Hairline, BlurBehindGlass = false });
+
+            Assert.Contains("\"Look\": \"Hairline\"", File.ReadAllText(store.FilePath));
+            AppSettings saved = store.Load();
+            Assert.Equal(NotchLook.Hairline, saved.Look);
+            Assert.False(saved.BlurBehindGlass);
+        });
+    }
+
+    [Theory]
+    [InlineData(NotchLook.Classic, false, null)]
+    [InlineData(NotchLook.Classic, true, null)]
+    [InlineData(NotchLook.Frosted, false, "FrostedDark")]
+    [InlineData(NotchLook.Paper, true, "PaperLight")]
+    [InlineData(NotchLook.Hairline, true, "HairlineLight")]
+    [InlineData((NotchLook)42, false, null)]
+    public void Each_look_but_classic_has_a_dictionary_per_theme(NotchLook look, bool light, string? expected) =>
+        Assert.Equal(expected, NotchLooks.DictionaryName(look, light));
+
+    [Theory]
+    [InlineData(NotchLook.Classic, false)]
+    [InlineData(NotchLook.Frosted, true)]
+    [InlineData(NotchLook.Paper, false)]
+    [InlineData(NotchLook.Hairline, true)]
+    public void Only_the_see_through_looks_are_glass(NotchLook look, bool expected) =>
+        Assert.Equal(expected, NotchLooks.IsGlass(look));
+
+    [Fact]
     public void Style_and_position_default_to_a_notch_at_the_top_and_are_saved_by_name()
     {
         WithStore(store =>

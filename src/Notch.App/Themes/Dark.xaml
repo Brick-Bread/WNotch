@@ -2,6 +2,8 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <!-- Light.xaml defines the same keys. Fills are translucent so they sit on any island colour. -->
     <SolidColorBrush x:Key="IslandBrush" Color="#000000" />
+    <!-- The island's rim, IslandBorderThickness wide (none by default). The glass looks light it. -->
+    <SolidColorBrush x:Key="IslandBorderBrush" Color="#00FFFFFF" />
     <SolidColorBrush x:Key="TextBrush" Color="#F5F5F7" />
     <!-- Artists, folders, times and labels: the text that comes second. -->
     <SolidColorBrush x:Key="SecondaryTextBrush" Color="#8FF5F5F7" />

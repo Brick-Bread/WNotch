@@ -190,6 +190,18 @@
                                     </ComboBox>
                                 </DockPanel>
                                 <DockPanel Style="{StaticResource Row}">
+                                    <TextBlock Text="Look" Style="{StaticResource RowLabel}" />
+                                    <ComboBox x:Name="Look" DockPanel.Dock="Right" Width="260"
+                                              ToolTip="How the island is drawn, in the dark or light colours of the theme above. A plugin theme replaces it while one is chosen.">
+                                        <ComboBoxItem Content="Classic (solid)" />
+                                        <ComboBoxItem Content="Frosted (glass)" />
+                                        <ComboBoxItem Content="Paper (warm, serif figures)" />
+                                        <ComboBoxItem Content="Hairline (glass, thin outline)" />
+                                    </ComboBox>
+                                </DockPanel>
+                                <CheckBox x:Name="BlurBehindGlass" Content="Blur what is behind the glass looks (Frosted, Hairline)"
+                                          ToolTip="Windows draws the blur. If it looks wrong on this PC, switch it off and the glass stays clear." />
+                                <DockPanel Style="{StaticResource Row}">
                                     <TextBlock Text="Plugin theme" Style="{StaticResource RowLabel}" />
                                     <ComboBox x:Name="PluginTheme" DockPanel.Dock="Right" Width="260"
                                               ToolTip="A look for the whole notch that a plugin offers. It replaces the theme above while it is chosen. Only plugins that are switched on and running offer themes." />

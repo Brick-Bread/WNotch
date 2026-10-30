@@ -27,4 +27,7 @@
 
     <!-- Multiplies the corner radius of the island itself, in every size it takes. 0 gives square corners. -->
     <sys:Double x:Key="IslandRadiusScale">1</sys:Double>
+
+    <!-- How wide IslandBorderBrush draws the island's rim. The side against the screen edge never shows. -->
+    <Thickness x:Key="IslandBorderThickness">0</Thickness>
 </ResourceDictionary>

@@ -63,6 +63,7 @@ public partial class NotchWindow : Window
     private readonly NotchAnimator _animator;
     private readonly GlowController _glow;
     private readonly RectangleGeometry _islandClip = new();
+    private readonly IslandBackdrop _backdrop = new();
     private readonly DispatcherTimer _hoverTimer = new();
     private readonly DispatcherTimer _pointerWatch = new() { Interval = TimeSpan.FromMilliseconds(100) };
     private readonly DispatcherTimer _housekeepingTimer = new() { Interval = TimeSpan.FromSeconds(1) };
@@ -256,6 +257,7 @@ public partial class NotchWindow : Window
         ThemeManager.Changed -= OnThemeChanged;
         _mediaTimer.Stop();
         _glow.Dispose();
+        _backdrop.Dispose();
         _hoverTimer.Stop();
         _pointerWatch.Stop();
         _housekeepingTimer.Stop();
@@ -433,6 +435,8 @@ public partial class NotchWindow : Window
         {
             OverlayWindow.SetBounds(_hwnd, target);
         }
+
+        SyncBackdrop();
     }
 
     /// <summary>Anchors the island, its glow and its content to the edge the placement puts them on.</summary>
@@ -508,6 +512,7 @@ public partial class NotchWindow : Window
             _hoverTimer.Stop();
             SetExpanded(false);
             Hide();
+            SyncBackdrop();
         }
         else
         {
@@ -841,6 +846,33 @@ public partial class NotchWindow : Window
         scale.BeginAnimation(ScaleTransform.ScaleYProperty, grow);
     }
 
+    /// <summary>
+    /// Puts the blur of a glass look under the island where it is on screen, or takes it away when the look is
+    /// not glass, the blur is switched off or the notch is hidden.
+    /// </summary>
+    private void SyncBackdrop()
+    {
+        if (_hwnd == 0 || _display is null || _hiddenForFullscreen || !IsVisible || !ThemeManager.IsGlass || !_settings.BlurBehindGlass)
+        {
+            _backdrop.Hide();
+            return;
+        }
+
+        // Where the island sits in the window, as ApplyPlacement lays it out: centred on the top edge, or
+        // in the bottom-left corner in the taskbar, the edge gap away from the screen edge.
+        double scale = _display.Scale;
+        PixelRect window = OverlayWindow.GetBounds(_hwnd);
+        int width = (int)Math.Round(Island.Width * scale);
+        int height = (int)Math.Round(Island.Height * scale);
+        int gap = (int)Math.Round(_placement.EdgeGap * scale);
+        int left = _placement.AtBottom
+            ? window.Left + (int)Math.Round(IslandPlacement.SideInset * scale)
+            : window.Left + ((window.Width - width) / 2);
+        int top = _placement.AtBottom ? window.Bottom - gap - height : window.Top + gap;
+        FlushEdge edge = _placement.Floating ? FlushEdge.None : _placement.AtBottom ? FlushEdge.Bottom : FlushEdge.Top;
+        _backdrop.Show(_hwnd, new PixelRect(left, top, left + width, top + height), (int)Math.Round(_islandClip.RadiusX * scale), edge);
+    }
+
     private void ApplyShape()
     {
         double width = Math.Max(0, _animator.Width);
@@ -893,6 +925,13 @@ public partial class NotchWindow : Window
             : new Rect(0, bottom ? 0 : -radius, width, height + radius);
         _islandClip.RadiusX = radius;
         _islandClip.RadiusY = radius;
+
+        // The rim has the clip's outline, reaching past the screen edge with it, so a notch has none along the edge.
+        IslandRim.CornerRadius = new CornerRadius(radius);
+        IslandRim.Margin = floating
+            ? new Thickness(0)
+            : bottom ? new Thickness(0, 0, 0, -radius) : new Thickness(0, -radius, 0, 0);
+        SyncBackdrop();
 
         Visibility shoulders = floating || bottom ? Visibility.Collapsed : Visibility.Visible;
         ShoulderLeft.Visibility = ShoulderRight.Visibility = shoulders;
