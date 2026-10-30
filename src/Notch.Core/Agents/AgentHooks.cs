@@ -108,6 +108,10 @@ public static class AgentHooks
     /// <param name="Payload">What the agent said, as it said it, for the events that are read further (a permission prompt).</param>
     /// <param name="Host">The program the agent runs in, when the reporter knows it (opencode's plugin says "openchamber").</param>
     /// <param name="Title">The session's title, when the reporter knows it.</param>
+    /// <param name="ListedSession">
+    /// The session the notch lists this under: <paramref name="AgentSession"/>, or for a sub-session (a subagent's)
+    /// that reports, the session it belongs to.
+    /// </param>
     public sealed record HookMessage(
         string Session,
         string EventName,
@@ -118,7 +122,8 @@ public static class AgentHooks
         bool WantsReply = false,
         string? Payload = null,
         string? Host = null,
-        string? Title = null);
+        string? Title = null,
+        string? ListedSession = null);
 
     /// <summary>Reads a line written by the hook executable, including agents that were not started by Notch.</summary>
     public static bool TryParseHookMessage(string line, out HookMessage? message)
@@ -143,17 +148,19 @@ public static class AgentHooks
 
             int pid = node?["pid"] is JsonValue value && value.TryGetValue(out int parsed) ? parsed : 0;
             bool reply = node?["reply"] is JsonValue flag && flag.TryGetValue(out bool wants) && wants;
+            string? agentSession = Text(payload, "session_id") ?? Text(payload, "sessionID");
             message = new HookMessage(
                 session,
                 name,
                 pid,
                 Text(payload, "cwd"),
                 Text(payload, "agent"),
-                Text(payload, "session_id") ?? Text(payload, "sessionID"),
+                agentSession,
                 reply,
                 payloadText,
                 Text(payload, "host"),
-                Text(payload, "title"));
+                Text(payload, "title"),
+                Text(payload, "listedSession") ?? agentSession);
             return true;
         }
         catch (Exception e) when (e is JsonException or InvalidOperationException or FormatException)

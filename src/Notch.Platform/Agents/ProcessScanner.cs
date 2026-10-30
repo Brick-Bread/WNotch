@@ -32,7 +32,7 @@ public sealed class ProcessScanner
         }
 
         int[] needed = [.. table
-            .Where(p => !_details.ContainsKey(p.Pid) && (AgentCatalog.IsAgentProgram(p.Name) || AgentCatalog.IsRuntime(p.Name) || AppSessions.IsAppProgram(p.Name)))
+            .Where(p => !_details.ContainsKey(p.Pid) && (AgentCatalog.IsAgentProgram(p.Name) || AgentCatalog.IsRuntime(p.Name) || AppSessions.IsAppProgram(p.Name) || OpenChamber.IsProgram(p.Name)))
             .Select(p => p.Pid)];
         if (needed.Length > 0)
         {

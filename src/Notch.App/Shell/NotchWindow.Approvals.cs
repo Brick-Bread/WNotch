@@ -81,8 +81,8 @@ public partial class NotchWindow
         DockPanel.SetDock(dismiss, Dock.Right);
         head.Children.Add(dismiss);
         head.Children.Add(AgentMark(request.AgentId));
-        string who = AgentCatalog.ById(request.AgentId)?.DisplayName ?? request.AgentId;
-        string? folder = AppSessions.FolderName(request.Folder);
+        string who = request.App ?? AgentCatalog.ById(request.AgentId)?.DisplayName ?? request.AgentId;
+        string? folder = request.SessionTitle ?? AppSessions.FolderName(request.Folder);
         var label = new TextBlock
         {
             Text = folder is null ? who : $"{who} · {folder}",
