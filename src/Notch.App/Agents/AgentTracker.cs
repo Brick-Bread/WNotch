@@ -70,8 +70,16 @@ internal sealed class AgentTracker : IDisposable
             return false;
         }
 
-        IReadOnlyList<int> candidates = AgentDetector.WindowCandidates(pid, _processes);
-        bool focused = candidates.Count > 0 && WindowFocus.Focus(candidates);
+        // In Windows Terminal the agent's own tab, when it can be told from the others; otherwise its window.
+        bool focused = _tracked.TryGetValue(entry.Key, out Tracked? tracked)
+            && tracked.Agent is { HostName: "Windows Terminal", HostPid: { } terminal }
+            && TerminalTabFocus.Focus(terminal, pid, tracked.Folder ?? AppSessions.FolderName(FolderOf(pid)));
+        if (!focused)
+        {
+            IReadOnlyList<int> candidates = AgentDetector.WindowCandidates(pid, _processes);
+            focused = candidates.Count > 0 && WindowFocus.Focus(candidates);
+        }
+
         if (focused)
         {
             // Looking at it is what clears a "Done".
@@ -80,6 +88,9 @@ internal sealed class AgentTracker : IDisposable
 
         return focused;
     }
+
+    /// <summary>The folder a program works in, as the last scan read it.</summary>
+    private string? FolderOf(int pid) => _processes.FirstOrDefault(p => p.Pid == pid)?.WorkingDirectory;
 
     private async Task RunAsync()
     {
