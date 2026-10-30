@@ -135,6 +135,8 @@
                     <!-- Scrolls (wheel only) once the notch has grown as tall as it may. -->
                     <ScrollViewer x:Name="HomeScroll" VerticalScrollBarVisibility="Hidden" Focusable="False">
                         <StackPanel>
+                            <!-- Agents' permission prompts and questions waiting for an answer, above the widgets; filled in code. -->
+                            <StackPanel x:Name="ApprovalRows" Visibility="Collapsed" />
                             <StackPanel x:Name="HomeRows" Background="Transparent" />
                             <TextBlock x:Name="HomeEmpty" Opacity="0.45" HorizontalAlignment="Center" Margin="0,24"
                                        Text="Nothing on Home. Click the pencil to add widgets." Visibility="Collapsed" />

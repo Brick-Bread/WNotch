@@ -143,7 +143,7 @@ public class TerminalTests
     {
         JsonNode settings = JsonNode.Parse(AgentHooks.BuildClaudeSettings(@"C:\Apps\Notch\Notch.Hook.exe"))!;
 
-        foreach (string name in new[] { "UserPromptSubmit", "PreToolUse", "PostToolUse", "Notification", "Stop", "SessionEnd" })
+        foreach (string name in new[] { "UserPromptSubmit", "PreToolUse", "PostToolUse", "PermissionRequest", "Notification", "Stop", "SessionEnd" })
         {
             JsonNode hook = settings["hooks"]![name]![0]!["hooks"]![0]!;
             Assert.Equal("command", (string?)hook["type"]);

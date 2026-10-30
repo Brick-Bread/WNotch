@@ -51,9 +51,16 @@ public sealed class AgentStatusTracker(AgentKind kind)
                 Set(AgentState.Working);
                 break;
 
-            // Claude raises Notification when it needs a permission or has been waiting on the user.
+            // Claude raises Notification when it needs a permission or has been waiting on the user, and
+            // PermissionRequest the moment it asks.
             case "Notification":
+            case AgentHooks.PermissionRequestEvent:
                 Set(AgentState.NeedsInput);
+                break;
+
+            // opencode's plugin: a prompt was answered, wherever, and the work goes on.
+            case AgentApprovals.OpenCodeRepliedEvent:
+                Set(AgentState.Working);
                 break;
 
             case "Stop":

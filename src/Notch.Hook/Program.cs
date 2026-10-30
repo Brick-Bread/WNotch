@@ -6,6 +6,12 @@ using Notch.Core.Agents;
 // the app and must never get in the CLI's way: it prints nothing (Claude adds hook output to the
 // conversation) and always exits 0.
 //
+// The one exception is Claude's PermissionRequest: the app may show the prompt in the notch, so the
+// hook waits on the pipe for the answer and prints it, which is how Claude takes a hook's decision.
+// Claude shows its own prompt in the terminal at the same time, and whichever is answered first wins.
+// When the app answers nothing (the user did not, or the notch does not take prompts), nothing is
+// printed and Claude carries on with its own prompt.
+//
 // A session Notch's own terminal started names its pipe and session in the environment. An agent
 // started anywhere else (a hook in the user's own settings) does not, so the event goes to the
 // pipe every Notch listens on, tagged with this program's process id so the app can tell which
@@ -26,11 +32,25 @@ try
         return 0;
     }
 
-    using var pipe = new NamedPipeClientStream(".", pipeName, PipeDirection.Out);
+    bool wantsReply = AgentHooks.WantsReply(payload);
+    using var pipe = new NamedPipeClientStream(".", pipeName, wantsReply ? PipeDirection.InOut : PipeDirection.Out);
     pipe.Connect(timeout: 1000);
-    byte[] line = Encoding.UTF8.GetBytes(AgentHooks.FormatMessage(session, payload, Environment.ProcessId) + "\n");
+    byte[] line = Encoding.UTF8.GetBytes(AgentHooks.FormatMessage(session, payload, Environment.ProcessId, wantsReply) + "\n");
     pipe.Write(line);
     pipe.Flush();
+
+    if (wantsReply)
+    {
+        // No time limit of its own: the app gives up when the user does not answer, and Claude stops a
+        // hook that runs longer than it allows.
+        using var reader = new StreamReader(pipe, Encoding.UTF8);
+        string? answer = reader.ReadLine();
+        if (!string.IsNullOrWhiteSpace(answer))
+        {
+            using Stream output = Console.OpenStandardOutput();
+            output.Write(Encoding.UTF8.GetBytes(answer.Trim()));
+        }
+    }
 }
 catch (Exception)
 {

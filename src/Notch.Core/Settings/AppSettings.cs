@@ -166,6 +166,23 @@ public sealed class AppSettings
     /// </summary>
     public bool GlobalAgentHooks { get; set; }
 
+    /// <summary>
+    /// Show agents' permission prompts and questions in the notch, to answer there. The agent asks in its
+    /// own window at the same time, and whichever is answered first counts.
+    /// </summary>
+    public bool AnswerPromptsInNotch { get; set; } = true;
+
+    /// <summary>How long a prompt stays in the notch unanswered before it is left to the agent's own window.</summary>
+    public int PromptWaitSeconds { get; set; } = DefaultPromptWaitSeconds;
+
+    public const int DefaultPromptWaitSeconds = 120;
+
+    /// <summary>Claude stops a hook after ten minutes; a prompt must be given back before that.</summary>
+    public const int MaxPromptWaitSeconds = 590;
+
+    /// <summary><see cref="PromptWaitSeconds"/>, kept to what works.</summary>
+    public TimeSpan PromptWait() => TimeSpan.FromSeconds(PromptWaitSeconds is >= 10 and <= MaxPromptWaitSeconds ? PromptWaitSeconds : DefaultPromptWaitSeconds);
+
     /// <summary>Play a sound when an agent finishes or needs the user. Off until the user turns it on.</summary>
     public bool AgentSounds { get; set; }
 

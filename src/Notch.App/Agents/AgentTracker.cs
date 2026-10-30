@@ -230,9 +230,9 @@ internal sealed class AgentTracker : IDisposable
 
     private void OnHook(AgentHooks.HookMessage message)
     {
-        // Sessions Notch's terminal started are handled by the terminal.
+        // Sessions Notch's terminal started are handled by the terminal. Usage figures are not news of what an agent does.
         bool openCode = message.Agent == "opencode";
-        if (message.Session.Length > 0 || (message.HookPid <= 0 && !openCode) || !_settings.DetectAgents)
+        if (message.Session.Length > 0 || (message.HookPid <= 0 && !openCode) || !_settings.DetectAgents || message.EventName == AgentHooks.UsageEvent)
         {
             return;
         }

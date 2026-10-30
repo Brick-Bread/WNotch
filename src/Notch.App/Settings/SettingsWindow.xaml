@@ -261,6 +261,21 @@
                             </StackPanel>
                         </Border>
 
+                        <TextBlock Text="PROMPTS" Style="{StaticResource Heading}" />
+                        <Border Style="{StaticResource Group}">
+                            <StackPanel>
+                                <CheckBox x:Name="AnswerPromptsInNotch" Content="Answer permission prompts and questions in the notch"
+                                          ToolTip="Shows what Claude Code or opencode asks to do (a command, a file edit, a question) at the top of Home, with Allow and Deny. The agent asks in its own window at the same time; whichever you answer first counts." />
+                                <DockPanel Style="{StaticResource Row}" IsEnabled="{Binding IsChecked, ElementName=AnswerPromptsInNotch}">
+                                    <TextBlock Text="Leave a prompt to the agent's window after (seconds)" Style="{StaticResource RowLabel}" />
+                                    <TextBox x:Name="PromptWaitSeconds" DockPanel.Dock="Right" Width="80"
+                                             ToolTip="From 10 to 590. Claude in a background subagent waits for the notch before it asks in its own window." />
+                                </DockPanel>
+                                <TextBlock Style="{StaticResource Help}"
+                                           Text="Works for agents that report to Notch: Notch's own terminal, and anywhere else once the option above is ticked. Codex has no hook for its prompts, so it keeps asking in its own window." />
+                            </StackPanel>
+                        </Border>
+
                         <TextBlock Text="SOUNDS" Style="{StaticResource Heading}" />
                         <Border Style="{StaticResource Group}">
                             <StackPanel>
