@@ -246,8 +246,8 @@
                                 <CheckBox x:Name="DetectAgents" Content="Show agents running outside Notch's terminal"
                                           ToolTip="Looks at the running programs every few seconds for Claude Code, Codex, opencode, Gemini CLI and Aider. Sessions that only run in the background of a desktop app are left out." />
                                 <StackPanel x:Name="AgentToggles" Margin="20,0,0,0" IsEnabled="{Binding IsChecked, ElementName=DetectAgents}" />
-                                <CheckBox x:Name="WatchAppSessions" Content="Show sessions open in the Claude and ChatGPT apps"
-                                          ToolTip="Reads the files the Claude app keeps for its Code tab and the ChatGPT app keeps for its Codex threads, so their sessions show as working, waiting for you or done. Nothing is changed in those files." />
+                                <CheckBox x:Name="WatchAppSessions" Content="Show sessions open in the Claude, ChatGPT and OpenChamber apps"
+                                          ToolTip="Reads the files the Claude app keeps for its Code tab and the ChatGPT app keeps for its Codex threads, so their sessions show as working, waiting for you or done. Nothing is changed in those files. OpenChamber's sessions report through Notch's opencode plugin (see Reporting below)." />
                             </StackPanel>
                         </Border>
 

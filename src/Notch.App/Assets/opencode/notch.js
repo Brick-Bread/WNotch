@@ -105,49 +105,71 @@ function ask(fields) {
   })
 }
 
-// Which sessions are working, per folder, so a sub-session finishing does not report the whole
-// project as done while the main session still works.
+// Which sessions are working, so a sub-session finishing does not report the work as done while the
+// main session still works. A terminal is matched to its sessions by folder, so they are counted per
+// folder; inside OpenChamber each session is listed in the notch on its own, under its title, with
+// its sub-sessions (a subagent's) counted with it.
 function tracker(context) {
   const busy = new Map()
-  const titles = new Map()
+  const known = new Map()
 
-  // Inside OpenChamber each session is listed in the notch, under its title.
-  const title = async (id) => {
-    if (!HOST || !id || id === "?") return undefined
-    if (titles.has(id)) return titles.get(id)
+  // A session's parent and title, asked once (and again when it starts work, since titles come later).
+  const info = async (id, fresh) => {
+    if (!fresh && known.has(id)) return known.get(id)
     try {
       const session = await context.session.get({ sessionID: id })
-      titles.set(id, session?.title)
-      return session?.title
+      const value = { parent: session?.parentID, title: session?.title }
+      known.set(id, value)
+      return value
     } catch {
-      return undefined
+      return {}
     }
   }
-  const report = async (eventName, directory, id, extra) =>
-    send({ hook_event_name: eventName, cwd: directory, sessionID: id, title: await title(id), ...extra })
 
-  const start = (directory, id) => {
-    const sessions = busy.get(directory) ?? new Set()
-    busy.set(directory, sessions)
-    sessions.add(id)
-    return report(WORKING, directory, id)
+  // The session the user started, which a sub-session belongs to.
+  const top = async (id, fresh) => {
+    if (!HOST || !id || id === "?") return { id }
+    let current = id
+    for (let depth = 0; depth < 8; depth++) {
+      const session = await info(current, fresh && depth === 0)
+      if (!session.parent) return { id: current, title: session.title }
+      current = session.parent
+    }
+    return { id: current }
   }
-  const finish = (directory, id, outcome) => {
-    const sessions = busy.get(directory)
+
+  const report = async (eventName, directory, id, extra, fresh) => {
+    const session = await top(id, fresh)
+    return send({ hook_event_name: eventName, cwd: directory, sessionID: session.id, title: session.title, ...extra })
+  }
+
+  const start = async (directory, id) => {
+    const group = HOST ? (await top(id, true)).id : directory
+    const sessions = busy.get(group) ?? new Set()
+    busy.set(group, sessions)
+    sessions.add(id)
+    return report(WORKING, directory, id, {}, true)
+  }
+  const finish = async (directory, id, outcome) => {
+    const group = HOST ? (await top(id)).id : directory
+    const sessions = busy.get(group)
     sessions?.delete(id)
     if (!sessions || sessions.size === 0) {
-      busy.delete(directory)
+      busy.delete(group)
       return report(outcome, directory, id)
     }
   }
 
   const permission = async (directory, data) => {
     await report(NEEDS_INPUT, directory, data.sessionID)
+    const session = await top(data.sessionID)
     const answer = await ask({
       hook_event_name: PERMISSION,
       cwd: directory,
+      // The session that asked, which the answer goes to and opencode's "replied" names; the one listed in the notch beside it.
       sessionID: data.sessionID,
-      title: await title(data.sessionID),
+      listedSession: session.id,
+      title: session.title,
       requestID: data.id,
       action: data.action,
       resources: data.resources,
@@ -182,7 +204,8 @@ function tracker(context) {
       case "permission.asked":
         return permission(directory, data)
       case "permission.replied":
-        return report(PERMISSION_REPLIED, directory, data.sessionID, { requestID: data.requestID })
+        return top(data.sessionID).then((session) =>
+          send({ hook_event_name: PERMISSION_REPLIED, cwd: directory, sessionID: data.sessionID, listedSession: session.id, requestID: data.requestID }))
 
       // What each step cost, for the usage card.
       case "session.step.ended": {

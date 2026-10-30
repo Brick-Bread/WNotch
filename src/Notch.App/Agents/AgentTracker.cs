@@ -37,6 +37,15 @@ internal sealed class AgentTracker : IDisposable
     /// <summary>A ChatGPT turn that ended before Notch started has been seen, as far as Notch can tell.</summary>
     private readonly DateTime _startedAt = DateTime.UtcNow;
 
+    /// <summary>How long an OpenChamber session with nothing going on stays listed after it last reported.</summary>
+    private static readonly TimeSpan ChamberSessionStale = TimeSpan.FromMinutes(30);
+
+    /// <summary>OpenChamber's sessions that reported, by the session id the plugin lists them under.</summary>
+    private readonly Dictionary<string, ChamberSession> _chamber = [];
+
+    /// <summary>OpenChamber's main process, while it runs.</summary>
+    private int? _chamberPid;
+
     private volatile IReadOnlyList<ProcessSnapshot> _processes = [];
     private volatile IReadOnlyList<DetectedAgent> _detected = [];
 
@@ -65,6 +74,13 @@ internal sealed class AgentTracker : IDisposable
     /// <summary>Brings the window the agent runs in to the front. False when none could be found.</summary>
     public bool Focus(AgentEntry entry)
     {
+        // An OpenChamber session opens in OpenChamber through its link, which brings the app up on it.
+        if (OpenChamber.SessionOf(entry.Key) is { } chamberSession && OpenLink(OpenChamber.SessionLink(chamberSession)))
+        {
+            _ui.BeginInvoke(() => MarkViewed(entry));
+            return true;
+        }
+
         if (entry.Pid is not { } pid)
         {
             return false;
@@ -91,6 +107,20 @@ internal sealed class AgentTracker : IDisposable
 
     /// <summary>The folder a program works in, as the last scan read it.</summary>
     private string? FolderOf(int pid) => _processes.FirstOrDefault(p => p.Pid == pid)?.WorkingDirectory;
+
+    /// <summary>Opens a link with the program registered for it. False when there is none.</summary>
+    private static bool OpenLink(string link)
+    {
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(link) { UseShellExecute = true })?.Dispose();
+            return true;
+        }
+        catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException)
+        {
+            return false;
+        }
+    }
 
     private async Task RunAsync()
     {
@@ -121,7 +151,7 @@ internal sealed class AgentTracker : IDisposable
             {
                 _processes = [];
                 _detected = [];
-                _ = _ui.BeginInvoke(() => Apply([], [], []));
+                _ = _ui.BeginInvoke(() => Apply([], [], [], null));
                 return;
             }
 
@@ -134,9 +164,10 @@ internal sealed class AgentTracker : IDisposable
 
             IReadOnlyList<RunningApp> apps = _settings.WatchAppSessions ? AppSessions.Running(processes) : [];
             IReadOnlyList<AppSession> appSessions = _appReader.Read(apps, DateTime.UtcNow);
+            int? chamber = _settings.WatchAppSessions ? OpenChamber.MainPid(processes) : null;
 
             int foreground = WindowFocus.ForegroundProcessId();
-            _ = _ui.BeginInvoke(() => Apply(detected, apps, appSessions, foreground));
+            _ = _ui.BeginInvoke(() => Apply(detected, apps, appSessions, chamber, foreground));
         }
         catch (Exception e) when (e is InvalidOperationException or System.ComponentModel.Win32Exception or UnauthorizedAccessException)
         {
@@ -149,9 +180,9 @@ internal sealed class AgentTracker : IDisposable
     }
 
     /// <summary>On the UI thread: makes the board match what the scan found.</summary>
-    private void Apply(IReadOnlyList<DetectedAgent> detected, IReadOnlyList<RunningApp> apps, IReadOnlyList<AppSession> appSessions, int foregroundPid = 0)
+    private void Apply(IReadOnlyList<DetectedAgent> detected, IReadOnlyList<RunningApp> apps, IReadOnlyList<AppSession> appSessions, int? chamberPid, int foregroundPid = 0)
     {
-        ApplyApps(apps, appSessions, foregroundPid);
+        ApplyApps(apps, appSessions, chamberPid, foregroundPid);
 
         var keep = new HashSet<string>();
         foreach (DetectedAgent agent in detected)
@@ -183,17 +214,18 @@ internal sealed class AgentTracker : IDisposable
     }
 
     /// <summary>On the UI thread: puts the desktop apps' sessions on the board.</summary>
-    private void ApplyApps(IReadOnlyList<RunningApp> apps, IReadOnlyList<AppSession> sessions, int foregroundPid)
+    private void ApplyApps(IReadOnlyList<RunningApp> apps, IReadOnlyList<AppSession> sessions, int? chamberPid, int foregroundPid)
     {
         DateTime now = DateTime.UtcNow;
         var keep = new HashSet<string>();
+        ApplyChamber(chamberPid, foregroundPid, now, keep);
         foreach (RunningApp app in apps)
         {
             AppSession[] mine = [.. sessions.Where(s => s.App == app.App)];
 
             // The app's window is in front: the session it shows has been seen. The Claude app says
             // which one that is; the ChatGPT app does not, so all of its sessions count as seen.
-            if (IsInFront(app, foregroundPid))
+            if (IsInFront(app.Pid, foregroundPid))
             {
                 AppSession? shown = app.App == DesktopApp.Claude ? mine.MaxBy(s => s.Viewed ?? DateTime.MinValue) : null;
                 foreach (AppSession session in app.App == DesktopApp.Claude ? (shown is null ? [] : [shown]) : mine)
@@ -233,14 +265,95 @@ internal sealed class AgentTracker : IDisposable
         _board.KeepOnly(AgentSource.App, keep);
     }
 
+    /// <summary>
+    /// On the UI thread: lists OpenChamber while it runs, each of its sessions that reported through opencode's
+    /// plugin, or the app itself as "Open" while none has. Its window in front counts as looking at its sessions,
+    /// since which one it shows cannot be told. A session quiet for long is let go; it comes back when it reports.
+    /// </summary>
+    private void ApplyChamber(int? chamberPid, int foregroundPid, DateTime now, HashSet<string> keep)
+    {
+        _chamberPid = chamberPid;
+        if (chamberPid is not { } pid)
+        {
+            _chamber.Clear();
+            return;
+        }
+
+        bool inFront = IsInFront(pid, foregroundPid);
+        foreach ((string id, ChamberSession session) in _chamber.ToArray())
+        {
+            if (session.Status.State == AgentState.Idle && now - session.LastHeard > ChamberSessionStale)
+            {
+                _chamber.Remove(id);
+                continue;
+            }
+
+            if (inFront)
+            {
+                session.Status.OnViewed();
+            }
+
+            keep.Add(OpenChamber.KeyFor(id));
+            PublishChamber(id, session);
+        }
+
+        if (_chamber.Count == 0)
+        {
+            keep.Add(OpenChamber.AppKey);
+            _board.Set(ChamberEntry(OpenChamber.AppKey, AgentState.Idle, null));
+        }
+    }
+
+    private void PublishChamber(string id, ChamberSession session) =>
+        _board.Set(ChamberEntry(OpenChamber.KeyFor(id), session.Status.State, session.Title ?? AppSessions.FolderName(session.Folder)));
+
+    private AgentEntry ChamberEntry(string key, AgentState state, string? name)
+    {
+        AgentDefinition openCode = AgentCatalog.ForKind(AgentKind.OpenCode)!;
+        return new AgentEntry(key, openCode.Id, OpenChamber.DisplayName, openCode.Glyph, state, name, AgentSource.App, _chamberPid, OpenChamber.DisplayName + " app");
+    }
+
+    /// <summary>On the UI thread: what opencode inside OpenChamber reported, for the session it is about.</summary>
+    private void ApplyChamberHook(AgentHooks.HookMessage message)
+    {
+        // Only the desktop app is listed; its web version in a browser has no window to bring up.
+        if (message.ListedSession is not { } id || message.EventName == AgentHooks.UsageEvent || _chamberPid is null)
+        {
+            return;
+        }
+
+        if (!_chamber.TryGetValue(id, out ChamberSession? session))
+        {
+            _chamber[id] = session = new ChamberSession();
+            _board.Remove(OpenChamber.AppKey);
+        }
+
+        session.LastHeard = DateTime.UtcNow;
+        session.Title = message.Title ?? session.Title;
+        session.Folder = message.Folder ?? session.Folder;
+        session.Status.OnHookEvent(message.EventName);
+        PublishChamber(id, session);
+    }
+
     /// <summary>Whether the window in front belongs to the app: its main process, or one the main process started.</summary>
-    private bool IsInFront(RunningApp app, int foregroundPid) =>
-        foregroundPid != 0 && (foregroundPid == app.Pid || _processes.Any(p => p.Pid == foregroundPid && p.ParentPid == app.Pid));
+    private bool IsInFront(int appPid, int foregroundPid) =>
+        foregroundPid != 0 && (foregroundPid == appPid || _processes.Any(p => p.Pid == foregroundPid && p.ParentPid == appPid));
 
     private static DateTime? Latest(DateTime? a, DateTime? b) => a is null ? b : b is null ? a : a > b ? a : b;
 
     private void OnHook(AgentHooks.HookMessage message)
     {
+        // opencode inside OpenChamber names its session; it is not a terminal or window of its own.
+        if (OpenChamber.IsFrom(message))
+        {
+            if (_settings.WatchAppSessions && message.Session.Length == 0)
+            {
+                _ = _ui.BeginInvoke(() => ApplyChamberHook(message));
+            }
+
+            return;
+        }
+
         // Sessions Notch's terminal started are handled by the terminal. Usage figures are not news of what an agent does.
         bool openCode = message.Agent == "opencode";
         if (message.Session.Length > 0 || (message.HookPid <= 0 && !openCode) || !_settings.DetectAgents || message.EventName == AgentHooks.UsageEvent)
@@ -317,6 +430,17 @@ internal sealed class AgentTracker : IDisposable
 
     private void MarkViewed(AgentEntry entry)
     {
+        if (OpenChamber.SessionOf(entry.Key) is { } id)
+        {
+            if (_chamber.TryGetValue(id, out ChamberSession? session))
+            {
+                session.Status.OnViewed();
+                PublishChamber(id, session);
+            }
+
+            return;
+        }
+
         if (entry.Source == AgentSource.App)
         {
             // Shown again at the next scan, without its "Done".
@@ -346,6 +470,18 @@ internal sealed class AgentTracker : IDisposable
         AgentSource.Detected,
         tracked.Agent.Pid,
         tracked.Agent.HostName));
+
+    /// <summary>One OpenChamber session, as its plugin events tell it.</summary>
+    private sealed class ChamberSession
+    {
+        public AgentStatusTracker Status { get; } = new(AgentKind.OpenCode);
+
+        public string? Title { get; set; }
+
+        public string? Folder { get; set; }
+
+        public DateTime LastHeard { get; set; }
+    }
 
     private sealed class Tracked
     {

@@ -122,6 +122,33 @@ public partial class NotchWindow
             button.Click += (_, _) => OpenSession(profile);
             TerminalLaunchers.Children.Add(button);
         }
+
+        // OpenChamber is not a terminal program, but a folder picked here can be opened in it too.
+        if (Notch.App.Agents.OpenChamberLauncher.IsInstalled())
+        {
+            var openChamber = new Button
+            {
+                Style = style,
+                Content = "OpenChamber ↗",
+                ToolTip = "Open this folder in a new OpenChamber session",
+            };
+            openChamber.Click += async (_, _) =>
+            {
+                openChamber.IsEnabled = false;
+                try
+                {
+                    if (!await Notch.App.Agents.OpenChamberLauncher.OpenFolderAsync(_terminalFolder))
+                    {
+                        Notice("notice.openchamber", "Opened OpenChamber", "Pick the folder there; Notch could not open it for you");
+                    }
+                }
+                finally
+                {
+                    openChamber.IsEnabled = true;
+                }
+            };
+            TerminalLaunchers.Children.Add(openChamber);
+        }
     }
 
     /// <summary>

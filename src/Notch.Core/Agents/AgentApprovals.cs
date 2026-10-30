@@ -38,6 +38,8 @@ public sealed record ApprovalQuestion(string Text, string? Header, IReadOnlyList
 /// <param name="Subject">The one line that says exactly what: the command, the file, the address.</param>
 /// <param name="Detail">More to read before answering, such as the change to a file or the plan; null for none.</param>
 /// <param name="CanAlwaysAllow">The agent can remember an "always allow" for this.</param>
+/// <param name="App">The app the agent runs in when it is not a terminal ("OpenChamber"), for saying who asks.</param>
+/// <param name="SessionTitle">The session's title, when the agent said it.</param>
 public sealed record ApprovalRequest(
     string AgentId,
     string? AgentSession,
@@ -47,7 +49,9 @@ public sealed record ApprovalRequest(
     string? Subject,
     string? Detail,
     IReadOnlyList<ApprovalQuestion> Questions,
-    bool CanAlwaysAllow);
+    bool CanAlwaysAllow,
+    string? App = null,
+    string? SessionTitle = null);
 
 /// <summary>The user's answer to an <see cref="ApprovalRequest"/>.</summary>
 /// <param name="Answers">For a question: the labels picked for each question, by its text.</param>
@@ -264,7 +268,9 @@ public static class AgentApprovals
             resources.Length == 0 ? null : string.Join("  ", resources),
             Trim(detail),
             [],
-            canRemember);
+            canRemember,
+            OpenChamber.IsFrom(message) ? OpenChamber.DisplayName : null,
+            message.Title);
     }
 
     private static List<ApprovalQuestion> Questions(JsonNode? node)
