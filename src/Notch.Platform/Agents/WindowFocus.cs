@@ -42,6 +42,26 @@ public static unsafe class WindowFocus
         return false;
     }
 
+    /// <summary>The top-level windows of <paramref name="pid"/> a user could switch to, in the order Windows lists them (front first).</summary>
+    public static IReadOnlyList<nint> WindowsOf(int pid)
+    {
+        var search = new Search { Pids = [pid] };
+        GCHandle handle = GCHandle.Alloc(search);
+        try
+        {
+            ProcessNative.EnumWindows(&Collect, GCHandle.ToIntPtr(handle));
+        }
+        finally
+        {
+            handle.Free();
+        }
+
+        return [.. search.Found.Select(f => f.Window)];
+    }
+
+    /// <summary>Brings <paramref name="window"/> to the front, restored if it was minimised.</summary>
+    public static void Bring(nint window) => Raise(window);
+
     /// <summary>The process that owns the window in front right now, or 0.</summary>
     public static int ForegroundProcessId()
     {
