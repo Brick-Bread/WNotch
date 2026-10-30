@@ -50,6 +50,16 @@ public sealed class AppSettings
     /// </summary>
     public string? PluginTheme { get; set; }
 
+    /// <summary>How the island is drawn over the <see cref="Theme"/> colours. A plugin theme replaces it while one is chosen.</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<NotchLook>))]
+    public NotchLook Look { get; set; } = NotchLook.Classic;
+
+    /// <summary>
+    /// Blur the desktop behind the island in a glass look (<see cref="NotchLooks.IsGlass"/>). Windows draws the
+    /// blur; when it misbehaves on a PC, turning this off leaves the glass clear.
+    /// </summary>
+    public bool BlurBehindGlass { get; set; } = true;
+
     /// <summary>
     /// Name of the <see cref="GlowColor"/> preset that tints buttons, bars and the selected tab.
     /// Anything that is not a preset, such as <see cref="NoAccent"/>, leaves them uncoloured.

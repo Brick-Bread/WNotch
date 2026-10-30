@@ -2,6 +2,7 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <!-- Same keys as Dark.xaml. -->
     <SolidColorBrush x:Key="IslandBrush" Color="#F5F5F7" />
+    <SolidColorBrush x:Key="IslandBorderBrush" Color="#00000000" />
     <SolidColorBrush x:Key="TextBrush" Color="#1D1D1F" />
     <SolidColorBrush x:Key="SecondaryTextBrush" Color="#941D1D1F" />
 

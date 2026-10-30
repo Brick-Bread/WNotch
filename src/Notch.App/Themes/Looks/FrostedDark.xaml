@@ -1,0 +1,34 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Frosted over Dark.xaml: smoky glass with a lit rim. The desktop shows through the island, blurred
+         when "Blur behind glass" is on (IslandBackdrop). Only the keys that differ from Dark.xaml are here. -->
+    <SolidColorBrush x:Key="IslandBrush" Color="#8C1C1C2A" />
+    <LinearGradientBrush x:Key="IslandBorderBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#66FFFFFF" Offset="0" />
+        <GradientStop Color="#1FFFFFFF" Offset="1" />
+    </LinearGradientBrush>
+    <Thickness x:Key="IslandBorderThickness">1</Thickness>
+
+    <SolidColorBrush x:Key="TextBrush" Color="#FFFFFF" />
+    <!-- Stronger than Dark's: whatever is behind the glass would swallow fainter text. -->
+    <SolidColorBrush x:Key="SecondaryTextBrush" Color="#B3FFFFFF" />
+
+    <SolidColorBrush x:Key="CardBrush" Color="#1AFFFFFF" />
+    <SolidColorBrush x:Key="CardBorderBrush" Color="#14FFFFFF" />
+    <SolidColorBrush x:Key="ControlBrush" Color="#24FFFFFF" />
+    <SolidColorBrush x:Key="HoverBrush" Color="#33FFFFFF" />
+    <SolidColorBrush x:Key="PressedBrush" Color="#47FFFFFF" />
+    <SolidColorBrush x:Key="SelectedBrush" Color="#2EFFFFFF" />
+    <SolidColorBrush x:Key="TrackBrush" Color="#38FFFFFF" />
+
+    <SolidColorBrush x:Key="WorkingBrush" Color="#7CC4FF" />
+    <SolidColorBrush x:Key="AttentionBrush" Color="#FFD166" />
+    <SolidColorBrush x:Key="DoneBrush" Color="#6EE7A0" />
+
+    <!-- The terminal cannot be see-through, so it gets a solid pane in the glass's colour. -->
+    <SolidColorBrush x:Key="TerminalBackgroundBrush" Color="#1A1A24" />
+    <SolidColorBrush x:Key="TerminalForegroundBrush" Color="#F5F5F7" />
+
+    <FontFamily x:Key="UiFontFamily">Segoe UI Variable Text, Segoe UI, /Assets/Fonts/#Inter</FontFamily>
+    <FontFamily x:Key="DisplayFontFamily">Segoe UI Variable Display, Segoe UI, /Assets/Fonts/#Inter Display</FontFamily>
+</ResourceDictionary>

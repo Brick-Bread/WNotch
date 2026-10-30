@@ -1,0 +1,36 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+    <!-- Paper over Dark.xaml: dark paper with cream ink, serif figures and a burnt-orange edge for what needs you.
+         Only the keys that differ from Dark.xaml are here. -->
+    <SolidColorBrush x:Key="IslandBrush" Color="#1D1B17" />
+    <SolidColorBrush x:Key="IslandBorderBrush" Color="#17EFE7D6" />
+    <Thickness x:Key="IslandBorderThickness">1</Thickness>
+
+    <SolidColorBrush x:Key="TextBrush" Color="#EFE7D6" />
+    <SolidColorBrush x:Key="SecondaryTextBrush" Color="#94EFE7D6" />
+
+    <SolidColorBrush x:Key="CardBrush" Color="#12EFE7D6" />
+    <SolidColorBrush x:Key="CardBorderBrush" Color="#0FEFE7D6" />
+    <SolidColorBrush x:Key="ControlBrush" Color="#1FEFE7D6" />
+    <SolidColorBrush x:Key="HoverBrush" Color="#29EFE7D6" />
+    <SolidColorBrush x:Key="PressedBrush" Color="#3DEFE7D6" />
+    <SolidColorBrush x:Key="SelectedBrush" Color="#1FEFE7D6" />
+    <SolidColorBrush x:Key="TrackBrush" Color="#26EFE7D6" />
+
+    <SolidColorBrush x:Key="WorkingBrush" Color="#7AA2FF" />
+    <SolidColorBrush x:Key="AttentionBrush" Color="#F08A4B" />
+    <SolidColorBrush x:Key="DoneBrush" Color="#7CC58F" />
+    <SolidColorBrush x:Key="DangerBrush" Color="#F2665A" />
+
+    <SolidColorBrush x:Key="TerminalBackgroundBrush" Color="#15130F" />
+    <SolidColorBrush x:Key="TerminalForegroundBrush" Color="#EFE7D6" />
+    <SolidColorBrush x:Key="TerminalCursorBrush" Color="#F08A4B" />
+    <SolidColorBrush x:Key="TerminalSelectionBrush" Color="#40F08A4B" />
+
+    <!-- The large figures (timer, stats, song title) are set in a serif, the rest stays sans. -->
+    <FontFamily x:Key="DisplayFontFamily">Iowan Old Style, Georgia, Cambria</FontFamily>
+
+    <CornerRadius x:Key="CardRadius">12</CornerRadius>
+    <sys:Double x:Key="IslandRadiusScale">0.8</sys:Double>
+</ResourceDictionary>

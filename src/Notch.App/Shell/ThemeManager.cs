@@ -13,9 +13,10 @@ namespace Notch.App.Shell;
 
 /// <summary>
 /// Puts the theme the settings ask for into effect. The app's own look is Themes/Design.xaml
-/// (fonts, sizes, radii), Themes/Styles.xaml (control styles) and one of Themes/Dark.xaml or
-/// Light.xaml (colours). A theme offered by a plugin is a further resource dictionary merged after
-/// those, so it can replace any key of them. Everything in XAML refers to these keys with
+/// (fonts, sizes, radii), Themes/Styles.xaml (control styles), one of Themes/Dark.xaml or
+/// Light.xaml (colours) and, unless the look is Classic, the look's dictionary for those colours
+/// (Themes/Looks), which replaces some of their keys. A theme offered by a plugin is a further
+/// resource dictionary merged after Dark or Light instead of a look, so it can replace any key of them. Everything in XAML refers to these keys with
 /// DynamicResource, so swapping dictionaries restyles the notch live.
 /// </summary>
 internal static class ThemeManager
@@ -57,6 +58,15 @@ internal static class ThemeManager
     /// writing themes). Ignored while <see cref="Override"/> is set.
     /// </summary>
     public static string? PluginThemeOverride { get; set; }
+
+    /// <summary>Used instead of the saved look for this run (<c>--look=</c>, for development).</summary>
+    public static NotchLook? LookOverride { get; set; }
+
+    /// <summary>The look showing: <see cref="NotchLook.Classic"/> while a plugin theme is.</summary>
+    public static NotchLook Look { get; private set; }
+
+    /// <summary>Whether the island is see-through in the look showing, so the desktop behind it can be blurred.</summary>
+    public static bool IsGlass => NotchLooks.IsGlass(Look);
 
     /// <summary>Whether the light theme is the one showing. For a plugin theme, whether it is built on the light one.</summary>
     public static bool IsLight { get; private set; }
@@ -111,13 +121,22 @@ internal static class ThemeManager
             ? entry.Base == PluginThemeBase.Light
             : NotchThemes.IsLight(Override ?? settings.Theme, SystemTheme.AppsUseLightTheme);
 
-        string signature = $"{light}#{source}";
+        // A plugin theme is a whole look of its own, so the chosen look waits until it is gone.
+        NotchLook look = entry is null ? LookOverride ?? settings.Look : NotchLook.Classic;
+        string? lookName = NotchLooks.DictionaryName(look, light);
+
+        string signature = $"{light}#{lookName}#{source}";
         if (signature != _signature)
         {
             var next = new List<ResourceDictionary>
             {
                 new() { Source = new Uri($"/Notch;component/Themes/{(light ? "Light" : "Dark")}.xaml", UriKind.Relative) },
             };
+            if (lookName is not null)
+            {
+                next.Add(new ResourceDictionary { Source = new Uri($"/Notch;component/Themes/Looks/{lookName}.xaml", UriKind.Relative) });
+            }
+
             if (plugin is not null)
             {
                 next.Add(plugin);
@@ -143,6 +162,7 @@ internal static class ThemeManager
         _pluginSource = plugin is null ? null : source;
         ActivePluginTheme = entry?.Key;
         IsLight = light;
+        Look = lookName is null ? NotchLook.Classic : look;
 
         // A theme that defines its own accent keeps it; otherwise the user's accent colour is laid over the theme.
         ApplyAccent(plugin is not null && Defines(plugin, "AccentBrush") ? null : GlowColor.FromName(settings.AccentColor));
@@ -163,12 +183,13 @@ internal static class ThemeManager
     }
 
     /// <summary>
-    /// How the terminal should look under the plugin theme in effect: xterm colours taken from the
-    /// theme's brushes, and its code font. Null under Notch's own themes, whose colours the page has built in.
+    /// How the terminal should look under the plugin theme or look in effect: xterm colours taken from the
+    /// theme's brushes, and its code font. Null under Notch's own Classic dark and light, whose colours the
+    /// page has built in.
     /// </summary>
     public static (JsonObject Palette, System.Drawing.Color? Background)? TerminalPalette()
     {
-        if (_plugin is null)
+        if (_plugin is null && Look == NotchLook.Classic)
         {
             return null;
         }
@@ -319,6 +340,7 @@ internal static class ThemeManager
     private static Type? ExpectedType(string name) => name switch
     {
         "UiFontSize" or "IslandRadiusScale" => typeof(double),
+        "IslandBorderThickness" => typeof(Thickness),
         "IconFont" => typeof(FontFamily),
         _ when name.EndsWith("Brush", StringComparison.Ordinal) => typeof(Brush),
         _ when name.EndsWith("FontFamily", StringComparison.Ordinal) => typeof(FontFamily),
