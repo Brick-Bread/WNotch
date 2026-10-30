@@ -169,6 +169,7 @@ public partial class SettingsWindow : Window
 
         AnswerPromptsInNotch.IsChecked = settings.AnswerPromptsInNotch;
         PromptWaitSeconds.Text = ((int)settings.PromptWait().TotalSeconds).ToString();
+        ClaudeUsage.IsChecked = settings.ClaudeUsage;
         AgentSounds.IsChecked = settings.AgentSounds;
         DoneSound.Text = settings.DoneSound ?? "";
         NeedsInputSound.Text = settings.NeedsInputSound ?? "";
@@ -469,6 +470,7 @@ public partial class SettingsWindow : Window
         _settings.HiddenAgents = [.. AgentToggles.Children.OfType<CheckBox>().Where(c => c.IsChecked != true).Select(c => (string)c.Tag)];
         _settings.AnswerPromptsInNotch = AnswerPromptsInNotch.IsChecked == true;
         _settings.PromptWaitSeconds = promptWait;
+        _settings.ClaudeUsage = ClaudeUsage.IsChecked == true;
         _settings.AgentSounds = AgentSounds.IsChecked == true;
         _settings.DoneSound = DoneSound.Text.Trim() is { Length: > 0 } done ? done : null;
         _settings.NeedsInputSound = NeedsInputSound.Text.Trim() is { Length: > 0 } needsInput ? needsInput : null;

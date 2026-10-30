@@ -67,6 +67,7 @@ public static class WidgetKinds
     public const string Command = "command";
     public const string Feed = "feed";
     public const string Plugin = "plugin";
+    public const string Usage = "usage";
 
     /// <summary>A widget a plugin draws itself; <see cref="HomeWidget.Source"/> says whose. Not in the catalog's picker list.</summary>
     public const string PluginWidget = "plugin-widget";
@@ -180,6 +181,12 @@ public static class WidgetCatalog
             new("url", "Link", WidgetOptionType.Text, Hint: "https://… returning text or JSON"),
             new("field", "JSON field", WidgetOptionType.Text, Hint: "Optional, such as data.status or items.0.title"),
             new("minutes", "Refresh every", WidgetOptionType.Choice, "15 min", ["1 min", "5 min", "15 min", "60 min"]),
+        ]),
+        new(WidgetKinds.Usage, "Agent usage", "\uE9D9", "How much of Claude's and Codex's limits is used, and what opencode spent today", WidgetWidth.Full, Single: true, CanBeEmpty: true,
+        [
+            new("claude", "Claude (switch it on in Settings > Agents)", WidgetOptionType.Toggle, WidgetOption.On),
+            new("codex", "Codex", WidgetOptionType.Toggle, WidgetOption.On),
+            new("opencode", "opencode today", WidgetOptionType.Toggle, WidgetOption.On),
         ]),
         new(WidgetKinds.Plugin, "Plugin card", "\uE71D", "A card from a plugin, on Home", WidgetWidth.Half, Single: false, CanBeEmpty: true,
         [

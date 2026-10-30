@@ -183,6 +183,12 @@ public sealed class AppSettings
     /// <summary><see cref="PromptWaitSeconds"/>, kept to what works.</summary>
     public TimeSpan PromptWait() => TimeSpan.FromSeconds(PromptWaitSeconds is >= 10 and <= MaxPromptWaitSeconds ? PromptWaitSeconds : DefaultPromptWaitSeconds);
 
+    /// <summary>
+    /// Show how much of Claude's plan limits is used, on the usage widget. Reads the sign-in Claude Code keeps
+    /// and asks the address Claude Code itself asks, so it is off until the user turns it on.
+    /// </summary>
+    public bool ClaudeUsage { get; set; }
+
     /// <summary>Play a sound when an agent finishes or needs the user. Off until the user turns it on.</summary>
     public bool AgentSounds { get; set; }
 

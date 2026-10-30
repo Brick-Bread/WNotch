@@ -43,6 +43,7 @@ public partial class NotchWindow
         WidgetKinds.Command => new ButtonsView(this, widget, runs: true),
         WidgetKinds.Feed => new FeedView(this, widget),
         WidgetKinds.PluginWidget => new PluginWidgetView(this, widget),
+        WidgetKinds.Usage => new UsageView(this, widget),
         _ => new PluginCardView(this, widget),
     };
 
