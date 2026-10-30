@@ -34,7 +34,7 @@ The terminal uses the WebView2 runtime, which ships with Windows 11.
 
 ## Using it
 
-- Hover over the pill (or click it) to expand it. Move away to close it. The hotkey (Alt+Shift+N unless you changed it) opens it and keeps it open until you press it again or move the pointer onto the notch and away.
+- Hover over the pill (or click it) to expand it. Move away to close it. Scroll over the row of tab icons to go from tab to tab. The hotkey (Alt+Shift+N unless you changed it) opens it and keeps it open until you press it again or move the pointer onto the notch and away.
 - **Shelf tab:** drag files from Explorer onto the pill; the notch opens and they land on the shelf. Drag a tile out to use the file, double-click to open it, right-click for more. A file that has been moved or deleted leaves the shelf by itself.
 - **Terminal tab:** pick a folder, then a launcher button (`+ Claude`, `+ Codex`, `+ opencode`, `+ Shell` by default). Settings → Terminal buttons lets you edit them or add your own, such as a Codex fork or a second account with its own `CLAUDE_CONFIG_DIR`. While the terminal has keyboard focus the notch stays open; click any other window to close it.
 - **Timer:** press a preset, or **+ Custom** and type a length; a bare number is minutes. Enter starts it, Esc cancels.

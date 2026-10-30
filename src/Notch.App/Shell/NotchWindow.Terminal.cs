@@ -19,6 +19,9 @@ public partial class NotchWindow
     private string _terminalFolder = "";
     private IReadOnlyList<TerminalProfile> _terminalProfiles = [];
 
+    /// <summary>Wheel movement over the tabs that has not added up to a step yet.</summary>
+    private int _tabWheel;
+
     private enum NotchTab
     {
         Home,
@@ -83,6 +86,10 @@ public partial class NotchWindow
         TabShelf.Checked += (_, _) => SelectTab(NotchTab.Shelf);
         TabPlugins.Checked += (_, _) => SelectTab(NotchTab.Plugins);
 
+        // The wheel over the row of tabs steps through them; a background lets the gaps between them catch it too.
+        TabStrip.Background = System.Windows.Media.Brushes.Transparent;
+        TabStrip.PreviewMouseWheel += OnTabStripWheel;
+
         ShowTerminalLaunchers();
         OpenSettingsButton.Click += (_, _) => SettingsRequested?.Invoke();
         TerminalFolder.Click += (_, _) => ShowFolderMenu();
@@ -114,6 +121,35 @@ public partial class NotchWindow
             };
             button.Click += (_, _) => OpenSession(profile);
             TerminalLaunchers.Children.Add(button);
+        }
+    }
+
+    /// <summary>
+    /// Scrolling down over the tabs goes to the next one, up to the one before; it stops at either end. A touchpad
+    /// sends many small steps, which add up to one notch of a mouse wheel before the tab changes.
+    /// </summary>
+    private void OnTabStripWheel(object sender, MouseWheelEventArgs e)
+    {
+        e.Handled = true;
+        if (Math.Sign(e.Delta) != Math.Sign(_tabWheel))
+        {
+            _tabWheel = 0;
+        }
+
+        _tabWheel += e.Delta;
+        if (Math.Abs(_tabWheel) < Mouse.MouseWheelDeltaForOneLine)
+        {
+            return;
+        }
+
+        int step = _tabWheel < 0 ? 1 : -1;
+        _tabWheel = 0;
+        RadioButton[] tabs = [.. TabStrip.Children.OfType<RadioButton>().Where(t => t.IsVisible && t.IsEnabled)];
+        int current = Array.FindIndex(tabs, t => t.IsChecked == true);
+        int next = current + step;
+        if (current >= 0 && next >= 0 && next < tabs.Length)
+        {
+            tabs[next].IsChecked = true;
         }
     }
 
