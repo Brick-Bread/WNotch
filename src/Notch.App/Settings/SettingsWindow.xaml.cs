@@ -167,6 +167,8 @@ public partial class SettingsWindow : Window
         // What the files say now, not what the setting remembers: the user may have edited them.
         GlobalAgentHooks.IsChecked = AgentHookFiles.IsInstalled();
 
+        AnswerPromptsInNotch.IsChecked = settings.AnswerPromptsInNotch;
+        PromptWaitSeconds.Text = ((int)settings.PromptWait().TotalSeconds).ToString();
         AgentSounds.IsChecked = settings.AgentSounds;
         DoneSound.Text = settings.DoneSound ?? "";
         NeedsInputSound.Text = settings.NeedsInputSound ?? "";
@@ -450,6 +452,13 @@ public partial class SettingsWindow : Window
             return;
         }
 
+        if (!int.TryParse(PromptWaitSeconds.Text.Trim(), out int promptWait) || promptWait is < 10 or > AppSettings.MaxPromptWaitSeconds)
+        {
+            MessageBox.Show(this, $"How long a prompt stays in the notch is a number of seconds from 10 to {AppSettings.MaxPromptWaitSeconds}.", "Notch", MessageBoxButton.OK, MessageBoxImage.Warning);
+            PromptWaitSeconds.Focus();
+            return;
+        }
+
         _settings.DetectAgents = DetectAgents.IsChecked == true;
         _settings.WatchAppSessions = WatchAppSessions.IsChecked == true;
         _settings.ClipboardHistory = ClipboardHistory.IsChecked == true;
@@ -458,6 +467,8 @@ public partial class SettingsWindow : Window
             .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Distinct(StringComparer.OrdinalIgnoreCase)];
         _settings.HiddenAgents = [.. AgentToggles.Children.OfType<CheckBox>().Where(c => c.IsChecked != true).Select(c => (string)c.Tag)];
+        _settings.AnswerPromptsInNotch = AnswerPromptsInNotch.IsChecked == true;
+        _settings.PromptWaitSeconds = promptWait;
         _settings.AgentSounds = AgentSounds.IsChecked == true;
         _settings.DoneSound = DoneSound.Text.Trim() is { Length: > 0 } done ? done : null;
         _settings.NeedsInputSound = NeedsInputSound.Text.Trim() is { Length: > 0 } needsInput ? needsInput : null;

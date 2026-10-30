@@ -29,6 +29,15 @@ public sealed class AgentHookServer : IDisposable
     /// <summary>Raised on a background thread for every event, including those from agents Notch did not start.</summary>
     public event Action<AgentHooks.HookMessage>? MessageReceived;
 
+    /// <summary>
+    /// Raised on a background thread, after <see cref="MessageReceived"/>, for an event whose hook waits for an
+    /// answer. Whoever handles it answers through the <see cref="HookReply"/>; with no handler the hook gets none at once.
+    /// </summary>
+    public event Action<HookReply>? ReplyRequested;
+
+    /// <summary>The longest a hook is kept waiting for an answer, whatever its handler does.</summary>
+    public static readonly TimeSpan MaxReplyWait = TimeSpan.FromMinutes(15);
+
     public void Dispose()
     {
         _stop.Cancel();
@@ -43,8 +52,8 @@ public sealed class AgentHookServer : IDisposable
             NamedPipeServerStream? pipe = null;
             try
             {
-                // Duplex although nothing is ever sent back: opencode's runtime opens the pipe for reading
-                // and writing and gives up when the server end only accepts input. Hooks that only write still connect.
+                // Duplex: a hook that asks a question reads its answer back on the same connection, and opencode's
+                // runtime opens the pipe for reading and writing anyway. Hooks that only write still connect.
                 pipe = new NamedPipeServerStream(
                     pipeName,
                     PipeDirection.InOut,
@@ -92,12 +101,75 @@ public sealed class AgentHookServer : IDisposable
                     {
                         EventReceived?.Invoke(message.Session, message.EventName);
                     }
+
+                    if (message.WantsReply)
+                    {
+                        await ReplyAsync(pipe, reader, message, token);
+                    }
                 }
             }
         }
-        catch (Exception e) when (e is IOException or OperationCanceledException)
+        catch (Exception e) when (e is IOException or OperationCanceledException or ObjectDisposedException)
         {
             // A hook that disconnects early or stalls is simply dropped.
         }
     }
+
+    /// <summary>
+    /// Holds the connection open until the hook's question is answered, then writes the answer as one line.
+    /// A hook that hangs up first (its agent ended, or stopped waiting) cancels the question.
+    /// </summary>
+    private async Task ReplyAsync(NamedPipeServerStream pipe, StreamReader reader, AgentHooks.HookMessage message, CancellationToken token)
+    {
+        using var hungUp = CancellationTokenSource.CreateLinkedTokenSource(token);
+        var reply = new HookReply(message, hungUp.Token);
+        if (ReplyRequested is { } handler)
+        {
+            handler(reply);
+        }
+        else
+        {
+            reply.Answer("");
+        }
+
+        // A hook sends nothing after its line, so a read that ends means it hung up.
+        Task<string?> closed = reader.ReadLineAsync(hungUp.Token).AsTask();
+        _ = closed.ContinueWith(t => _ = t.Exception, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
+        Task finished = await Task.WhenAny(reply.Answered, closed, Task.Delay(MaxReplyWait, hungUp.Token));
+        if (finished != reply.Answered)
+        {
+            await hungUp.CancelAsync();
+            reply.Answer("");
+            return;
+        }
+
+        string answer = (await reply.Answered).ReplaceLineEndings(" ");
+        byte[] bytes = Encoding.UTF8.GetBytes(answer + "\n");
+        await pipe.WriteAsync(bytes, token);
+        await pipe.FlushAsync(token);
+        await hungUp.CancelAsync();
+    }
+}
+
+/// <summary>A hook waiting on its connection for an answer. Answer it once; later answers are ignored.</summary>
+public sealed class HookReply
+{
+    private readonly TaskCompletionSource<string> _answer = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    internal HookReply(AgentHooks.HookMessage message, CancellationToken hungUp)
+    {
+        Message = message;
+        HungUp = hungUp;
+    }
+
+    public AgentHooks.HookMessage Message { get; }
+
+    /// <summary>Cancelled when the hook stops waiting: it hung up, or was answered.</summary>
+    public CancellationToken HungUp { get; }
+
+    internal Task<string> Answered => _answer.Task;
+
+    /// <summary>Sends <paramref name="text"/> back to the hook as one line; empty means no answer.</summary>
+    /// <returns>False when the hook had its answer already, or had gone.</returns>
+    public bool Answer(string text) => _answer.TrySetResult(text);
 }

@@ -16,7 +16,17 @@ public static class AgentHooks
     /// <summary>Environment variable identifying the terminal session the CLI runs in.</summary>
     public const string SessionVariable = "NOTCH_SESSION";
 
-    private static readonly string[] ClaudeEvents = ["UserPromptSubmit", "PreToolUse", "PostToolUse", "Notification", "Stop", "SessionEnd"];
+    /// <summary>What opencode's plugin sends after each step: its token use and cost. Says nothing about what the agent is doing.</summary>
+    public const string UsageEvent = "Usage";
+
+    /// <summary>The Claude event the hook program waits on: Claude asks to use a tool, and Notch may answer.</summary>
+    public const string PermissionRequestEvent = "PermissionRequest";
+
+    /// <summary>
+    /// The events Notch's hook runs for. <see cref="PermissionRequestEvent"/> also shows the prompt in the
+    /// notch and waits for the user's answer there; the others only report.
+    /// </summary>
+    internal static readonly string[] ClaudeEvents = ["UserPromptSubmit", "PreToolUse", "PostToolUse", PermissionRequestEvent, "Notification", "Stop", "SessionEnd"];
 
     /// <summary>The settings JSON passed to <c>claude --settings</c>: every relevant hook runs the hook executable.</summary>
     public static string BuildClaudeSettings(string hookExecutablePath)
@@ -60,15 +70,55 @@ public static class AgentHooks
 
     /// <summary>Formats the line the hook executable writes to the pipe.</summary>
     /// <param name="hookPid">The hook program's own process id, so the app can find which agent started it.</param>
-    public static string FormatMessage(string sessionId, string payload, int hookPid = 0) =>
-        JsonSerializer.Serialize(new JsonObject { ["session"] = sessionId, ["payload"] = payload, ["pid"] = hookPid });
+    /// <param name="wantsReply">
+    /// The hook waits for one line back on the same connection before it hangs up: the answer to a
+    /// permission prompt, or an empty line for none.
+    /// </param>
+    public static string FormatMessage(string sessionId, string payload, int hookPid = 0, bool wantsReply = false)
+    {
+        var message = new JsonObject { ["session"] = sessionId, ["payload"] = payload, ["pid"] = hookPid };
+        if (wantsReply)
+        {
+            message["reply"] = true;
+        }
+
+        return JsonSerializer.Serialize(message);
+    }
+
+    /// <summary>Whether the hook program waits for an answer to this event (see <see cref="FormatMessage"/>).</summary>
+    public static bool WantsReply(string payload)
+    {
+        try
+        {
+            return (string?)JsonNode.Parse(payload)?["hook_event_name"] == PermissionRequestEvent;
+        }
+        catch (Exception e) when (e is JsonException or InvalidOperationException)
+        {
+            return false;
+        }
+    }
 
     /// <summary>What a hook reported.</summary>
     /// <param name="Session">The Notch terminal session, or empty for an agent started elsewhere.</param>
     /// <param name="HookPid">The hook program's process id; 0 when it did not say.</param>
     /// <param name="Folder">The folder the agent works in, when it said.</param>
     /// <param name="Agent">Which agent reported, when it said (opencode's plugin does); null for Claude and Codex.</param>
-    public sealed record HookMessage(string Session, string EventName, int HookPid, string? Folder, string? Agent = null);
+    /// <param name="AgentSession">The agent's own id for its session (Claude's <c>session_id</c>, opencode's <c>sessionID</c>), when it said.</param>
+    /// <param name="WantsReply">The hook waits on the connection for an answer.</param>
+    /// <param name="Payload">What the agent said, as it said it, for the events that are read further (a permission prompt).</param>
+    /// <param name="Host">The program the agent runs in, when the reporter knows it (opencode's plugin says "openchamber").</param>
+    /// <param name="Title">The session's title, when the reporter knows it.</param>
+    public sealed record HookMessage(
+        string Session,
+        string EventName,
+        int HookPid,
+        string? Folder,
+        string? Agent = null,
+        string? AgentSession = null,
+        bool WantsReply = false,
+        string? Payload = null,
+        string? Host = null,
+        string? Title = null);
 
     /// <summary>Reads a line written by the hook executable, including agents that were not started by Notch.</summary>
     public static bool TryParseHookMessage(string line, out HookMessage? message)
@@ -92,9 +142,18 @@ public static class AgentHooks
             }
 
             int pid = node?["pid"] is JsonValue value && value.TryGetValue(out int parsed) ? parsed : 0;
-            string? folder = (string?)payload?["cwd"];
-            string? agent = (string?)payload?["agent"];
-            message = new HookMessage(session, name, pid, string.IsNullOrWhiteSpace(folder) ? null : folder, string.IsNullOrWhiteSpace(agent) ? null : agent);
+            bool reply = node?["reply"] is JsonValue flag && flag.TryGetValue(out bool wants) && wants;
+            message = new HookMessage(
+                session,
+                name,
+                pid,
+                Text(payload, "cwd"),
+                Text(payload, "agent"),
+                Text(payload, "session_id") ?? Text(payload, "sessionID"),
+                reply,
+                payloadText,
+                Text(payload, "host"),
+                Text(payload, "title"));
             return true;
         }
         catch (Exception e) when (e is JsonException or InvalidOperationException or FormatException)
@@ -136,6 +195,9 @@ public static class AgentHooks
             return false;
         }
     }
+
+    private static string? Text(JsonNode? node, string key) =>
+        node?[key] is JsonValue value && value.TryGetValue(out string? text) && !string.IsNullOrWhiteSpace(text) ? text : null;
 
     /// <summary>
     /// Claude runs hook commands through a shell (Git Bash by default on Windows), where

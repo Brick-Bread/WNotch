@@ -63,6 +63,7 @@ public partial class App : Application
     private AgentPublisher? _agentPublisher;
     private AgentTracker? _agentTracker;
     private AgentSoundPlayer? _agentSounds;
+    private ApprovalService? _approvals;
     private NotificationService? _notifications;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -248,6 +249,8 @@ public partial class App : Application
         {
             _agentTracker = new AgentTracker(Dispatcher, _agentBoard, settings, _terminal.HookServer, _terminal.TryRouteOpenCode);
             _agentSounds = new AgentSoundPlayer(_agentBoard, settings, Dispatcher, () => window.IsHiddenForFullscreen);
+            _approvals = new ApprovalService(_terminal.HookServer, settings, Dispatcher);
+            window.AttachApprovals(_approvals);
             _notifications = new NotificationService(settings, _activities);
             _ = ApplyNotificationsAsync(showProblem: false);
             if (settings.GlobalAgentHooks)
@@ -539,6 +542,7 @@ public partial class App : Application
         _webhook?.Dispose();
         _agentTracker?.Dispose();
         _agentSounds?.Dispose();
+        _approvals?.Dispose();
         _notifications?.Dispose();
         _agentPublisher?.Dispose();
         _commandPipe?.Dispose();

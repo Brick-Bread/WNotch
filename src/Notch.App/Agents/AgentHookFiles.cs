@@ -66,7 +66,7 @@ internal static class AgentHookFiles
             : AgentHookEditor.RemoveClaudeHooks(Read(ClaudeSettingsPath));
         if (claude.Changed)
         {
-            files.Add((ClaudeSettingsPath, enable ? "adds Notch's six hooks" : "removes Notch's hooks"));
+            files.Add((ClaudeSettingsPath, enable ? "adds Notch's hooks" : "removes Notch's hooks"));
         }
         else if (claude.Problem is not null)
         {
@@ -189,6 +189,11 @@ internal static class AgentHookFiles
             if (AgentHookEditor.ClaudeHasHooks(claude) && claude?.Contains(forward, StringComparison.OrdinalIgnoreCase) != true)
             {
                 ApplyClaude(enable: false);
+                ApplyClaude(enable: true);
+            }
+            else if (AgentHookEditor.ClaudeHasHooks(claude))
+            {
+                // A newer Notch reports more events (the permission prompts it answers); the user agreed to Notch's hooks.
                 ApplyClaude(enable: true);
             }
 

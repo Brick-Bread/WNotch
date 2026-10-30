@@ -22,7 +22,7 @@ public static partial class AgentHookEditor
 
     private const string CodexComment = "# Notch: reports when Codex finishes a turn. Remove it in Notch's settings.";
 
-    private static readonly string[] ClaudeEvents = ["UserPromptSubmit", "PreToolUse", "PostToolUse", "Notification", "Stop", "SessionEnd"];
+    private static readonly string[] ClaudeEvents = AgentHooks.ClaudeEvents;
 
     private static readonly JsonSerializerOptions Pretty = new() { WriteIndented = true };
 
@@ -35,7 +35,10 @@ public static partial class AgentHookEditor
 
     public static bool ClaudeHasHooks(string? json) => FindClaudeEntries(json).Any();
 
-    /// <summary>Adds the six hooks to Claude's <c>settings.json</c> (null or empty text starts a new file).</summary>
+    /// <summary>
+    /// Adds Notch's hooks to Claude's <c>settings.json</c> (null or empty text starts a new file). Hooks a
+    /// file already has are kept, so a file from an older Notch gets only the ones it lacks.
+    /// </summary>
     public static HookEdit AddClaudeHooks(string? json, string hookExecutable)
     {
         JsonObject root;

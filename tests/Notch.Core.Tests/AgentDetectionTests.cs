@@ -284,7 +284,7 @@ public class AgentHookEditorTests
     private const string Hook = @"C:\Users\me\AppData\Local\Programs\Notch\Notch.Hook.exe";
 
     [Fact]
-    public void Claude_gets_the_six_hooks_and_keeps_everything_else()
+    public void Claude_gets_notchs_hooks_and_keeps_everything_else()
     {
         const string existing = """
             {
@@ -303,7 +303,7 @@ public class AgentHookEditorTests
         Assert.Equal("opus", (string?)root["model"]);
         Assert.Equal(2, root["hooks"]!["Stop"]!.AsArray().Count);
         Assert.Single(root["hooks"]!["PreCompact"]!.AsArray());
-        foreach (string name in new[] { "UserPromptSubmit", "PreToolUse", "PostToolUse", "Notification", "Stop", "SessionEnd" })
+        foreach (string name in new[] { "UserPromptSubmit", "PreToolUse", "PostToolUse", "PermissionRequest", "Notification", "Stop", "SessionEnd" })
         {
             Assert.Contains(root["hooks"]![name]!.AsArray(), g => ((string?)g!["hooks"]![0]!["command"])!.Contains("Notch.Hook"));
         }

@@ -718,6 +718,7 @@ public partial class NotchWindow : Window
                 PruneShelf();
                 _mouseWasDown = OverlayWindow.IsAnyMouseButtonDown();
                 _pointerWatch.Start();
+                ShowNewApprovals();
             }
             else
             {

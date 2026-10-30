@@ -86,4 +86,48 @@ public class AgentHookServerTests(HookServerFixture fixture) : IClassFixture<Hoo
             fixture.Server.EventReceived -= handler;
         }
     }
+
+    [Fact]
+    public async Task A_hook_that_asks_reads_its_answer_back_and_one_that_hangs_up_is_let_go()
+    {
+        var asked = new TaskCompletionSource<HookReply>();
+        Action<HookReply> handler = r => asked.TrySetResult(r);
+        fixture.Server.ReplyRequested += handler;
+        try
+        {
+            string line = AgentHooks.FormatMessage("q1", """{"hook_event_name":"PermissionRequest","session_id":"s1"}""", 123, wantsReply: true) + "\n";
+            using (var client = new NamedPipeClientStream(".", fixture.Server.PipeName, PipeDirection.InOut))
+            {
+                client.Connect(timeout: 5000);
+                client.Write(Encoding.UTF8.GetBytes(line));
+                client.Flush();
+
+                HookReply reply = await asked.Task.WaitAsync(TimeSpan.FromSeconds(5));
+                Assert.Equal("s1", reply.Message.AgentSession);
+                Assert.True(reply.Answer("""{"ok":true}"""));
+                Assert.False(reply.Answer("second"));
+
+                using var reader = new StreamReader(client, Encoding.UTF8);
+                Assert.Equal("""{"ok":true}""", await reader.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(5)));
+            }
+
+            asked = new TaskCompletionSource<HookReply>();
+            using (var client = new NamedPipeClientStream(".", fixture.Server.PipeName, PipeDirection.InOut))
+            {
+                client.Connect(timeout: 5000);
+                client.Write(Encoding.UTF8.GetBytes(line));
+                client.Flush();
+                HookReply waiting = await asked.Task.WaitAsync(TimeSpan.FromSeconds(5));
+                client.Dispose();
+
+                var gone = new TaskCompletionSource();
+                waiting.HungUp.Register(() => gone.TrySetResult());
+                await gone.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            }
+        }
+        finally
+        {
+            fixture.Server.ReplyRequested -= handler;
+        }
+    }
 }
