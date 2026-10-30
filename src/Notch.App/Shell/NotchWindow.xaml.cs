@@ -346,6 +346,9 @@ public partial class NotchWindow : Window
         || _terminal.Sessions.Count > 0
         || _countdown.State is CountdownState.Running or CountdownState.Paused;
 
+    /// <summary>True while a game or other fullscreen app has the notch taken off the screen.</summary>
+    public bool IsHiddenForFullscreen => _hiddenForFullscreen;
+
     /// <summary>Re-reads the settings object after the user saved changes.</summary>
     public void ApplySettings()
     {

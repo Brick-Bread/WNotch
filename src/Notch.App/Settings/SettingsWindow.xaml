@@ -260,6 +260,38 @@
                                            Text="Edits ~\.claude\settings.json and ~\.codex\config.toml after asking, with a backup next to each, and adds one file, plugins\notch.js, to opencode's config folder (opencode 2). Codex runs only one notify command, so an existing one is never replaced." />
                             </StackPanel>
                         </Border>
+
+                        <TextBlock Text="SOUNDS" Style="{StaticResource Heading}" />
+                        <Border Style="{StaticResource Group}">
+                            <StackPanel>
+                                <CheckBox x:Name="AgentSounds" Content="Play a sound when an agent is done or needs me"
+                                          ToolTip="Only for agents that report what they are doing. Never while a game or other fullscreen app is showing." />
+                                <StackPanel IsEnabled="{Binding IsChecked, ElementName=AgentSounds}">
+                                    <DockPanel Style="{StaticResource Row}">
+                                        <TextBlock Text="Done" Style="{StaticResource RowLabel}" />
+                                        <Button x:Name="PlayDoneSound" DockPanel.Dock="Right" Content="Play" Margin="6,0,0,0" />
+                                        <Button x:Name="ChooseDoneSound" DockPanel.Dock="Right" Content="Choose…" Margin="6,0,0,0" />
+                                        <TextBox x:Name="DoneSound" DockPanel.Dock="Right" Width="220"
+                                                 ToolTip="A .wav file. Leave empty for the sound Notch comes with." />
+                                    </DockPanel>
+                                    <DockPanel Style="{StaticResource Row}">
+                                        <TextBlock Text="Needs input" Style="{StaticResource RowLabel}" />
+                                        <Button x:Name="PlayNeedsInputSound" DockPanel.Dock="Right" Content="Play" Margin="6,0,0,0" />
+                                        <Button x:Name="ChooseNeedsInputSound" DockPanel.Dock="Right" Content="Choose…" Margin="6,0,0,0" />
+                                        <TextBox x:Name="NeedsInputSound" DockPanel.Dock="Right" Width="220"
+                                                 ToolTip="A .wav file. Leave empty for the sound Notch comes with." />
+                                    </DockPanel>
+                                    <DockPanel Style="{StaticResource Row}" LastChildFill="True">
+                                        <TextBlock Text="Volume" Style="{StaticResource RowLabel}" />
+                                        <TextBlock x:Name="SoundVolumeText" DockPanel.Dock="Right" Width="44" TextAlignment="Right"
+                                                   VerticalAlignment="Center" Foreground="{DynamicResource SecondaryTextBrush}"
+                                                   Typography.NumeralAlignment="Tabular" />
+                                        <Slider x:Name="SoundVolume" Minimum="0" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True"
+                                                SmallChange="5" LargeChange="25" VerticalAlignment="Center" Margin="40,0,0,0" />
+                                    </DockPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
 
                     <!-- Notifications -->

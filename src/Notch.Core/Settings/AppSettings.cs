@@ -166,6 +166,18 @@ public sealed class AppSettings
     /// </summary>
     public bool GlobalAgentHooks { get; set; }
 
+    /// <summary>Play a sound when an agent finishes or needs the user. Off until the user turns it on.</summary>
+    public bool AgentSounds { get; set; }
+
+    /// <summary>A .wav file to play when an agent finishes; null or empty for the one Notch comes with.</summary>
+    public string? DoneSound { get; set; }
+
+    /// <summary>A .wav file to play when an agent needs the user; null or empty for the one Notch comes with.</summary>
+    public string? NeedsInputSound { get; set; }
+
+    /// <summary>How loud agent sounds play, in percent.</summary>
+    public int SoundVolume { get; set; } = 70;
+
     /// <summary>Keep a history of what was copied, in the Clipboard tab. Off until the user turns it on.</summary>
     public bool ClipboardHistory { get; set; }
 

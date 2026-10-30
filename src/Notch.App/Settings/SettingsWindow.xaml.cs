@@ -167,6 +167,16 @@ public partial class SettingsWindow : Window
         // What the files say now, not what the setting remembers: the user may have edited them.
         GlobalAgentHooks.IsChecked = AgentHookFiles.IsInstalled();
 
+        AgentSounds.IsChecked = settings.AgentSounds;
+        DoneSound.Text = settings.DoneSound ?? "";
+        NeedsInputSound.Text = settings.NeedsInputSound ?? "";
+        SoundVolume.ValueChanged += (_, _) => SoundVolumeText.Text = $"{SoundVolume.Value:0}%";
+        SoundVolume.Value = Math.Clamp(settings.SoundVolume, 0, 100);
+        ChooseDoneSound.Click += (_, _) => ChooseSound(DoneSound);
+        ChooseNeedsInputSound.Click += (_, _) => ChooseSound(NeedsInputSound);
+        PlayDoneSound.Click += (_, _) => AgentSoundPlayer.Play(AgentChime.Done, DoneSound.Text.Trim(), (int)SoundVolume.Value);
+        PlayNeedsInputSound.Click += (_, _) => AgentSoundPlayer.Play(AgentChime.NeedsInput, NeedsInputSound.Text.Trim(), (int)SoundVolume.Value);
+
         _webhookToken = settings.WebhookToken;
         WebhookEnabled.IsChecked = settings.WebhookEnabled;
         WebhookPort.Text = settings.WebhookPort.ToString();
@@ -410,6 +420,22 @@ public partial class SettingsWindow : Window
         AccentSwatches.Children.Add(none);
     }
 
+    /// <summary>Lets the user pick a .wav file for an agent sound and puts its path in <paramref name="box"/>.</summary>
+    private void ChooseSound(TextBox box)
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Choose a sound",
+            Filter = "Sounds (*.wav)|*.wav",
+            FileName = box.Text.Trim(),
+        };
+
+        if (dialog.ShowDialog(this) == true)
+        {
+            box.Text = dialog.FileName;
+        }
+    }
+
     private void OnSave()
     {
         if (!TryReadTerminalPresets(out List<string> terminalPresets) || !TryReadTimerPresets(out List<TimerPreset> presets) || !TryReadHotkey(OpenHotkey, out string hotkey) || !TryReadHotkey(PaletteHotkey, out string paletteHotkey))
@@ -432,6 +458,10 @@ public partial class SettingsWindow : Window
             .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Distinct(StringComparer.OrdinalIgnoreCase)];
         _settings.HiddenAgents = [.. AgentToggles.Children.OfType<CheckBox>().Where(c => c.IsChecked != true).Select(c => (string)c.Tag)];
+        _settings.AgentSounds = AgentSounds.IsChecked == true;
+        _settings.DoneSound = DoneSound.Text.Trim() is { Length: > 0 } done ? done : null;
+        _settings.NeedsInputSound = NeedsInputSound.Text.Trim() is { Length: > 0 } needsInput ? needsInput : null;
+        _settings.SoundVolume = (int)Math.Round(SoundVolume.Value);
         if (!TryApplyAgentHooks())
         {
             return;
