@@ -276,6 +276,16 @@
                             </StackPanel>
                         </Border>
 
+                        <TextBlock Text="USAGE" Style="{StaticResource Heading}" />
+                        <Border Style="{StaticResource Group}">
+                            <StackPanel>
+                                <CheckBox x:Name="ClaudeUsage" Content="Show how much of Claude's plan limits is used"
+                                          ToolTip="On the Agent usage widget (add it from Home's pencil): the five-hour and weekly limits, and when they reset." />
+                                <TextBlock Style="{StaticResource Help}"
+                                           Text="Reads the sign-in Claude Code keeps in ~\.claude\.credentials.json and asks api.anthropic.com every five minutes while the widget is on screen, the way Claude Code itself checks. That address is not a published API and may stop working. Codex's limits are read from its own session files and opencode's spending from Notch's plugin, with nothing to switch on." />
+                            </StackPanel>
+                        </Border>
+
                         <TextBlock Text="SOUNDS" Style="{StaticResource Heading}" />
                         <Border Style="{StaticResource Group}">
                             <StackPanel>

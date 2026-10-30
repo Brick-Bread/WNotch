@@ -64,6 +64,7 @@ public partial class App : Application
     private AgentTracker? _agentTracker;
     private AgentSoundPlayer? _agentSounds;
     private ApprovalService? _approvals;
+    private UsageService? _usage;
     private NotificationService? _notifications;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -251,6 +252,8 @@ public partial class App : Application
             _agentSounds = new AgentSoundPlayer(_agentBoard, settings, Dispatcher, () => window.IsHiddenForFullscreen);
             _approvals = new ApprovalService(_terminal.HookServer, settings, Dispatcher);
             window.AttachApprovals(_approvals);
+            _usage = new UsageService(_terminal.HookServer, settings, Path.Combine(localData, "opencode-usage.json"));
+            window.AttachUsage(_usage);
             _notifications = new NotificationService(settings, _activities);
             _ = ApplyNotificationsAsync(showProblem: false);
             if (settings.GlobalAgentHooks)
@@ -543,6 +546,7 @@ public partial class App : Application
         _agentTracker?.Dispose();
         _agentSounds?.Dispose();
         _approvals?.Dispose();
+        _usage?.Dispose();
         _notifications?.Dispose();
         _agentPublisher?.Dispose();
         _commandPipe?.Dispose();
@@ -584,6 +588,7 @@ public partial class App : Application
 
             _webhook?.Apply();
             _agentTracker?.ScanSoon();
+            _usage?.RefreshSoon();
             _ = ApplyNotificationsAsync(showProblem: true);
             if (_webhook?.Problem is { } webhookProblem)
             {
