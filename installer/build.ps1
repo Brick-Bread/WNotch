@@ -30,9 +30,9 @@ if (-not $SkipPublish) {
     # All the executables are published self-contained into one folder so they share a single
     # copy of the .NET runtime and users need nothing preinstalled. ReadyToRun compiles Notch's own code
     # ahead of time, so starting the app (and the hook, which starts on every agent event) does not wait on the JIT.
-    Invoke-Dotnet publish (Join-Path $root 'src\Notch.App') -c Release -r win-x64 --self-contained true -p:PublishReadyToRun=true -o $publish "-p:Version=$Version"
-    Invoke-Dotnet publish (Join-Path $root 'src\Notch.Hook') -c Release -r win-x64 --self-contained true -p:PublishReadyToRun=true -o $publish "-p:Version=$Version"
-    Invoke-Dotnet publish (Join-Path $root 'src\Notch.Cli') -c Release -r win-x64 --self-contained true -p:PublishReadyToRun=true -o $publish "-p:Version=$Version"
+    Invoke-Dotnet publish (Join-Path $root 'src\Notch.App') -c Release -r win-x64 --self-contained true "-p:PublishReadyToRun=true" -o $publish "-p:Version=$Version"
+    Invoke-Dotnet publish (Join-Path $root 'src\Notch.Hook') -c Release -r win-x64 --self-contained true "-p:PublishReadyToRun=true" -o $publish "-p:Version=$Version"
+    Invoke-Dotnet publish (Join-Path $root 'src\Notch.Cli') -c Release -r win-x64 --self-contained true "-p:PublishReadyToRun=true" -o $publish "-p:Version=$Version"
 
     # Signs Notch's own programs when the certificate is configured (CODESIGN_PFX_BASE64); otherwise says it did not.
     & (Join-Path $PSScriptRoot 'sign-authenticode.ps1') -Path $publish
