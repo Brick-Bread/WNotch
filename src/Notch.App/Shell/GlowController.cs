@@ -16,7 +16,8 @@ namespace Notch.App.Shell;
 /// </summary>
 internal sealed class GlowController : IDisposable
 {
-    private const double HaloBlur = 18;
+    // A wider, softer halo around a crisp lit rim, rather than a tight smudge.
+    private const double HaloBlur = 22;
     private const double HaloExtraBlur = 14;
     private const double CoreBlur = 9;
 

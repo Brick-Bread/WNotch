@@ -15,8 +15,8 @@
 
     <!-- Panels and the resting, hovered and pressed states of controls, faintest first. Panels have
          no edge: the one faint fill is enough to group what is in them. -->
-    <SolidColorBrush x:Key="CardBrush" Color="#0FFFFFFF" />
-    <SolidColorBrush x:Key="ControlBrush" Color="#1CFFFFFF" />
+    <SolidColorBrush x:Key="CardBrush" Color="#14FFFFFF" />
+    <SolidColorBrush x:Key="ControlBrush" Color="#1FFFFFFF" />
     <SolidColorBrush x:Key="HoverBrush" Color="#26FFFFFF" />
     <SolidColorBrush x:Key="PressedBrush" Color="#38FFFFFF" />
 

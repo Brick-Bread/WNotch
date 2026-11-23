@@ -6,16 +6,18 @@ namespace Notch.App.Shell;
 /// <summary>Drives the notch's width, height and corner radius with springs, one step per rendered frame.</summary>
 internal sealed class NotchAnimator(double width, double height, double radius)
 {
-    // Size springs a little stiffer and looser than the default, for a quick move with a visible overshoot
-    // (damping ratio about 0.67); the corners follow more calmly so they never look pinched.
-    private const double SizeStiffness = 380;
-    private const double SizeDamping = 26;
-    private const double RadiusStiffness = 300;
-    private const double RadiusDamping = 30;
+    // Growing, the island stretches sideways a beat before it drops down, with a soft overshoot, the way the
+    // Dynamic Island opens. Shrinking, it pulls in quicker and settles without a wobble, height first.
+    // (Response in seconds, damping ratio.)
+    private static readonly (double Response, double Damping) GrowWidth = (0.34, 0.74);
+    private static readonly (double Response, double Damping) GrowHeight = (0.42, 0.76);
+    private static readonly (double Response, double Damping) ShrinkWidth = (0.34, 0.9);
+    private static readonly (double Response, double Damping) ShrinkHeight = (0.28, 0.94);
+    private static readonly (double Response, double Damping) Corners = (0.3, 1);
 
-    private readonly Spring _width = new(width, SizeStiffness, SizeDamping);
-    private readonly Spring _height = new(height, SizeStiffness, SizeDamping);
-    private readonly Spring _radius = new(radius, RadiusStiffness, RadiusDamping);
+    private readonly Spring _width = new(width);
+    private readonly Spring _height = new(height);
+    private readonly Spring _radius = Tuned(new Spring(radius), Corners);
     private TimeSpan? _lastFrame;
     private bool _running;
 
@@ -35,6 +37,9 @@ internal sealed class NotchAnimator(double width, double height, double radius)
 
     public void AnimateTo(double width, double height, double radius)
     {
+        bool grows = width * height > _width.Value * _height.Value;
+        Tuned(_width, grows ? GrowWidth : ShrinkWidth);
+        Tuned(_height, grows ? GrowHeight : ShrinkHeight);
         _width.Target = width;
         _height.Target = height;
         _radius.Target = radius;
@@ -75,5 +80,11 @@ internal sealed class NotchAnimator(double width, double height, double radius)
             CompositionTarget.Rendering -= OnRendering;
             Settled?.Invoke();
         }
+    }
+
+    private static Spring Tuned(Spring spring, (double Response, double Damping) tuning)
+    {
+        spring.Tune(tuning.Response, tuning.Damping);
+        return spring;
     }
 }

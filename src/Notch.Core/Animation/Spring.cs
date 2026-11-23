@@ -21,9 +21,23 @@ public sealed class Spring
 
     public double Target { get; set; }
 
-    public double Stiffness { get; }
+    /// <summary>May change while the spring moves, e.g. to open with a bounce and close without one; it keeps its velocity.</summary>
+    public double Stiffness { get; set; }
 
-    public double Damping { get; }
+    public double Damping { get; set; }
+
+    /// <summary>
+    /// Stiffness and damping from the way SwiftUI describes a spring: <paramref name="response"/> is roughly how long a
+    /// move takes, in seconds, and <paramref name="dampingRatio"/> how much it bounces (1 none, lower more).
+    /// </summary>
+    public static (double Stiffness, double Damping) Tuning(double response, double dampingRatio)
+    {
+        response = Math.Max(0.01, response);
+        double omega = 2 * Math.PI / response;
+        return (omega * omega, 2 * dampingRatio * omega);
+    }
+
+    public void Tune(double response, double dampingRatio) => (Stiffness, Damping) = Tuning(response, dampingRatio);
 
     public bool IsSettled => Math.Abs(Target - Value) < RestDistance && Math.Abs(Velocity) < RestVelocity;
 

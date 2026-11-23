@@ -44,8 +44,8 @@ public partial class NotchWindow
     private bool CompactPage => CurrentPage?.Page.Size == PluginPageSize.Compact;
 
     private Shape PageShape() => CompactPage
-        ? new Shape(CompactPageWidth, _compactPageHeight, 32)
-        : new Shape(LargePageWidth, LargePageHeight, 32);
+        ? new Shape(CompactPageWidth, _compactPageHeight, ExpandedRadius)
+        : new Shape(LargePageWidth, LargePageHeight, ExpandedRadius);
 
     /// <summary>A compact page is as tall as what it shows: measured once the new content is laid out.</summary>
     private void FitCompactPage()

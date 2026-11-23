@@ -160,4 +160,38 @@ public class ShellTests
 
         Assert.InRange(spring.Value, 0, 200);
     }
+
+    [Fact]
+    public void Spring_tuning_follows_response_and_damping()
+    {
+        (double stiffness, double damping) = Spring.Tuning(0.5, 1);
+        Assert.Equal(Math.Pow(2 * Math.PI / 0.5, 2), stiffness, 6);
+        Assert.Equal(4 * Math.PI / 0.5, damping, 6);
+
+        // Critically damped: it never passes its target.
+        var calm = new Spring(0) { Target = 100 };
+        calm.Tune(0.3, 1);
+        double highest = 0;
+        for (int frame = 0; frame < 240 && !calm.IsSettled; frame++)
+        {
+            calm.Step(1.0 / 60.0);
+            highest = Math.Max(highest, calm.Value);
+        }
+
+        Assert.True(calm.IsSettled);
+        Assert.InRange(highest, 0, 100.05);
+
+        // Underdamped: it overshoots a little, then settles.
+        var bouncy = new Spring(0) { Target = 100 };
+        bouncy.Tune(0.4, 0.7);
+        highest = 0;
+        for (int frame = 0; frame < 240 && !bouncy.IsSettled; frame++)
+        {
+            bouncy.Step(1.0 / 60.0);
+            highest = Math.Max(highest, bouncy.Value);
+        }
+
+        Assert.True(bouncy.IsSettled);
+        Assert.InRange(highest, 101, 110);
+    }
 }

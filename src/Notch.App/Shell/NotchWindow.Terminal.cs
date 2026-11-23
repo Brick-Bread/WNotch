@@ -182,6 +182,7 @@ public partial class NotchWindow
 
     private void SelectTab(NotchTab tab)
     {
+        bool switched = _tab != tab && _expanded;
         _tab = tab;
 
         // Whatever box of a page's own view had the keyboard is gone with the page.
@@ -194,6 +195,16 @@ public partial class NotchWindow
         ClipboardPanel.Visibility = tab == NotchTab.Clipboard ? Visibility.Visible : Visibility.Collapsed;
         PalettePanel.Visibility = tab == NotchTab.Palette ? Visibility.Visible : Visibility.Collapsed;
         PagePanel.Visibility = tab == NotchTab.Page ? Visibility.Visible : Visibility.Collapsed;
+
+        // The new tab eases in while the island springs to its size, rather than popping in.
+        if (switched && new UIElement[] { HomePanel, TerminalPanel, StatsPanel, ShelfPanel, PluginsPanel, ClipboardPanel, PalettePanel, PagePanel }
+            .FirstOrDefault(p => p.Visibility == Visibility.Visible) is { } shown)
+        {
+            shown.BeginAnimation(OpacityProperty, new System.Windows.Media.Animation.DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(220))
+            {
+                EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut },
+            });
+        }
 
         if (tab != NotchTab.Home)
         {

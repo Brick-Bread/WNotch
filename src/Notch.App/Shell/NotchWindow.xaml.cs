@@ -62,7 +62,8 @@ public partial class NotchWindow : Window
     private readonly AppSettings _settings;
     private readonly NotchAnimator _animator;
     private readonly GlowController _glow;
-    private readonly RectangleGeometry _islandClip = new();
+    /// <summary>The corner radius the island was last drawn with, for the glass blur under it.</summary>
+    private double _islandRadius;
     private readonly IslandBackdrop _backdrop = new();
     private readonly DispatcherTimer _hoverTimer = new();
     private readonly DispatcherTimer _pointerWatch = new() { Interval = TimeSpan.FromMilliseconds(100) };
@@ -140,7 +141,6 @@ public partial class NotchWindow : Window
         _animator = new NotchAnimator(idle.Width, idle.Height, idle.Radius);
         _animator.Frame += ApplyShape;
         _animator.Settled += ShrinkWindowWhenClear;
-        Island.Clip = _islandClip;
         ApplyShape();
 
         // The bridge is the strip between a floating island and the screen edge; it counts as the island.
@@ -187,26 +187,44 @@ public partial class NotchWindow : Window
 
     private readonly record struct Shape(double Width, double Height, double Radius);
 
+    /// <summary>The expanded notch's corner radius. Its corners are continuous, which look smaller than an arc of the same radius.</summary>
+    private const double ExpandedRadius = 36;
+
     private Shape ShapeFor(NotchMode mode)
     {
         Shape shape = BaseShapeFor(mode);
         return shape with { Radius = shape.Radius * ThemeManager.IslandRadiusScale };
     }
 
-    private Shape BaseShapeFor(NotchMode mode) => mode switch
+    /// <summary>The pointer is on the closed notch, which swells a little under it, the way a button answers a touch.</summary>
+    private bool _lifted;
+
+    private Shape BaseShapeFor(NotchMode mode)
+    {
+        Shape shape = RestingShapeFor(mode);
+        if (_lifted && !_expanded && mode is NotchMode.Idle or NotchMode.Compact)
+        {
+            // In the taskbar the height is what the taskbar is laid out for; only the width gives.
+            shape = shape with { Width = shape.Width + 10, Height = shape.Height + (_placement.AtBottom ? 0 : 2) };
+        }
+
+        return shape;
+    }
+
+    private Shape RestingShapeFor(NotchMode mode) => mode switch
     {
         NotchMode.Compact => new Shape(_pillActivity?.Tier == ActivityTier.Glance ? _glanceWidth : PillWidth(_pillActivity) + (_deadlineChipShown ? DeadlineChipRoom : 0), CompactHeight, CompactHeight / 2),
         NotchMode.Peek => new Shape(380, PeekHeight, PeekHeight / 2),
-        NotchMode.Expanded when _tab == NotchTab.Terminal => new Shape(920, 540, 32),
-        NotchMode.Expanded when _tab == NotchTab.Stats => new Shape(640, 290, 32),
-        NotchMode.Expanded when _tab == NotchTab.Shelf => new Shape(640, ShelfTabHeight, 32),
-        NotchMode.Expanded when _tab == NotchTab.Plugins => new Shape(640, PluginsTabHeight, 32),
-        NotchMode.Expanded when _tab == NotchTab.Clipboard => new Shape(640, ClipboardTabHeight, 32),
-        NotchMode.Expanded when _tab == NotchTab.Palette => new Shape(640, PaletteTabHeight, 32),
+        NotchMode.Expanded when _tab == NotchTab.Terminal => new Shape(920, 540, ExpandedRadius),
+        NotchMode.Expanded when _tab == NotchTab.Stats => new Shape(640, 290, ExpandedRadius),
+        NotchMode.Expanded when _tab == NotchTab.Shelf => new Shape(640, ShelfTabHeight, ExpandedRadius),
+        NotchMode.Expanded when _tab == NotchTab.Plugins => new Shape(640, PluginsTabHeight, ExpandedRadius),
+        NotchMode.Expanded when _tab == NotchTab.Clipboard => new Shape(640, ClipboardTabHeight, ExpandedRadius),
+        NotchMode.Expanded when _tab == NotchTab.Palette => new Shape(640, PaletteTabHeight, ExpandedRadius),
         NotchMode.Expanded when _tab == NotchTab.Page => PageShape(),
 
         // Home is as tall as the widgets on it.
-        NotchMode.Expanded => new Shape(640, HomeHeight(), 32),
+        NotchMode.Expanded => new Shape(640, HomeHeight(), ExpandedRadius),
         _ => new Shape(180, IdleHeight, IdleHeight / 2),
     };
 
@@ -607,6 +625,11 @@ public partial class NotchWindow : Window
     private void OnPointerEntered()
     {
         HoverTrace.Write("enter");
+        if (!_lifted)
+        {
+            _lifted = true;
+            Refresh();
+        }
 
         // Entering also cancels a pending close, which matters even when hover-to-open is off.
         if (_settings.ExpandOnHover || _expanded)
@@ -623,6 +646,12 @@ public partial class NotchWindow : Window
         HoverTrace.Write($"leave over={over}");
         if (!over)
         {
+            if (_lifted)
+            {
+                _lifted = false;
+                Refresh();
+            }
+
             ScheduleExpanded(false, CloseDelay);
         }
     }
@@ -877,7 +906,7 @@ public partial class NotchWindow : Window
         opacity.KeyFrames.Add(new EasingDoubleKeyFrame(1, KeyTime.FromTimeSpan(delay + FadeDuration.TimeSpan), ease));
         element.BeginAnimation(OpacityProperty, opacity);
 
-        var grow = new DoubleAnimation(0.96, 1, FadeDuration) { BeginTime = delay, EasingFunction = ease };
+        var grow = new DoubleAnimation(0.94, 1, FadeDuration) { BeginTime = delay, EasingFunction = ease };
         scale.BeginAnimation(ScaleTransform.ScaleXProperty, grow);
         scale.BeginAnimation(ScaleTransform.ScaleYProperty, grow);
     }
@@ -906,7 +935,7 @@ public partial class NotchWindow : Window
             : window.Left + ((window.Width - width) / 2);
         int top = _placement.AtBottom ? window.Bottom - gap - height : window.Top + gap;
         FlushEdge edge = _placement.Floating ? FlushEdge.None : _placement.AtBottom ? FlushEdge.Bottom : FlushEdge.Top;
-        _backdrop.Show(_hwnd, new PixelRect(left, top, left + width, top + height), (int)Math.Round(_islandClip.RadiusX * scale), edge);
+        _backdrop.Show(_hwnd, new PixelRect(left, top, left + width, top + height), (int)Math.Round(_islandRadius * scale), edge);
     }
 
     private void ApplyShape()
@@ -915,7 +944,9 @@ public partial class NotchWindow : Window
         // The springs overshoot, which reads well when the island grows but would sink it below its resting
         // height (and under the notch's shoulders) as it shrinks back; it stops at the resting height instead.
         double height = Math.Max(IdleHeight, _animator.Height);
-        double radius = Math.Max(0, _animator.Radius);
+
+        // Never rounder than a capsule: the corners can lag the height a little as the island shrinks.
+        double radius = Math.Clamp(_animator.Radius, 0, Math.Min(width, height) / 2);
 
         Island.Width = width;
         Island.Height = height;
@@ -954,19 +985,25 @@ public partial class NotchWindow : Window
         double padSide = bottom ? IslandPlacement.SideInset - pad : 0;
         GlowSpectrum.Margin = bottom ? new Thickness(padSide, 0, 0, padEdge) : new Thickness(0, padEdge, 0, 0);
 
-        // A notch's rounded rectangle reaches one radius past the screen edge, so the corners
-        // on that side fall outside the island and it sits flush against the edge.
-        _islandClip.Rect = floating
-            ? new Rect(0, 0, width, height)
-            : new Rect(0, bottom ? 0 : -radius, width, height + radius);
-        _islandClip.RadiusX = radius;
-        _islandClip.RadiusY = radius;
+        // Continuous corners, square on the side a notch has against the screen edge.
+        bool roundTop = floating || bottom;
+        bool roundBottom = floating || !bottom;
+        _islandRadius = radius;
+        Island.Clip = IslandOutline.Build(new Rect(0, 0, width, height), radius, roundTop, roundBottom);
 
-        // The rim has the clip's outline, reaching past the screen edge with it, so a notch has none along the edge.
-        IslandRim.CornerRadius = new CornerRadius(radius);
-        IslandRim.Margin = floating
-            ? new Thickness(0)
-            : bottom ? new Thickness(0, 0, 0, -radius) : new Thickness(0, -radius, 0, 0);
+        // The rim follows the same outline. Against the screen edge it reaches past it, so a notch has no line there.
+        double rim = TryFindResource("IslandBorderThickness") is Thickness thickness ? thickness.Left : 0;
+        IslandRim.Visibility = rim > 0 ? Visibility.Visible : Visibility.Collapsed;
+        if (rim > 0)
+        {
+            double past = (2 * rim) + 1;
+            Rect outline = floating ? new Rect(0, 0, width, height)
+                : bottom ? new Rect(0, 0, width, height + past)
+                : new Rect(0, -past, width, height + past);
+            IslandRim.StrokeThickness = 2 * rim;
+            IslandRim.Data = IslandOutline.Build(outline, radius, roundTop, roundBottom);
+        }
+
         SyncBackdrop();
 
         Visibility shoulders = floating || bottom ? Visibility.Collapsed : Visibility.Visible;

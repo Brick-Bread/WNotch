@@ -42,7 +42,7 @@
 
             <!-- The pill: what it is on the left (an agent's logo, album art or a glyph), a line of text in the
                  middle that scrolls when it is too long, and the state on the right. Filled in by Refresh. -->
-            <Grid x:Name="CompactLayer" Margin="14,0" Opacity="0" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
+            <Grid x:Name="CompactLayer" Margin="8,0,12,0" Opacity="0" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
                 <Grid.RenderTransform>
                     <ScaleTransform x:Name="CompactScale" />
                 </Grid.RenderTransform>
@@ -51,16 +51,17 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <Grid x:Name="CompactIcon" Width="18" Height="18" VerticalAlignment="Center">
-                    <TextBlock x:Name="CompactGlyph" FontFamily="{DynamicResource IconFont}" FontSize="14"
+                <Grid x:Name="CompactIcon" Width="20" Height="20" VerticalAlignment="Center">
+                    <TextBlock x:Name="CompactGlyph" FontFamily="{DynamicResource IconFont}" FontSize="14.5"
                                HorizontalAlignment="Center" VerticalAlignment="Center" />
                     <Path x:Name="CompactLogo" Width="14" Height="14" Stretch="Uniform" Fill="{DynamicResource TextBrush}"
                           HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
-                    <Border x:Name="CompactArt" CornerRadius="{DynamicResource SmallRadius}" Visibility="Collapsed" />
+                    <!-- Round, as the pill's ends are. -->
+                    <Border x:Name="CompactArt" CornerRadius="10" Visibility="Collapsed" />
                 </Grid>
 
-                <shell:Marquee x:Name="CompactText" Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
-                    <TextBlock FontSize="11.5" FontWeight="SemiBold">
+                <shell:Marquee x:Name="CompactText" Grid.Column="1" Margin="9,0,10,0" VerticalAlignment="Center">
+                    <TextBlock FontSize="12" FontWeight="SemiBold" TextOptions.TextFormattingMode="Display">
                         <Run x:Name="CompactTitle" /><Run x:Name="CompactSubtitle" FontWeight="Medium"
                              Foreground="{DynamicResource SecondaryTextBrush}" />
                     </TextBlock>
@@ -841,9 +842,9 @@
                 </Grid>
             </Grid>
 
-            <!-- The island's rim, for the looks that have one (Frosted, Paper, Hairline). Shaped in ApplyShape. -->
-            <Border x:Name="IslandRim" BorderBrush="{DynamicResource IslandBorderBrush}"
-                    BorderThickness="{DynamicResource IslandBorderThickness}" IsHitTestVisible="False" />
+            <!-- The island's rim, for the looks that have one (Frosted, Paper, Hairline): the island's own outline,
+                 drawn in ApplyShape. Its outer half falls outside the island's clip, so it is drawn twice as thick. -->
+            <Path x:Name="IslandRim" Stroke="{DynamicResource IslandBorderBrush}" IsHitTestVisible="False" />
         </Grid>
     </Grid>
 </Window>
