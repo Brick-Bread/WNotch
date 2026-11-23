@@ -127,8 +127,11 @@ public partial class App : Application
         }
         else
         {
-            media = _media = new GsmtcMediaService();
-            _ = StartMediaAsync(_media);
+            GsmtcMediaService gsmtc = new();
+            media = _media = gsmtc;
+
+            // Once the notch is on screen: connecting to Windows' media sessions loads WinRT and need not hold up the first frame.
+            Dispatcher.BeginInvoke(() => _ = StartMediaAsync(gsmtc), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
         }
 
         _mediaPublisher = new MediaActivityPublisher(media, _activities);
@@ -264,7 +267,7 @@ public partial class App : Application
             _usage = new UsageService(_terminal.HookServer, settings, Path.Combine(localData, "opencode-usage.json"));
             window.AttachUsage(_usage);
             _notifications = new NotificationService(settings, _activities);
-            _ = ApplyNotificationsAsync(showProblem: false);
+            Dispatcher.BeginInvoke(() => _ = ApplyNotificationsAsync(showProblem: false), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
             if (settings.GlobalAgentHooks)
             {
                 // The hooks must name this copy of the hook program, wherever Notch is installed now.

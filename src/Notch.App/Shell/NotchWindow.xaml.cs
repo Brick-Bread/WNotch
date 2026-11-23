@@ -787,10 +787,13 @@ public partial class NotchWindow : Window
         Shape shape = ShapeFor(mode);
         _animator.AnimateTo(shape.Width, shape.Height, shape.Radius);
 
-        // The content keeps a fixed size per tab; the island grows or shrinks around it.
-        Shape expanded = ShapeFor(NotchMode.Expanded);
-        ExpandedLayer.Width = expanded.Width - 36;
-        ExpandedLayer.Height = expanded.Height - 32;
+        // The content keeps a fixed size per tab; the island grows or shrinks around it. Measuring Home is a
+        // layout pass, so it is only done while expanded, not for every activity change in the pill.
+        if (mode == NotchMode.Expanded)
+        {
+            ExpandedLayer.Width = shape.Width - 36;
+            ExpandedLayer.Height = shape.Height - 32;
+        }
         UpdateMediaTimer();
 
         // No glow while expanded: the halo around the large panel would swallow clicks meant
@@ -822,6 +825,9 @@ public partial class NotchWindow : Window
 
     private string _pillKey = "";
 
+    /// <summary>The layers last asked to show, so a fade-out that finishes late does not hide one that came back.</summary>
+    private static readonly HashSet<UIElement> FadingIn = [];
+
     /// <summary>
     /// Hides or shows a layer. Content leaves at once and comes in, from slightly smaller, once the island has
     /// mostly reached its new size. <paramref name="again"/> fades content that is already showing out and back
@@ -832,8 +838,32 @@ public partial class NotchWindow : Window
         var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
         if (!visible)
         {
-            element.BeginAnimation(OpacityProperty, new DoubleAnimation(0, TimeSpan.FromMilliseconds(90)));
+            if (element.Visibility != Visibility.Visible)
+            {
+                return;
+            }
+
+            // Once faded out the layer is hidden: at opacity 0 it would still be drawn, and what is in it
+            // (a scrolling title, the terminal's browser) would keep running. Hidden keeps its layout.
+            var leave = new DoubleAnimation(0, TimeSpan.FromMilliseconds(120)) { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn } };
+            leave.Completed += (_, _) =>
+            {
+                if (!FadingIn.Contains(element))
+                {
+                    element.Visibility = Visibility.Hidden;
+                }
+            };
+            FadingIn.Remove(element);
+            element.BeginAnimation(OpacityProperty, leave);
             return;
+        }
+
+        FadingIn.Add(element);
+        if (element.Visibility != Visibility.Visible)
+        {
+            element.Opacity = 0;
+            element.Visibility = Visibility.Visible;
+            again = true;
         }
 
         if (element.Opacity >= 0.99 && !again && element.HasAnimatedProperties)

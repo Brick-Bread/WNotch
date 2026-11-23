@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
+using System.Windows.Threading;
 using Notch.Core.Activities;
 using Notch.Core.Plugins;
 using Notch.Platform.Media;
@@ -11,7 +12,7 @@ namespace Notch.App.Shell;
 /// <summary>
 /// Animates the light around the notch. Two layers sit behind the island, reaching just past
 /// its edge (<see cref="Spread"/>), so a thin lit rim and their blurred shadows show: a wide
-/// soft halo and a tight bright core. Runs per frame only while lit.
+/// soft halo and a tight bright core. Runs on a timer only while lit, and only redraws when the light changed.
 /// </summary>
 internal sealed class GlowController : IDisposable
 {
@@ -26,8 +27,12 @@ internal sealed class GlowController : IDisposable
 
     private const double SpectrumPad = 9;
 
-    // A soft glow looks the same at 24 fps, and every frame redraws the whole transparent window.
-    private static readonly TimeSpan MinFrameInterval = TimeSpan.FromMilliseconds(40);
+    // A soft glow looks the same at 30 fps, and every frame redraws the whole transparent window. A timer rather
+    // than CompositionTarget.Rendering: subscribing to that keeps WPF rendering at the display's full rate.
+    private static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(33);
+
+    // Changes smaller than this are not drawn: they cannot be seen, and each draw copies the whole window.
+    private const double OpacityStep = 1.0 / 128;
 
     private readonly Border _halo;
     private readonly Border _core;
@@ -38,6 +43,8 @@ internal sealed class GlowController : IDisposable
     private readonly DropShadowEffect _coreShadow = CreateShadow(CoreBlur);
     private readonly SolidColorBrush _rim = new(Colors.Transparent);
     private readonly Lazy<AudioLevelMeter> _meter = new(() => new AudioLevelMeter());
+    private readonly DispatcherTimer _timer = new(DispatcherPriority.Render) { Interval = FrameInterval };
+    private (Color Color, int Opacity, int Core, double Reach) _drawn = (Colors.Transparent, -1, -1, 0);
 
     private Glow? _glow;
     private GlowColor _targetColor;
@@ -69,6 +76,7 @@ internal sealed class GlowController : IDisposable
         _core.Background = _rim;
         _halo.Effect = _haloShadow;
         _core.Effect = _coreShadow;
+        _timer.Tick += OnFrame;
         SetVisible(false);
     }
 
@@ -154,8 +162,9 @@ internal sealed class GlowController : IDisposable
 
         _running = true;
         _lastFrame = null;
+        _drawn = (Colors.Transparent, -1, -1, 0);
         SetVisible(true);
-        CompositionTarget.Rendering += OnRendering;
+        _timer.Start();
     }
 
     private void Stop()
@@ -166,18 +175,13 @@ internal sealed class GlowController : IDisposable
         }
 
         _running = false;
-        CompositionTarget.Rendering -= OnRendering;
+        _timer.Stop();
         SetVisible(false);
     }
 
-    private void OnRendering(object? sender, EventArgs e)
+    private void OnFrame(object? sender, EventArgs e)
     {
         TimeSpan now = CurrentTime();
-        if (_lastFrame is { } previous && now - previous < MinFrameInterval)
-        {
-            return;
-        }
-
         double dt = _lastFrame is { } last ? Math.Clamp((now - last).TotalSeconds, 0, 0.1) : 0;
         _lastFrame = now;
 
@@ -229,13 +233,20 @@ internal sealed class GlowController : IDisposable
         }
 
         var color = Color.FromRgb(_color.R, _color.G, _color.B);
-        _haloShadow.Color = color;
-        _haloShadow.Opacity = opacity;
-        _haloShadow.BlurRadius = (HaloBlur + (HaloExtraBlur * opacity)) * reach;
-        _coreShadow.Color = color;
-        _coreShadow.Opacity = Math.Min(1, level * 1.1);
-        _coreShadow.BlurRadius = CoreBlur * reach;
-        _rim.Color = Color.FromArgb((byte)(255 * opacity), color.R, color.G, color.B);
+        int opacitySteps = (int)Math.Round(opacity / OpacityStep);
+        int coreSteps = (int)Math.Round(Math.Min(1, level * 1.1) / OpacityStep);
+        if ((color, opacitySteps, coreSteps, reach) != _drawn)
+        {
+            _drawn = (color, opacitySteps, coreSteps, reach);
+            double shown = opacitySteps * OpacityStep;
+            _haloShadow.Color = color;
+            _haloShadow.Opacity = shown;
+            _haloShadow.BlurRadius = (HaloBlur + (HaloExtraBlur * shown)) * reach;
+            _coreShadow.Color = color;
+            _coreShadow.Opacity = coreSteps * OpacityStep;
+            _coreShadow.BlurRadius = CoreBlur * reach;
+            _rim.Color = Color.FromArgb((byte)(255 * shown), color.R, color.G, color.B);
+        }
 
         if (_glow is null && frame is null && _intensity < 0.001)
         {

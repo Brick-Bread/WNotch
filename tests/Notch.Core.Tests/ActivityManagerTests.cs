@@ -121,4 +121,26 @@ public class ActivityManagerTests
         Assert.False(manager.Remove("media"));
         Assert.Empty(manager.Snapshot());
     }
+
+    [Fact]
+    public void Publishing_the_same_activity_again_changes_nothing()
+    {
+        using var manager = new ActivityManager(new FakeTimeProvider());
+        int changes = 0;
+        manager.Changed += (_, _) => changes++;
+        var media = new Activity { Id = "media", Tier = ActivityTier.Ongoing, Title = "Song" };
+
+        manager.Publish(media);
+        manager.Publish(media with { });
+        Assert.Equal(1, changes);
+
+        manager.Publish(media with { Title = "Next song" });
+        Assert.Equal(2, changes);
+
+        // A HUD shown again starts its lifetime over, so it still counts.
+        var volume = new Activity { Id = "hud.volume", Tier = ActivityTier.Transient, Title = "Volume" };
+        manager.Publish(volume);
+        manager.Publish(volume);
+        Assert.Equal(4, changes);
+    }
 }

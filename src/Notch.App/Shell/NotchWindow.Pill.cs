@@ -15,6 +15,9 @@ public partial class NotchWindow
 {
     private const string DoneGlyph = "";
 
+    /// <summary>Frames a second for the pill's endless animations; WPF would otherwise run them at the display's rate.</summary>
+    internal const int LoopFrameRate = 30;
+
     private bool _dotsRunning;
     private bool _waveRunning;
 
@@ -272,6 +275,11 @@ public partial class NotchWindow
                     EasingFunction = new SineEase(),
                 }
                 : null;
+            if (blink is not null)
+            {
+                Timeline.SetDesiredFrameRate(blink, LoopFrameRate);
+            }
+
             dot.BeginAnimation(OpacityProperty, blink);
         }
     }
@@ -304,6 +312,11 @@ public partial class NotchWindow
                     EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut },
                 }
                 : null;
+            if (move is not null)
+            {
+                Timeline.SetDesiredFrameRate(move, LoopFrameRate);
+            }
+
             scale.BeginAnimation(ScaleTransform.ScaleYProperty, move);
         }
     }

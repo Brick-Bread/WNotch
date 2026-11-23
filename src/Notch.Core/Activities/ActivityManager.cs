@@ -57,6 +57,15 @@ public sealed class ActivityManager : IDisposable
                 return;
             }
 
+            // The same activity again (media sources repeat themselves often) changes nothing. A HUD shown again
+            // still starts its lifetime over, below.
+            if (activity.Tier != ActivityTier.Transient
+                && _entries.TryGetValue(activity.Id, out Entry? same)
+                && same.Activity == activity)
+            {
+                return;
+            }
+
             // An update keeps its place in line so a ticking progress value does not reorder the pill.
             long sequence = _entries.Remove(activity.Id, out Entry? previous) ? previous.Sequence : ++_sequence;
             previous?.Expiry?.Dispose();

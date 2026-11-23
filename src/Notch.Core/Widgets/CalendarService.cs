@@ -43,7 +43,8 @@ public sealed class CalendarService(HttpClient http, TimeProvider? time = null)
             int index = feed++;
             try
             {
-                string text = await http.GetStringAsync(NormalizeUrl(url), cancellation);
+                // Off the caller's thread: a large feed with many repeating events takes a while to read.
+                string text = await http.GetStringAsync(NormalizeUrl(url), cancellation).ConfigureAwait(false);
                 entries.AddRange(CalendarFeed.ReadEntries(text, now, now + Horizon).Select(e => e with { Feed = index }));
                 deadlines.AddRange(CalendarFeed.ReadDeadlines(text, now - DeadlineLookBack, now + DeadlineHorizon, index));
             }

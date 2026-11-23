@@ -22,6 +22,22 @@ internal sealed class Marquee : Decorator
     public Marquee()
     {
         ClipToBounds = true;
+
+        // Out of sight it stops, so a long title left in a hidden pill or card does not scroll forever; it
+        // starts again the next time it is laid out on screen.
+        IsVisibleChanged += (_, _) =>
+        {
+            if (!IsVisible)
+            {
+                _shift.BeginAnimation(TranslateTransform.XProperty, null);
+                _shift.X = 0;
+                _overflow = -1;
+            }
+            else
+            {
+                InvalidateArrange();
+            }
+        };
     }
 
     protected override Size MeasureOverride(Size constraint)
@@ -62,7 +78,7 @@ internal sealed class Marquee : Decorator
         _shift.BeginAnimation(TranslateTransform.XProperty, null);
         _shift.X = 0;
 
-        if (overflow < 1 || width <= 0)
+        if (overflow < 1 || width <= 0 || !IsVisible)
         {
             OpacityMask = null;
             return;
@@ -77,6 +93,7 @@ internal sealed class Marquee : Decorator
             Duration = TimeSpan.FromSeconds((3 * Hold) + (2 * travel)),
             RepeatBehavior = RepeatBehavior.Forever,
         };
+        Timeline.SetDesiredFrameRate(scroll, NotchWindow.LoopFrameRate);
         scroll.KeyFrames.Add(new DiscreteDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(Hold))));
         scroll.KeyFrames.Add(new EasingDoubleKeyFrame(-overflow, there, ease));
         scroll.KeyFrames.Add(new DiscreteDoubleKeyFrame(-overflow, KeyTime.FromTimeSpan(TimeSpan.FromSeconds((2 * Hold) + travel))));
