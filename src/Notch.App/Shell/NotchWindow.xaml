@@ -67,6 +67,16 @@
                 </shell:Marquee>
 
                 <StackPanel x:Name="CompactRight" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- The next deadline, beside whatever else the pill shows: how long is left, in its colour. -->
+                    <Border x:Name="DeadlineChip" Height="17" CornerRadius="8.5" Padding="6,0,7,0" Margin="0,0,8,0"
+                            VerticalAlignment="Center" Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock x:Name="DeadlineChipGlyph" Text="&#xE7C1;" FontFamily="{DynamicResource IconFont}" FontSize="9"
+                                       Margin="0,1,4,0" VerticalAlignment="Center" />
+                            <TextBlock x:Name="DeadlineChipText" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center"
+                                       Typography.NumeralAlignment="Tabular" />
+                        </StackPanel>
+                    </Border>
                     <!-- An agent at work: three dots that blink in turn. -->
                     <StackPanel x:Name="CompactDots" Orientation="Horizontal" Visibility="Collapsed">
                         <Ellipse Width="5" Height="5" Margin="0,0,4,0" Fill="{DynamicResource WorkingBrush}" />

@@ -38,3 +38,9 @@ public sealed record ToastCommand(string Title, string? Detail, string? Glyph, G
 public sealed record OpenPaletteCommand : NotchCommand;
 
 public sealed record OpenSettingsCommand : NotchCommand;
+
+/// <summary>Adds a deadline, or moves the one with the same title. See <see cref="Deadlines.DeadlineBoard.SetLinked"/>.</summary>
+public sealed record SetDeadlineCommand(string Title, DateTimeOffset Due, string? Detail) : NotchCommand;
+
+/// <summary>Removes the deadline a link or <c>notchctl</c> set under this title.</summary>
+public sealed record RemoveDeadlineCommand(string Title) : NotchCommand;

@@ -130,6 +130,21 @@ public sealed class AppSettings
             return preset with { Name = name.Length > Widgets.TimerPreset.MaxNameLength ? name[..Widgets.TimerPreset.MaxNameLength].TrimEnd() : name };
         })];
 
+    /// <summary>Show the next deadline in the pill: a chip beside whatever it shows, or the deadline itself when it is near.</summary>
+    public bool DeadlinesInPill { get; set; } = true;
+
+    /// <summary>How many hours before it is due a deadline takes the pill over, in amber, then red once overdue.</summary>
+    public int DeadlineNearHours { get; set; } = 24;
+
+    /// <summary>The pill lights up a day, an hour and a quarter of an hour before a deadline, and when it is due.</summary>
+    public bool DeadlineAlerts { get; set; } = true;
+
+    /// <summary>Those alerts play a sound.</summary>
+    public bool DeadlineSounds { get; set; } = true;
+
+    /// <summary>Set once the Deadlines widget has been put on Home for someone who had their Home arranged before it existed.</summary>
+    public bool DeadlinesWidgetOffered { get; set; }
+
     /// <summary>The widgets on the Home tab, in order. Rearranged from the notch's own edit mode.</summary>
     public List<Widgets.HomeWidget> HomeWidgets { get; set; } = Widgets.HomeLayout.Default();
 
@@ -252,6 +267,16 @@ public sealed class AppSettings
         if (!ShowCapsLock)
         {
             yield return HudActivities.CapsLockId;
+        }
+
+        if (!DeadlinesInPill)
+        {
+            yield return Deadlines.DeadlineActivities.PillId;
+        }
+
+        if (!DeadlineAlerts)
+        {
+            yield return Deadlines.DeadlineActivities.AlertId;
         }
     }
 

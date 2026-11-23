@@ -44,6 +44,7 @@ public partial class NotchWindow
         WidgetKinds.Feed => new FeedView(this, widget),
         WidgetKinds.PluginWidget => new PluginWidgetView(this, widget),
         WidgetKinds.Usage => new UsageView(this, widget),
+        WidgetKinds.Deadlines => new DeadlinesView(this, widget),
         _ => new PluginCardView(this, widget),
     };
 

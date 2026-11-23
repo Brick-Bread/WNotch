@@ -21,6 +21,7 @@ internal sealed class PluginHost : IPluginHost
     private readonly ScopedWidgets _widgets;
     private readonly ScopedPalette _palette;
     private readonly ScopedHotkeys _hotkeys;
+    private readonly ScopedDeadlines _deadlines;
 
     public PluginHost(
         PluginManifest manifest,
@@ -37,7 +38,8 @@ internal sealed class PluginHost : IPluginHost
         PluginLog log,
         PluginWidgetBoard? widgets = null,
         PluginPaletteBoard? palette = null,
-        PluginHotkeyBoard? hotkeys = null)
+        PluginHotkeyBoard? hotkeys = null,
+        Deadlines.DeadlineBoard? deadlines = null)
     {
         Manifest = manifest;
         PluginDirectory = pluginDirectory;
@@ -56,6 +58,7 @@ internal sealed class PluginHost : IPluginHost
         Widgets = _widgets = new ScopedWidgets(manifest.Id, widgets ?? new PluginWidgetBoard(), scopedLog);
         Palette = _palette = new ScopedPalette(manifest.Id, manifest.Name, palette ?? new PluginPaletteBoard(), scopedLog);
         Hotkeys = _hotkeys = new ScopedHotkeys(manifest.Id, hotkeys ?? new PluginHotkeyBoard(), scopedLog);
+        Deadlines = _deadlines = new ScopedDeadlines(manifest.Id, deadlines ?? new Deadlines.DeadlineBoard(), scopedLog);
         Settings = SettingsStore = new PluginSettingsStore(Path.Combine(dataDirectory, "settings.json"));
     }
 
@@ -84,6 +87,8 @@ internal sealed class PluginHost : IPluginHost
 
     public IPluginHotkeys Hotkeys { get; }
 
+    public IPluginDeadlines Deadlines { get; }
+
     public IPluginThemes Themes { get; }
 
     public IPluginGlow Glow { get; }
@@ -109,6 +114,7 @@ internal sealed class PluginHost : IPluginHost
         _widgets.Close();
         _palette.Close();
         _hotkeys.Close();
+        _deadlines.Close();
         _pages.Close();
         _themes.Close();
         _glow.Close();
@@ -250,6 +256,49 @@ internal sealed class PluginHost : IPluginHost
                     log.Error($"The click handler of card '{card.Id}' failed.", e);
                 }
             });
+        }
+    }
+
+    private sealed class ScopedDeadlines(string pluginId, Deadlines.DeadlineBoard board, ScopedLog log) : IPluginDeadlines
+    {
+        private readonly Lock _gate = new();
+        private bool _closed;
+        private bool _warned;
+
+        public bool Set(Deadlines.PluginDeadline deadline)
+        {
+            ArgumentNullException.ThrowIfNull(deadline);
+            ArgumentException.ThrowIfNullOrWhiteSpace(deadline.Id);
+
+            lock (_gate)
+            {
+                if (_closed)
+                {
+                    return false;
+                }
+
+                bool set = board.SetPlugin(pluginId, deadline);
+                if (!set && !_warned)
+                {
+                    _warned = true;
+                    log.Warn($"A deadline was not shown: it has no title, or the plugin already has {Notch.Core.Deadlines.DeadlineBoard.MaxPerPlugin}.");
+                }
+
+                return set;
+            }
+        }
+
+        public bool Remove(string id) => board.RemovePlugin(pluginId, id);
+
+        public void Clear() => board.ClearPlugin(pluginId);
+
+        public void Close()
+        {
+            lock (_gate)
+            {
+                _closed = true;
+                Clear();
+            }
         }
     }
 

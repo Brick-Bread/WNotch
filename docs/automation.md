@@ -7,6 +7,8 @@ Three ways to tell a running Notch what to do. They share one list of commands, 
 | `timer 5m` | Starts the timer. Lengths like `90s`, `1:30`, `1h20m`; up to 24 hours. |
 | `timer stop` / `pause` / `resume` | Controls the running timer. |
 | `toast "Build done"` | A short notice in the pill. Options: `detail`, `glyph`, `color` (a name such as `green`, or `#rrggbb`), `lifetime` (such as `5s`, at most 30 s). |
+| `deadline "Report" --due "fri 17:00"` | Adds a deadline, or moves the one with the same title, so a script can run it again. `due` reads `in 3d`, `2h30m`, `today 17:00`, `tomorrow`, `fri 5pm`, `next mon`, `17:00`, `2026-12-01`, `2026-12-01 09:30` or an ISO time with an offset; a day without a time is due at 23:59. Also `in` (`--in 3d`) and `detail`. |
+| `deadline "Report" --done` | Removes a deadline that a link, `notchctl` or the webhook set. Ones you added in Notch are removed there. |
 | `open stats` | Opens the notch on a tab: `home`, `terminal`, `stats`, `shelf`, `plugins`, `clipboard`. |
 | `open page <plugin-id>/<page-id>` | Opens the notch on a plugin's page, e.g. `open page acme.tool/main`. Refused when the page is not there (its plugin is off, say). As a link `notch://open?page=acme.tool/main`, on the webhook `{ "command": "open", "page": "acme.tool/main" }`. |
 | `install <plugin-id>` | Asks to install a plugin from the plugin list. Notch shows a confirmation window first. |
@@ -15,7 +17,7 @@ Three ways to tell a running Notch what to do. They share one list of commands, 
 
 ## notch:// links
 
-`notch://timer?d=5m`, `notch://toast?title=Done&color=green`, `notch://open?tab=stats`, `notch://install?id=acme.build-status`.
+`notch://timer?d=5m`, `notch://toast?title=Done&color=green`, `notch://deadline?title=Taxes&due=2027-04-15`, `notch://open?tab=stats`, `notch://install?id=acme.build-status`.
 
 The installer registers the `notch` scheme for your account. If Notch is not running, the link starts it. A link can only do what the table above lists: unknown commands and malformed values are ignored, and anything that changes what runs on your computer (installing or switching on a plugin) shows a window and needs your click.
 
@@ -27,6 +29,7 @@ The installer registers the `notch` scheme for your account. If Notch is not run
 notchctl timer 5m
 notchctl toast "Build done" --detail "all green" --color green
 notchctl open stats
+notchctl deadline "Release 0.23" --due "fri 17:00" --detail "notch"
 notchctl install acme.build-status
 notchctl webhook          # shows the webhook address and token
 ```

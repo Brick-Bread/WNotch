@@ -402,6 +402,22 @@
                                    Text="One iCalendar (.ics) link per line. Google Calendar and Outlook both offer a private link under their sharing settings." />
                         <TextBox x:Name="CalendarFeeds" AcceptsReturn="True" Height="130" TextWrapping="NoWrap"
                                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" />
+
+                        <TextBlock Text="DEADLINES" Style="{StaticResource Heading}" />
+                        <TextBlock Style="{StaticResource Help}" Margin="4,0,0,8"
+                                   Text="Add deadlines on the Deadlines widget on Home, with notchctl deadline, or in a calendar: an event whose title starts with &quot;Due:&quot; or that has the DEADLINE category, and tasks with a due date." />
+                        <Border Style="{StaticResource Group}">
+                            <StackPanel>
+                                <CheckBox x:Name="DeadlinesInPill" Content="Show the next deadline at the top of the pill" />
+                                <DockPanel Style="{StaticResource Row}" IsEnabled="{Binding IsChecked, ElementName=DeadlinesInPill}">
+                                    <TextBlock Text="Hours before it is due that it takes over the pill" Style="{StaticResource RowLabel}" />
+                                    <TextBox x:Name="DeadlineNearHours" DockPanel.Dock="Right" Width="72" />
+                                </DockPanel>
+                                <CheckBox x:Name="DeadlineAlerts" Content="Light up a day, an hour and 15 minutes before, and when it is due" />
+                                <CheckBox x:Name="DeadlineSounds" Content="Play a sound with those alerts" Margin="24,0,0,0"
+                                          IsEnabled="{Binding IsChecked, ElementName=DeadlineAlerts}" />
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
 
                     <!-- Automation -->

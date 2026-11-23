@@ -112,6 +112,10 @@ public partial class SettingsWindow : Window
         ShowBluetooth.IsChecked = settings.ShowBluetooth;
         ShowCapsLock.IsChecked = settings.ShowCapsLock;
         CalendarFeeds.Text = string.Join(Environment.NewLine, settings.CalendarFeeds);
+        DeadlinesInPill.IsChecked = settings.DeadlinesInPill;
+        DeadlineNearHours.Text = settings.DeadlineNearHours.ToString();
+        DeadlineAlerts.IsChecked = settings.DeadlineAlerts;
+        DeadlineSounds.IsChecked = settings.DeadlineSounds;
 
         // First entry follows whichever display Windows treats as primary.
         IReadOnlyList<DisplayInfo> displays = Displays.GetAll();
@@ -512,6 +516,13 @@ public partial class SettingsWindow : Window
         _settings.ShowPower = ShowPower.IsChecked == true;
         _settings.ShowBluetooth = ShowBluetooth.IsChecked == true;
         _settings.ShowCapsLock = ShowCapsLock.IsChecked == true;
+        _settings.DeadlinesInPill = DeadlinesInPill.IsChecked == true;
+        _settings.DeadlineNearHours = int.TryParse(DeadlineNearHours.Text.Trim(), out int nearHours)
+            && nearHours is >= Notch.Core.Deadlines.DeadlineTiming.MinNearHours and <= Notch.Core.Deadlines.DeadlineTiming.MaxNearHours
+            ? nearHours
+            : _settings.DeadlineNearHours;
+        _settings.DeadlineAlerts = DeadlineAlerts.IsChecked == true;
+        _settings.DeadlineSounds = DeadlineSounds.IsChecked == true;
         _settings.DisplayIndex = Display.SelectedIndex > 0 ? Display.SelectedIndex - 1 : null;
         _settings.CalendarFeeds = [.. CalendarFeeds.Text
             .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)

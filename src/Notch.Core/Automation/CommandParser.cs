@@ -169,6 +169,9 @@ public static partial class CommandParser
             case "toast":
                 return BuildToast(Get, out command, out error);
 
+            case "deadline" or "due":
+                return BuildDeadline(Get, out command, out error);
+
             case "palette":
                 command = new OpenPaletteCommand();
                 return true;
@@ -190,6 +193,7 @@ public static partial class CommandParser
         "timer" => "d",
         "open" => "tab",
         "toast" => "title",
+        "deadline" or "due" => "title",
         _ => null,
     };
 
@@ -291,6 +295,56 @@ public static partial class CommandParser
         }
 
         command = new ToastCommand(title, detail.Length > 0 ? detail : null, glyph.Length > 0 ? glyph : null, color, lifetime);
+        return true;
+    }
+
+    private static bool BuildDeadline(Func<string, string> get, out NotchCommand? command, out string? error)
+    {
+        command = null;
+        error = null;
+        string title = get("title");
+        if (title.Length == 0)
+        {
+            title = get("text");
+        }
+
+        if (title.Length == 0 || title.Length > MaxTitleLength || title.Any(char.IsControl))
+        {
+            error = $"deadline needs a title of 1 to {MaxTitleLength} characters.";
+            return false;
+        }
+
+        if (TryBool(get("done"), out bool done) && done || TryBool(get("remove"), out bool remove) && remove)
+        {
+            command = new RemoveDeadlineCommand(title);
+            return true;
+        }
+
+        string dueText = get("due");
+        if (dueText.Length == 0)
+        {
+            dueText = get("at");
+        }
+
+        if (dueText.Length == 0 && get("in") is { Length: > 0 } inText)
+        {
+            dueText = "in " + inText;
+        }
+
+        if (!Deadlines.DueParser.TryParse(dueText, DateTimeOffset.Now, out DateTimeOffset due))
+        {
+            error = "deadline needs --due, such as \"fri 17:00\", \"tomorrow\", \"2026-12-01 09:00\" or \"in 3d\".";
+            return false;
+        }
+
+        string detail = get("detail");
+        if (detail.Length > MaxDetailLength)
+        {
+            error = $"The detail can be at most {MaxDetailLength} characters.";
+            return false;
+        }
+
+        command = new SetDeadlineCommand(title, due, detail.Length > 0 ? detail : null);
         return true;
     }
 

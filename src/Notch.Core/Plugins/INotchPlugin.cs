@@ -13,7 +13,7 @@ public static class PluginApi
     /// its manifest (<c>apiVersion</c>); Notch runs plugins written for this version or an older
     /// one, and refuses those that need a newer one.
     /// </summary>
-    public const int Version = 10;
+    public const int Version = 11;
 }
 
 /// <summary>
@@ -76,6 +76,9 @@ public interface IPluginHost
     /// <summary>Keyboard shortcuts that work from any app. API version 9.</summary>
     IPluginHotkeys Hotkeys { get; }
 
+    /// <summary>Deadlines shown with the user's own: at the top of the pill, in the Deadlines widget, with alerts. API version 11.</summary>
+    IPluginDeadlines Deadlines { get; }
+
     /// <summary>Looks for the whole notch that the user can pick in Settings. API version 6.</summary>
     IPluginThemes Themes { get; }
 
@@ -117,6 +120,27 @@ public interface IPluginActivities
     bool Remove(string id);
 
     /// <summary>Removes every activity the plugin has published.</summary>
+    void Clear();
+}
+
+/// <summary>
+/// The plugin's deadlines. Notch shows them beside the user's own: the next one as a chip on the pill, which takes
+/// the pill over as it gets near, alerts a day, an hour and a quarter of an hour before, and the Deadlines widget.
+/// The user can complete or snooze one; a completed one stays hidden until the plugin moves it to another due time.
+/// Ids are private to the plugin. API version 11.
+/// </summary>
+public interface IPluginDeadlines
+{
+    /// <summary>
+    /// Shows <paramref name="deadline"/>, or replaces the plugin's deadline with the same id. False when it has no
+    /// title or the plugin already shows 50.
+    /// </summary>
+    bool Set(Deadlines.PluginDeadline deadline);
+
+    /// <summary>Removes a deadline by id. False when there was none.</summary>
+    bool Remove(string id);
+
+    /// <summary>Removes all of the plugin's deadlines.</summary>
     void Clear();
 }
 

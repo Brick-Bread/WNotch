@@ -5,6 +5,7 @@ using Notch.Core.Automation;
 // notchctl: tells the running Notch what to do.
 //   notchctl timer 5m          notchctl toast "Build done" --color green
 //   notchctl install <plugin>  notchctl open stats        notchctl webhook
+//   notchctl deadline "Report" --due "fri 17:00"
 // Exit code 0 when Notch did it, 1 when it refused, 2 when it could not be reached, 3 when it did not answer in time.
 
 string[] arguments = args;
@@ -18,6 +19,8 @@ if (arguments.Length == 0 || arguments[0] is "-h" or "--help" or "help" or "/?")
 
           timer 5m | stop | pause | resume      start or control the timer
           toast "Title" [--detail t] [--glyph g] [--color green|#rrggbb] [--lifetime 5s]
+          deadline "Title" --due "fri 17:00" [--detail t]   add a deadline, or move the one with that title
+          deadline "Title" --done               remove a deadline set this way
           open home|terminal|stats|shelf|plugins|clipboard
           open page <plugin-id>/<page-id>       open a plugin's page
           install <plugin-id>                   ask to install a plugin from the registry

@@ -94,6 +94,16 @@ internal sealed class CommandDispatcher(
                     window.ShowNotice(toast);
                     return new CommandResult(true);
 
+                case SetDeadlineCommand deadline:
+                    return window.SetLinkedDeadline(deadline) is { } set
+                        ? new CommandResult(true, $"Deadline set: {set.Title}, {Notch.Core.Deadlines.DeadlineTiming.Describe(set.Due - DateTimeOffset.Now)}.")
+                        : new CommandResult(false, "There are too many deadlines already.");
+
+                case RemoveDeadlineCommand remove:
+                    return window.RemoveLinkedDeadline(remove.Title)
+                        ? new CommandResult(true, $"Deadline removed: {remove.Title}.")
+                        : new CommandResult(false, $"There is no deadline called {remove.Title} set by a command.");
+
                 case OpenPaletteCommand:
                     openPalette();
                     return new CommandResult(true);

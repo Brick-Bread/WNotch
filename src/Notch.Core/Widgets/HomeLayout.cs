@@ -68,6 +68,7 @@ public static class WidgetKinds
     public const string Feed = "feed";
     public const string Plugin = "plugin";
     public const string Usage = "usage";
+    public const string Deadlines = "deadlines";
 
     /// <summary>A widget a plugin draws itself; <see cref="HomeWidget.Source"/> says whose. Not in the catalog's picker list.</summary>
     public const string PluginWidget = "plugin-widget";
@@ -133,6 +134,7 @@ public static class WidgetCatalog
         new(WidgetKinds.Media, "Media", "\uE8D6", "What is playing, with its controls", WidgetWidth.Full, Single: true, CanBeEmpty: true, []),
         new(WidgetKinds.Agents, "Agents", "\uE99A", "Coding agents and what they are doing", WidgetWidth.Full, Single: true, CanBeEmpty: true, []),
         new(WidgetKinds.Timer, "Timer", "\uE916", "Pomodoro and one-click timers", WidgetWidth.Half, Single: true, CanBeEmpty: false, []),
+        new(WidgetKinds.Deadlines, "Deadlines", "\uE7C1", "What is due and when, from you, your calendars, scripts and plugins", WidgetWidth.Full, Single: true, CanBeEmpty: false, []),
         new(WidgetKinds.Calendar, "Calendar", "\uE787", "Upcoming events from your feeds", WidgetWidth.Half, Single: true, CanBeEmpty: false, []),
         new(WidgetKinds.Clock, "Clock", "\uE121", "The time here or anywhere else", WidgetWidth.Half, Single: false, CanBeEmpty: false,
         [
@@ -217,11 +219,12 @@ public static class HomeLayout
     /// <summary>More than this is more than the notch can show, even scrolling.</summary>
     public const int MaxWidgets = 24;
 
-    /// <summary>What Home showed before it could be changed: media, agents, then the timer and calendar side by side.</summary>
+    /// <summary>What a new Home shows: media, agents, deadlines, then the timer and calendar side by side.</summary>
     public static List<HomeWidget> Default() =>
     [
         new() { Kind = WidgetKinds.Media, Width = WidgetWidth.Full },
         new() { Kind = WidgetKinds.Agents, Width = WidgetWidth.Full },
+        new() { Kind = WidgetKinds.Deadlines, Width = WidgetWidth.Full },
         new() { Kind = WidgetKinds.Timer, Width = WidgetWidth.Half },
         new() { Kind = WidgetKinds.Calendar, Width = WidgetWidth.Half },
     ];

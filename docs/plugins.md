@@ -181,7 +181,7 @@ Notch reads the manifest to list a plugin in Settings before running any of its 
 | `id` | yes | Unique, permanent identifier. Lowercase letters and digits in groups separated by `.` or `-`, at most 64 characters, e.g. `yourname.build-status`. Prefix it with your name to avoid clashes. It names the plugin's data folder, so changing it loses the plugin's settings. |
 | `name` | yes | Shown in Settings. |
 | `assembly` | yes | File name of the plugin's `.dll`, in the same folder. No paths. |
-| `apiVersion` | yes | The plugin API version the plugin was written for. Currently `10`. See [Compatibility](#compatibility). |
+| `apiVersion` | yes | The plugin API version the plugin was written for. Currently `11`. See [Compatibility](#compatibility). |
 | `version` | no | The plugin's own version, shown in Settings. |
 | `author` | no | Shown in the plugin's tooltip in Settings. |
 | `description` | no | Shown in the plugin's tooltip in Settings. |
@@ -343,6 +343,22 @@ A card is plain data: the plugin describes it and Notch draws it in its own styl
 `Clicked` runs on a background thread, not the UI thread. An exception it throws is logged and otherwise ignored.
 
 There is currently no way to learn whether the tab is on screen, so update cards on a modest schedule: once a second at most, and less often for anything that costs something to compute or fetch.
+
+## Deadlines
+
+A plugin can hand Notch deadlines, such as a ticket's due date or a build that must ship by Friday. They show with the user's own: the next one sits at the top of the pill, takes the pill over as it comes near, lights up a day, an hour and a quarter of an hour before and when due, and is listed on the Deadlines widget on Home. Needs API version 11.
+
+```csharp
+host.Deadlines.Set(new PluginDeadline
+{
+    Id = "release",
+    Title = "Ship 2.0",
+    Due = new DateTimeOffset(2026, 12, 4, 17, 0, 0, TimeSpan.FromHours(1)),
+    Detail = "acme/app",
+});
+```
+
+`Set` with the same `Id` replaces the deadline; `Remove(id)` and `Clear()` take them away, and Notch removes them all when the plugin stops. A plugin can show up to 50. The user can complete one, which hides it until you set it with another due time, or snooze it. Titles are cut to 120 characters, details to 200.
 
 ## Widgets: the Home tab
 
@@ -943,6 +959,7 @@ The plugin API is `Notch.Core.Plugins` plus the types in `Notch.Core.Activities`
 | 8 | `IPluginHost.Widgets`: widgets for the Home tab, drawn with blocks or with WPF. |
 | 9 | `IPluginHost.Palette` (commands and live results in the command palette) and `IPluginHost.Hotkeys`. Pages: `View` (a page drawn with WPF), `Size`, `Accept`. Blocks: `PluginChoices`; `PluginTextField.Changed`, `ClearOnSubmit` and `Lines`. `Activity.OpensPage`, and `CountingFrom` on activities, cards and figures. `IPluginShell.IsCardVisible`. Notch's own `notch.timer` and `notch.media` messages on the bus. |
 | 10 | `ActivityTier.Glance` and `Activity.Order`: figures from any number of plugins side by side in the pill. |
+| 11 | `IPluginHost.Deadlines`: deadlines shown with the user's own, in the pill, with alerts and on the Deadlines widget. |
 
 ## Troubleshooting
 

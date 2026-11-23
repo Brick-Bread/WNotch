@@ -318,6 +318,23 @@ public partial class NotchWindow
             entries.Add(new PaletteEntry($"Start a {DurationParser.Describe(typed)} timer", "Timer", query, () => StartTimer(typed)));
         }
 
+        // "Report by fri 17:00" is a deadline.
+        int by = query.LastIndexOf(" by ", StringComparison.OrdinalIgnoreCase);
+        if (by > 0
+            && Notch.Core.Deadlines.Deadline.Tidy(query[..by]) is { Length: > 0 } deadlineTitle
+            && Notch.Core.Deadlines.DueParser.TryParse(query[(by + 4)..], DateTimeOffset.Now, out DateTimeOffset due))
+        {
+            string when = Notch.Core.Deadlines.DeadlineTiming.When(due, DateTimeOffset.Now);
+            entries.Add(new PaletteEntry($"Add deadline: {deadlineTitle}", $"Deadline · due {when}", query, () => _deadlines.Add(deadlineTitle, due), Notch.Core.Deadlines.DeadlineActivities.Glyph));
+        }
+
+        // Only once something is typed, so the deadlines do not crowd out the rest of the list.
+        foreach (Notch.Core.Deadlines.Deadline deadline in query.Trim().Length == 0 ? [] : _deadlines.All().Take(5))
+        {
+            string left = Notch.Core.Deadlines.DeadlineTiming.Describe(deadline.Due - DateTimeOffset.Now);
+            entries.Add(new PaletteEntry($"Complete deadline: {deadline.Title}", $"Deadline · {left}", "done finish tick due", () => _deadlines.Complete(deadline.Id), Notch.Core.Deadlines.DeadlineActivities.Glyph));
+        }
+
         foreach ((string title, string tab) in new[] { ("Home", "home"), ("Terminal", "terminal"), ("Stats", "stats"), ("Shelf", "shelf") })
         {
             entries.Add(new PaletteEntry($"Open {title}", "Tab", null, () => OpenOnTab(tab)));

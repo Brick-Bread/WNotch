@@ -161,6 +161,9 @@ public partial class App : Application
         {
             // The plugins that ship with Notch (the New Age theme), copied there by Notch.App.csproj.
             BuiltInDirectory = Path.Combine(AppContext.BaseDirectory, "plugins"),
+
+            // The user's own deadlines are kept beside the settings; the demo's are made up and never saved.
+            Deadlines = new Notch.Core.Deadlines.DeadlineBoard(demo ? null : Path.Combine(appData, "deadlines.json")),
         };
         _plugins.Audio.Starter = publish => new SpectrumAnalyzer(publish);
         _pluginStartMarker = Path.Combine(appData, "plugins-starting");
@@ -235,7 +238,7 @@ public partial class App : Application
 
         // Before any window exists, so nothing is ever drawn without its colours.
         ThemeManager.Apply(settings);
-        var window = new NotchWindow(_activities, media, _terminal, pluginCards, _plugins.Pages, _plugins.ShellState, _plugins.Glow, _plugins.Widgets, shelf, settingsStore, settings, _agentBoard, entry => _agentTracker?.Focus(entry) ?? false)
+        var window = new NotchWindow(_activities, media, _terminal, pluginCards, _plugins.Pages, _plugins.ShellState, _plugins.Glow, _plugins.Widgets, shelf, settingsStore, settings, _agentBoard, entry => _agentTracker?.Focus(entry) ?? false, _plugins.Deadlines)
         {
             ShelfKeepsMissingFiles = demo,
         };

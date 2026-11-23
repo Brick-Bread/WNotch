@@ -49,12 +49,14 @@ public partial class NotchWindow
         CompactIcon.Visibility = CompactText.Visibility = CompactRight.Visibility = glance ? Visibility.Collapsed : Visibility.Visible;
         if (glance)
         {
+            _deadlineChipShown = false;
             FillGlance(activities);
             StopPillAnimations();
             return;
         }
 
         FillPill(top);
+        FillDeadlineChip(top);
     }
 
     /// <summary>Every glance activity side by side: its glyph or picture, then its title or clock.</summary>
@@ -226,6 +228,7 @@ public partial class NotchWindow
             CompactTitle.Text = "";
         }
 
+        ColorDeadlineDetail(top);
         CompactProgress.Visibility = bar ? Visibility.Visible : Visibility.Collapsed;
         CompactLevel.Visibility = bar ? Visibility.Visible : Visibility.Collapsed;
         CompactProgress.Value = top.Progress ?? 0;

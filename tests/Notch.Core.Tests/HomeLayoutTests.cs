@@ -13,12 +13,12 @@ public class HomeLayoutTests
         [.. rows.Select(r => r.Select(w => w.Kind).ToArray())];
 
     [Fact]
-    public void Default_layout_is_what_home_showed_before()
+    public void Default_layout_has_deadlines_under_the_agents()
     {
         IReadOnlyList<IReadOnlyList<HomeWidget>> rows = HomeLayout.Rows(HomeLayout.Default());
 
         Assert.Equal(
-            [[WidgetKinds.Media], [WidgetKinds.Agents], [WidgetKinds.Timer, WidgetKinds.Calendar]],
+            [[WidgetKinds.Media], [WidgetKinds.Agents], [WidgetKinds.Deadlines], [WidgetKinds.Timer, WidgetKinds.Calendar]],
             Kinds(rows));
     }
 
@@ -88,10 +88,10 @@ public class HomeLayoutTests
     public void Move_puts_a_widget_in_its_new_place()
     {
         List<HomeWidget> widgets = HomeLayout.Default();
-        string timer = widgets[2].Id;
+        string timer = widgets.Single(w => w.Kind == WidgetKinds.Timer).Id;
 
         Assert.True(HomeLayout.Move(widgets, timer, 0));
-        Assert.Equal([WidgetKinds.Timer, WidgetKinds.Media, WidgetKinds.Agents, WidgetKinds.Calendar], widgets.Select(w => w.Kind));
+        Assert.Equal([WidgetKinds.Timer, WidgetKinds.Media, WidgetKinds.Agents, WidgetKinds.Deadlines, WidgetKinds.Calendar], widgets.Select(w => w.Kind));
         Assert.False(HomeLayout.Move(widgets, timer, 0));
         Assert.True(HomeLayout.Move(widgets, timer, 99));
         Assert.Equal(WidgetKinds.Timer, widgets[^1].Kind);

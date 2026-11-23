@@ -102,7 +102,8 @@ public partial class NotchWindow : Window
         SettingsStore settingsStore,
         AppSettings settings,
         AgentBoard agents,
-        Func<AgentEntry, bool> focusDetectedAgent)
+        Func<AgentEntry, bool> focusDetectedAgent,
+        Notch.Core.Deadlines.DeadlineBoard deadlines)
     {
         InitializeComponent();
         _agents = agents;
@@ -133,6 +134,7 @@ public partial class NotchWindow : Window
         RefreshLibrary();
         InitializeClipboard();
         InitializePalette();
+        InitializeDeadlines(deadlines);
 
         Shape idle = ShapeFor(NotchMode.Idle);
         _animator = new NotchAnimator(idle.Width, idle.Height, idle.Radius);
@@ -193,7 +195,7 @@ public partial class NotchWindow : Window
 
     private Shape BaseShapeFor(NotchMode mode) => mode switch
     {
-        NotchMode.Compact => new Shape(_pillActivity?.Tier == ActivityTier.Glance ? _glanceWidth : PillWidth(_pillActivity), CompactHeight, CompactHeight / 2),
+        NotchMode.Compact => new Shape(_pillActivity?.Tier == ActivityTier.Glance ? _glanceWidth : PillWidth(_pillActivity) + (_deadlineChipShown ? DeadlineChipRoom : 0), CompactHeight, CompactHeight / 2),
         NotchMode.Peek => new Shape(380, PeekHeight, PeekHeight / 2),
         NotchMode.Expanded when _tab == NotchTab.Terminal => new Shape(920, 540, 32),
         NotchMode.Expanded when _tab == NotchTab.Stats => new Shape(640, 290, 32),
@@ -363,6 +365,10 @@ public partial class NotchWindow : Window
         RefreshCalendar();
         ShowTimerPresets();
         ShowTerminalLaunchers();
+
+        // Switching the pill's deadline back on, or a new threshold, publishes it afresh.
+        _deadlineShown = null;
+        UpdateDeadlines();
         RefreshHomeViews();
         HomeContentChanged();
         _glow.Gain = GlowOutput.Gain(_settings.GlowIntensity);

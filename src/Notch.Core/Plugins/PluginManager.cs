@@ -114,6 +114,9 @@ public sealed class PluginManager : IDisposable
     /// <summary>The pages plugins show as tabs, and their consoles.</summary>
     public PluginPageBoard Pages { get; } = new();
 
+    /// <summary>Where plugins' deadlines go; the app hands in the board the pill and the Deadlines widget read.</summary>
+    public Deadlines.DeadlineBoard Deadlines { get; init; } = new();
+
     /// <summary>The widgets plugins offer for Home, and what each one on Home shows.</summary>
     public PluginWidgetBoard Widgets { get; } = new();
 
@@ -663,7 +666,7 @@ public sealed class PluginManager : IDisposable
 
             slot.Factory ??= _loader(manifest, LoadDirectory(slot));
             slot.Host = new PluginHost(
-                manifest, slot.Directory, Path.Combine(_dataDirectory, slot.DataId ?? manifest.Id), _activities, _cards, Pages, Themes, Glow, Audio, ShellState, Bus, _log, Widgets, Palette, Hotkeys);
+                manifest, slot.Directory, Path.Combine(_dataDirectory, slot.DataId ?? manifest.Id), _activities, _cards, Pages, Themes, Glow, Audio, ShellState, Bus, _log, Widgets, Palette, Hotkeys, Deadlines);
             slot.Instance = slot.Factory();
             slot.Instance.Start(slot.Host);
 
